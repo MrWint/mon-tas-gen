@@ -1,0 +1,56 @@
+import sys
+
+global_cflags = ARGUMENTS.get('CFLAGS', '-Wall -Wextra -O2 -fomit-frame-pointer')
+global_cxxflags = ARGUMENTS.get('CXXFLAGS', global_cflags + ' -fno-exceptions -fno-rtti -std=c++11')
+global_cpppath = ['src', 'include', 'common']
+vars = Variables()
+vars.Add('CC')
+vars.Add('CXX')
+
+env = Environment(CPPPATH = global_cpppath,
+                  CFLAGS = global_cflags,
+                  CXXFLAGS = global_cxxflags,
+                  variables = vars)
+
+env.ParseConfig('sdl-config --cflags --libs')
+
+sourceFiles = Split('''
+	src/common/videolink/rgb32conv.cpp
+	src/cpu.cpp
+	src/gambatte.cpp
+	src/initstate.cpp
+	src/interrupter.cpp
+	src/interruptrequester.cpp
+	src/memory.cpp
+	src/mem/cartridge.cpp
+	src/mem/memptrs.cpp
+	src/mem/rtc.cpp
+	src/sdl/blitterwrapper.cpp
+	src/sdl/gambatte_sdl.cpp
+	src/sdl/sdlblitter.cpp
+	src/newstate.cpp
+	src/sound.cpp
+	src/sound/channel1.cpp
+	src/sound/channel2.cpp
+	src/sound/channel3.cpp
+	src/sound/channel4.cpp
+	src/sound/duty_unit.cpp
+	src/sound/envelope_unit.cpp
+	src/sound/length_counter.cpp
+	src/tima.cpp
+	src/video.cpp
+	src/video/lyc_irq.cpp
+	src/video/ly_counter.cpp
+	src/video/next_m0_time.cpp
+	src/video/ppu.cpp
+	src/video/sprite_mapper.cpp
+		   ''')
+
+conf = env.Configure()
+
+conf.Finish()
+
+gambatte = env.SharedLibrary('gambatte', sourceFiles)
+
+env.Install('../', gambatte)
+env.Alias('install', '../')

@@ -1,0 +1,12 @@
+[package]
+name = "gb-tas-gen-v2"
+version = "0.1.0"
+authors = ["MrWint"]
+build = "build.rs"
+
+[dependencies]
+bitflags = "1.0"
+serde = "1.0"
+serde_derive = "1.0"
+bincode = "1.0"
+flate2 = "1.0"
