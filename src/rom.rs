@@ -22,7 +22,7 @@ pub trait TextAddresses {
   const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32; // in PrintLetterDelay, after wait loop is done
   const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16; // variable which is checked in the busy-wait loop in PrintLetterDelay
 }
-pub trait OverworldAddresses {
+pub trait Gen1OverworldAddresses {
   const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32; // in JoypadOverworld, before call to Joypad happened
   const OVERWORLD_JOYPAD_ADDRESS: i32; // the element of JOYPAD_USE_ADDRESSES which is used in JoypadOverworld
   const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32; // in JoypadOverworld, after call to Joypad happened
@@ -43,8 +43,76 @@ pub trait OverworldAddresses {
   const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32;
   const OVERWORLD_WALKED_ADDRESS: i32;
 }
+pub trait Gen2MapEventsAddresses {
+  const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32;
+  const OVERWORLD_JOYPAD_ADDRESS: i32;
+  const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32;
+  const PLAYER_EVENTS_ADDRESS: i32; // PlayerEvents
+  const PLAYER_SCRIPT_RUNNING_MEM_ADDRESS: u16; // wScriptRunning
+  const PLAYER_EVENTS_SEEN_BY_TRAINER_ADDRESS: i32; // in CheckTrainerBattle3
+  const PLAYER_EVENTS_MAP_CONNECTION_ADDRESS: i32; // CheckTileEvent.map_connection
+  const PLAYER_EVENTS_WARP_ADDRESS: i32; // CheckTileEvent.not_pit
+  const PLAYER_EVENTS_FALL_ADDRESS: i32; // CheckTileEvent.pit
+  const PLAYER_EVENTS_MAP_COORD_EVENT_ADDRESS: i32; // CheckTileEvent.coord_event
+  const PLAYER_EVENTS_COUNT_STEP_EVENT_ADDRESS: i32; // CountStep.doscript
+  const PLAYER_EVENTS_HATCH_ADDRESS: i32; // CountStep.hatch
+  const PLAYER_EVENTS_RANDOM_ENCOUNTER_ADDRESS: i32; // RandomEncounter.done
+  const PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS: u16; // wTempWildMonSpecies
+  const PLAYER_EVENTS_RANDOM_ENCOUNTER_LEVEL_MEM_ADDRESS: u16; // wCurPartyLevel
+  const PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS: i32; // RunMemScript.runScript
+  const PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS: i32; // RunSceneScript.runScript
+  const PLAYER_EVENTS_END_BUG_CONTEST_ADDRESS: i32; // CheckTimeEvents.end_bug_contest
+  const PLAYER_EVENTS_PHONE_CALL_ADDRESS: i32; // CheckPhoneCall.call
+  const PLAYER_EVENTS_WHIRLPOOL_FORCED_MOVEMENT_ADDRESS: i32; // DoPlayerMovement.CheckTile_whirlpool
+  const PLAYER_EVENTS_FORCED_MOVEMENT_ADDRESS: i32; // DoPlayerMovement.continue_walk
+  const PLAYER_EVENTS_TURNING_ADDRESS: i32; // DoPlayerMovement.CheckTurning_turning
+  const PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS: u16; // wWalkingDirection
+  const PLAYER_EVENTS_STEP_WALK_ADDRESS: i32; // DoPlayerMovement.walk
+  const PLAYER_EVENTS_STEP_BIKE_ADDRESS: i32; // DoPlayerMovement.fast
+  const PLAYER_EVENTS_STEP_BIKE_UPHILL_ADDRESS: i32; // DoPlayerMovement.bike_uphill
+  const PLAYER_EVENTS_STEP_ICE_ADDRESS: i32; // DoPlayerMovement.ice
+  const PLAYER_EVENTS_STEP_SURF_ADDRESS: i32; // DoPlayerMovement.surf_step
+  const PLAYER_EVENTS_STEP_OUT_OF_WATER_ADDRESS: i32; // DoPlayerMovement.ExitWater
+  const PLAYER_EVENTS_JUMP_LEDGE_ADDRESS: i32; // DoPlayerMovement.TryJump_jump
+  const PLAYER_EVENTS_EDGE_WARP_ADDRESS: i32; // DoPlayerMovement.CheckWarp_warp
+  const PLAYER_EVENTS_INTERACT_OBJECT_SCRIPT_ADDRESS: i32; // TryObjectEvent.script
+  const PLAYER_EVENTS_INTERACT_OBJECT_ITEMBALL_ADDRESS: i32; // TryObjectEvent.itemball
+  const PLAYER_EVENTS_INTERACT_OBJECT_TRAINER_ADDRESS: i32; // TryObjectEvent.trainer
+  const PLAYER_EVENTS_INTERACT_BG_READ_ADDRESS: i32; // TryBGEvent.read
+  const PLAYER_EVENTS_INTERACT_BG_HIDDEN_ITEM_ADDRESS: i32; // TryBGEvent.hiddenItem
+  const PLAYER_EVENTS_INTERACT_BG_THENREAD_ADDRESS: i32; // TryBGEvent.thenread
+  const PLAYER_EVENTS_INTERACT_TILE_COLLISION_ADDRESS: i32; // TryTileCollisionEvent.done
+  const PLAYER_EVENTS_START_MENU_ADDRESS: i32; // CheckMenuOW.Start
+  const PLAYER_EVENTS_SELECT_MENU_ADDRESS: i32; // CheckMenuOW.Select
+  const PLAYER_EVENTS_NO_EVENTS_ADDRESS: i32; // PlayerEvents.noEvents
+  const PLAYER_DIRECTION_MEM_ADDRESS: u16; // wPlayerDirection
+}
 pub trait InputIdentificationAddresses {
   const II_ADDRESSES: &'static [(i32, i32, i32, &'static str)];
+}
+pub trait Gen2MapAddresses {
+  const OVERWORLD_MAP_MEM_ADDRESS: u16; // wOverworldMap
+  const MAP_WIDTH_MEM_ADDRESS: u16; // wMapWidth
+  const MAP_HEIGHT_MEM_ADDRESS: u16; // wMapHeight
+  const TILESET_COLLISION_PTR_MEM_ADDRESS: u16; // wTilesetCollisionAddress
+  const TILESET_COLLISION_BANK_MEM_ADDRESS: u16; // wTilesetCollisionBank
+  const TILE_COLLISION_TABLE_ADDRESS: i32; // TileCollisionTable
+  const MAP_OBJECTS_MEM_ADDRESS: u16; // wMapObjects
+  const EVENT_FLAGS_MEM_ADDRESS: u16; // wEventFlags
+  const PLAYER_X_MEM_ADDRESS: u16; // wPlayerStandingMapX
+  const PLAYER_Y_MEM_ADDRESS: u16; // wPlayerStandingMapY
+}
+impl Gen2MapAddresses for Crystal {
+  const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc800; // wOverworldMap
+  const MAP_WIDTH_MEM_ADDRESS: u16 = 0xd19f; // wMapWidth
+  const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd19e; // wMapHeight
+  const TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd1e0; // wTilesetCollisionAddress
+  const TILESET_COLLISION_BANK_MEM_ADDRESS: u16 = 0xd1df; // wTilesetCollisionBank
+  const TILE_COLLISION_TABLE_ADDRESS: i32 = 0x13_4E1F; // TileCollisionTable
+  const MAP_OBJECTS_MEM_ADDRESS: u16 = 0xd71e; // wMapObjects
+  const EVENT_FLAGS_MEM_ADDRESS: u16 = 0xda72; // wEventFlags
+  const PLAYER_X_MEM_ADDRESS: u16 = 0xD4E6; // wPlayerStandingMapX
+  const PLAYER_Y_MEM_ADDRESS: u16 = 0xD4E7; // wPlayerStandingMapY
 }
 
 // Gen 1
@@ -83,7 +151,7 @@ macro_rules! impl_red_blue_common_addresses {
       const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_390F;
       const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5;
     }
-    impl OverworldAddresses for $t {
+    impl Gen1OverworldAddresses for $t {
       const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32 = 0x0_0F57;
       const OVERWORLD_JOYPAD_ADDRESS: i32 = 0x3_4000; // _Joypad
       const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32 = 0x0_0F5A;
@@ -391,4 +459,48 @@ impl InputIdentificationAddresses for Crystal {
     (0x24_6903, 0x24_6903, 0x24_6903, "SlotsAction_WaitReel2"),
     (0x24_692D, 0x24_692D, 0x24_692D, "SlotsAction_WaitReel3"),
   ];
+}
+impl Gen2MapEventsAddresses for Crystal {
+  const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32 = 0x25_67CA;
+  const OVERWORLD_JOYPAD_ADDRESS: i32 = 0x0_098F;
+  const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32 = 0x25_67CD;
+  const PLAYER_EVENTS_ADDRESS: i32 = 0x25_681F; // PlayerEvents
+  const PLAYER_SCRIPT_RUNNING_MEM_ADDRESS: u16 = 0xd438; // wScriptRunning
+  const PLAYER_EVENTS_SEEN_BY_TRAINER_ADDRESS: i32 = 0x25_6870; // in CheckTrainerBattle3
+  const PLAYER_EVENTS_MAP_CONNECTION_ADDRESS: i32 = 0x25_68A6; // CheckTileEvent.map_connection
+  const PLAYER_EVENTS_WARP_ADDRESS: i32 = 0x25_68B6; // CheckTileEvent.not_pit
+  const PLAYER_EVENTS_FALL_ADDRESS: i32 = 0x25_68B2; // CheckTileEvent.pit
+  const PLAYER_EVENTS_MAP_COORD_EVENT_ADDRESS: i32 = 0x25_68BA; // CheckTileEvent.coord_event
+  const PLAYER_EVENTS_COUNT_STEP_EVENT_ADDRESS: i32 = 0x25_6BCB; // CountStep.doscript
+  const PLAYER_EVENTS_HATCH_ADDRESS: i32 = 0x25_6BCF; // CountStep.hatch
+  const PLAYER_EVENTS_RANDOM_ENCOUNTER_ADDRESS: i32 = 0x25_7CF4; // RandomEncounter.done
+  const PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS: u16 = 0xD22E; // wTempWildMonSpecies
+  const PLAYER_EVENTS_RANDOM_ENCOUNTER_LEVEL_MEM_ADDRESS: u16 = 0xD143; // wCurPartyLevel
+  const PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS: i32 = 0x25_7C41; // RunMemScript.runScript
+  const PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS: i32 = 0x_25_6936; // RunSceneScript.runScript
+  const PLAYER_EVENTS_END_BUG_CONTEST_ADDRESS: i32 = 0x_25_6966; // CheckTimeEvents.end_bug_contest
+  const PLAYER_EVENTS_PHONE_CALL_ADDRESS: i32 = 0x_24_40A2; // CheckPhoneCall.call
+  const PLAYER_EVENTS_WHIRLPOOL_FORCED_MOVEMENT_ADDRESS: i32 = 0x20_40C2; // DoPlayerMovement.CheckTile_whirlpool
+  const PLAYER_EVENTS_FORCED_MOVEMENT_ADDRESS: i32 = 0x20_413E; // DoPlayerMovement.continue_walk
+  const PLAYER_EVENTS_TURNING_ADDRESS: i32 = 0x20_4167; // DoPlayerMovement.CheckTurning_turning
+  const PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS: u16 = 0xD043; // wWalkingDirection
+  const PLAYER_EVENTS_STEP_WALK_ADDRESS: i32 = 0x20_41AE; // DoPlayerMovement.walk
+  const PLAYER_EVENTS_STEP_BIKE_ADDRESS: i32 = 0x20_41A7; // DoPlayerMovement.fast
+  const PLAYER_EVENTS_STEP_BIKE_UPHILL_ADDRESS: i32 = 0x20_41A0; // DoPlayerMovement.bike_uphill
+  const PLAYER_EVENTS_STEP_ICE_ADDRESS: i32 = 0x20_41B5; // DoPlayerMovement.ice
+  const PLAYER_EVENTS_STEP_SURF_ADDRESS: i32 = 0x20_41DB; // DoPlayerMovement.surf_step
+  const PLAYER_EVENTS_STEP_OUT_OF_WATER_ADDRESS: i32 = 0x20_41E2; // DoPlayerMovement.ExitWater
+  const PLAYER_EVENTS_JUMP_LEDGE_ADDRESS: i32 = 0x20_421A; // DoPlayerMovement.TryJump_jump
+  const PLAYER_EVENTS_EDGE_WARP_ADDRESS: i32 = 0x20_4255; // DoPlayerMovement.CheckWarp_warp
+  const PLAYER_EVENTS_INTERACT_OBJECT_SCRIPT_ADDRESS: i32 = 0x25_6A04; // TryObjectEvent.script
+  const PLAYER_EVENTS_INTERACT_OBJECT_ITEMBALL_ADDRESS: i32 = 0x25_6A12; // TryObjectEvent.itemball
+  const PLAYER_EVENTS_INTERACT_OBJECT_TRAINER_ADDRESS: i32 = 0x25_6A29; // TryObjectEvent.trainer
+  const PLAYER_EVENTS_INTERACT_BG_READ_ADDRESS: i32 = 0x25_6A72; // TryBGEvent.read
+  const PLAYER_EVENTS_INTERACT_BG_HIDDEN_ITEM_ADDRESS: i32 = 0x25_6AA0; // TryBGEvent.hiddenItem
+  const PLAYER_EVENTS_INTERACT_BG_THENREAD_ADDRESS: i32 = 0x25_6AC1; // TryBGEvent.thenread
+  const PLAYER_EVENTS_INTERACT_TILE_COLLISION_ADDRESS: i32 = 0x25_7CB9; // TryTileCollisionEvent.done
+  const PLAYER_EVENTS_START_MENU_ADDRESS: i32 = 0x25_6B47; // CheckMenuOW.Start
+  const PLAYER_EVENTS_SELECT_MENU_ADDRESS: i32 = 0x25_6B4B; // CheckMenuOW.Select
+  const PLAYER_EVENTS_NO_EVENTS_ADDRESS: i32 = 0x25_6846; // PlayerEvents.noEvents
+  const PLAYER_DIRECTION_MEM_ADDRESS: u16 = 0xD4DE; // wPlayerDirection
 }

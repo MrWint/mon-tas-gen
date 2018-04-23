@@ -15,7 +15,7 @@ pub struct TextSegment<R: JoypadAddresses + RngAddresses + TextAddresses> {
   _rom: PhantomData<R>,
 }
 impl<R: JoypadAddresses + RngAddresses + TextAddresses> super::WithDebugOutput for TextSegment<R> {
-  fn with_debug_output(mut self) -> Self { self.debug_output = true; self }
+  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 impl<R: JoypadAddresses + RngAddresses + TextAddresses> TextSegment<R> {
   pub fn new(skip_input: Input) -> Self {

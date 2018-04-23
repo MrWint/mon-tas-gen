@@ -27,7 +27,7 @@ impl <F, T: JoypadAddresses + RngAddresses> MoveSegment<F, T> where F: Fn(&mut G
   }
 }
 impl<F, T: JoypadAddresses + RngAddresses> super::WithDebugOutput for MoveSegment<F, T> {
-  fn with_debug_output(mut self) -> Self { self.debug_output = true; self }
+  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 impl <T: JoypadAddresses + RngAddresses> MoveSegment<fn(&mut Gb<T>) -> bool, T> {
   pub fn new(input: Input) -> Self {

@@ -9,7 +9,7 @@ pub struct IdentifyInputSegment<R: JoypadAddresses + RngAddresses + InputIdentif
   _rom: PhantomData<R>,
 }
 impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> super::WithDebugOutput for IdentifyInputSegment<R> {
-  fn with_debug_output(mut self) -> Self { self.debug_output = true; self }
+  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> IdentifyInputSegment<R> {
   pub fn new() -> Self {

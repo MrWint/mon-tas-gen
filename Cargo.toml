@@ -1,7 +1,8 @@
 [package]
-name = "gb-tas-gen-v2"
+name = "mon-tas-gen"
 version = "0.1.0"
 authors = ["MrWint"]
+links = "gambatte"
 build = "build.rs"
 
 [dependencies]

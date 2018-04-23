@@ -9,7 +9,7 @@ pub trait Segment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> StateBuffer;
 }
 pub trait WithDebugOutput {
-  fn with_debug_output(self) -> Self;
+  fn with_debug_output(self, debug_output: bool) -> Self;
 }
 
 // Checks whether an vblank input that was just made uses the input in the expected way. pre_address and post_address identify the expected before/after state around the use can should be closer than one video frame to each other.
@@ -33,6 +33,8 @@ mod delaysegment;
 pub use self::delaysegment::DelaySegment;
 mod identifyinputsegment;
 pub use self::identifyinputsegment::IdentifyInputSegment;
+mod moveloopsegment;
+pub use self::moveloopsegment::MoveLoopSegment;
 mod movesegment;
 pub use self::movesegment::MoveSegment;
 mod skiptextssegment;

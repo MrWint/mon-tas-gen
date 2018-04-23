@@ -20,7 +20,7 @@ impl<S: super::Segment> DelaySegment<S> {
   }
 }
 impl<S: super::Segment> super::WithDebugOutput for DelaySegment<S> {
-  fn with_debug_output(mut self) -> Self { self.debug_output = true; self }
+  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 impl<S: super::Segment> super::Segment for DelaySegment<S> {
   type Rom = S::Rom;
