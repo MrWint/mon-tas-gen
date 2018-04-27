@@ -34,9 +34,15 @@ impl StateBuffer {
     }
   }
   #[allow(dead_code)]
-  fn from_iter_unbounded<I: IntoIterator<Item=State>>(iter: I) -> Self {
+  pub fn from_iter_unbounded<I: IntoIterator<Item=State>>(iter: I) -> Self {
     let mut sb = StateBuffer::unbounded();
-    for s in iter { sb.add_state(s); }
+    sb.add_all(iter);
+    sb
+  }
+  #[allow(dead_code)]
+  pub fn from_iter_sized<I: IntoIterator<Item=State>>(iter: I, max_size: usize) -> Self {
+    let mut sb = StateBuffer::with_max_size(max_size);
+    sb.add_all(iter);
     sb
   }
 
@@ -48,8 +54,8 @@ impl StateBuffer {
     self.states.insert(s.rng_state, s);
     self.prune();
   }
-  pub fn add_all(&mut self, sb: StateBuffer) {
-    for (_, s) in sb.states.into_iter() { self.add_state(s); }
+  pub fn add_all<I: IntoIterator<Item=State>>(&mut self, iter: I) {
+    for s in iter.into_iter() { self.add_state(s); }
   }
   fn prune(&mut self) {
     while self.states.len() > self.max_size {
@@ -107,7 +113,7 @@ impl StateBuffer {
 impl FromIterator<State> for StateBuffer {
   fn from_iter<I: IntoIterator<Item=State>>(iter: I) -> Self {
     let mut sb = StateBuffer::new();
-    for s in iter { sb.add_state(s); }
+    sb.add_all(iter);
     sb
   }
 }

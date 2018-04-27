@@ -19,7 +19,7 @@ pub struct State {
 pub struct Gb<R> {
   pub gb: Gambatte,
   root: Vec<u8>,
-  skipped_relevant_inputs: bool, // whether relevant inputs were skipped over, making this inherently unsavable in any way.
+  pub skipped_relevant_inputs: bool, // whether relevant inputs were skipped over, making this inherently unsavable in any way.
   _rom: PhantomData<R>,
 
   inputs: Vec<Input>,
@@ -111,6 +111,13 @@ impl <R: JoypadAddresses> Gb<R> {
     self.inputs.push(input);
     self.is_at_input = false;
   }
+  fn input_skip(&mut self) {
+    assert!(self.is_at_input);
+    self.skipped_relevant_inputs = true; // this state is busted after this point
+    self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
+    self.is_at_input = false;
+  }
+
   pub fn step(&mut self) {
     self.step_until_or_any_vblank(&[]); // slightly more performant than step_until
   }
@@ -203,8 +210,7 @@ impl <R: JoypadAddresses> Gb<R> {
     assert!(!self.is_at_input);
     let hit = self.step_until(addresses);
     if hit != 0 { return hit; }
-    self.skipped_relevant_inputs = true; // this state is busted after this point
-    self.input(Input::empty());
+    self.input_skip();
     let hit = self.step_until(&[addresses, R::JOYPAD_USE_ADDRESSES].concat());
     if addresses.contains(&hit) { hit } else { 0 }
   }

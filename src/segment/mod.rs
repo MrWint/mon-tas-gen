@@ -1,6 +1,11 @@
+use gambatte::Input;
 use gb::*;
 use rom::*;
 use statebuffer::StateBuffer;
+use std::collections::HashMap;
+use std::hash::Hash;
+use std::iter::FromIterator;
+use std::marker::PhantomData;
 
 // Represents a transition from one decision point to another decision point.
 pub trait Segment {
@@ -11,6 +16,80 @@ pub trait Segment {
 pub trait WithDebugOutput {
   fn with_debug_output(self, debug_output: bool) -> Self;
 }
+pub trait WithOutputBufferSize {
+  fn with_buffer_size(self, buffer_size: usize) -> Self;
+  fn with_unbounded_buffer(self) -> Self where Self: Sized {
+    self.with_buffer_size(::statebuffer::STATE_BUFFER_UNBOUNDED_MAX_SIZE)
+  }
+}
+pub trait SplitSegment {
+  type KeyType: Eq + Hash;
+  type Rom: JoypadAddresses + RngAddresses;
+
+  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> HashMap<Self::KeyType, StateBuffer>;
+}
+
+
+pub trait StateBufferHashMap {
+  fn to_state_buffer(self) -> StateBuffer;
+  fn to_sized_state_buffer(self, size: usize) -> StateBuffer;
+  fn to_unbounded_state_buffer(self) -> StateBuffer;
+}
+impl<K: Eq + Hash> StateBufferHashMap for HashMap<K, StateBuffer> {
+  fn to_state_buffer(self) -> StateBuffer {
+    StateBuffer::from_iter(self.into_iter().flat_map(|(_, v)| v))
+  }
+  fn to_sized_state_buffer(self, size: usize) -> StateBuffer {
+    StateBuffer::from_iter_sized(self.into_iter().flat_map(|(_, v)| v), size)
+  }
+  fn to_unbounded_state_buffer(self) -> StateBuffer {
+    StateBuffer::from_iter_unbounded(self.into_iter().flat_map(|(_, v)| v))
+  }
+}
+pub trait Metric {
+  type Rom;
+  type ValueType: Eq + Hash;
+
+  fn evaluate(&self, gb: &mut Gb<Self::Rom>) -> Option<Self::ValueType>;
+
+  fn split_states<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> HashMap<Self::ValueType, StateBuffer> 
+      where Self::Rom: JoypadAddresses + RngAddresses {
+    let mut result: HashMap<Self::ValueType, StateBuffer> = HashMap::new();
+    for s in iter {
+      gb.restore(&s);
+      if let Some(value) = self.evaluate(gb) {
+        gb.restore(&s);
+        gb.step();
+        result.entry(value).or_insert(StateBuffer::new()).add_state(gb.save());
+      }
+    }
+    result
+  }
+}
+pub struct NullMetric<T> {
+  _rom: PhantomData<T>,
+}
+impl<T> NullMetric<T> {
+  pub fn new() -> Self {
+    Self {
+      _rom: PhantomData,
+    }
+  }
+}
+impl<T> Metric for NullMetric<T> {
+  type Rom = T;
+  type ValueType = ();
+
+  fn evaluate(&self, _gb: &mut Gb<Self::Rom>) -> Option<Self::ValueType> {
+    Some(())
+  }
+}
+
+
+
+
+
+
 
 // Checks whether an vblank input that was just made uses the input in the expected way. pre_address and post_address identify the expected before/after state around the use can should be closer than one video frame to each other.
 fn is_correct_input_use<R: JoypadAddresses>(gb: &mut Gb<R>, pre_address: i32, use_address: i32, post_address: i32) -> bool {
