@@ -1,31 +1,33 @@
 use gb::*;
+use rom::*;
 use statebuffer::StateBuffer;
+use std::marker::PhantomData;
 
 const DELAY_SEGMENT_DEFAULT_MAX_SKIPS: u32 = 100;
 const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u32 = 3;
 const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u32 = 10;
 
-pub struct DelaySegment<S: super::Segment> {
+pub struct DelaySegment<T, S: super::Segment<T>> {
   segment: S,
   debug_output: bool,
   max_skips: u32,
+  _rom: PhantomData<T>,
 }
-impl<S: super::Segment> DelaySegment<S> {
+impl<T, S: super::Segment<T>> DelaySegment<T, S> {
   pub fn new(segment: S) -> Self {
     Self {
       segment: segment,
       debug_output: false,
       max_skips: DELAY_SEGMENT_DEFAULT_MAX_SKIPS,
+      _rom: PhantomData,
     }
   }
 }
-impl<S: super::Segment> super::WithDebugOutput for DelaySegment<S> {
+impl<R, S: super::Segment<R>> super::WithDebugOutput for DelaySegment<R, S> {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
-impl<S: super::Segment> super::Segment for DelaySegment<S> {
-  type Rom = S::Rom;
-
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> StateBuffer {
+impl<R: JoypadAddresses + RngAddresses, S: super::Segment<R>> super::Segment<R> for DelaySegment<R, S> {
+  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
     let mut result = StateBuffer::new();
 
     let mut active_states: Vec<State> = iter.into_iter().collect();

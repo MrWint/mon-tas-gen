@@ -3,17 +3,15 @@ use gb::*;
 use rom::*;
 use segment::WithDebugOutput;
 use statebuffer::StateBuffer;
-use std::marker::PhantomData;
 use super::OverworldInteractionResult;
 
-pub struct WalkStepSegment<T> {
+pub struct WalkStepSegment {
   input: Input,
   into_result: OverworldInteractionResult,
   max_skips: u32,
   debug_output: bool,
-  _rom: PhantomData<T>,
 }
-impl <T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> WalkStepSegment<T> {
+impl WalkStepSegment {
   #[allow(dead_code)]
   pub fn new(input: Input) -> Self {
     Self {
@@ -21,20 +19,17 @@ impl <T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> WalkStepSegmen
       into_result: OverworldInteractionResult::NoEvents,
       max_skips: 0,
       debug_output: false,
-      _rom: PhantomData,
     }
   }
   #[allow(dead_code)]
   pub fn into(mut self, into_result: OverworldInteractionResult) -> Self { self.into_result = into_result; self }
   pub fn with_max_skips(mut self, max_skips: u32) -> Self { self.max_skips = max_skips; self }
 }
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> WithDebugOutput for WalkStepSegment<T> {
+impl WithDebugOutput for WalkStepSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> ::segment::Segment for WalkStepSegment<T> {
-  type Rom = T;
-
+impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> ::segment::Segment<T> for WalkStepSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     iter.into_iter().flat_map(|mut s| {
       let mut result = vec![];

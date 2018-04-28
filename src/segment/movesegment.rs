@@ -6,21 +6,19 @@ use statebuffer::StateBuffer;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
-pub struct MoveSegment<F, T> {
+pub struct MoveSegment<F> {
   input: Input,
   check_func: F,
   max_skips: u32,
   debug_output: bool,
-  _rom: PhantomData<T>,
 }
-impl <F, T: JoypadAddresses + RngAddresses> MoveSegment<F, T> where F: Fn(&mut Gb<T>) -> bool {
+impl <F> MoveSegment<F> {
   pub fn with_check(input: Input, check_func: F) -> Self {
     Self {
       input: input,
       check_func: check_func,
       max_skips: 0,
       debug_output: false,
-      _rom: PhantomData,
     }
   }
   pub fn with_max_skips(mut self, max_skips: u32) -> Self {
@@ -28,25 +26,22 @@ impl <F, T: JoypadAddresses + RngAddresses> MoveSegment<F, T> where F: Fn(&mut G
     self
   }
 }
-impl<F, T: JoypadAddresses + RngAddresses> WithDebugOutput for MoveSegment<F, T> {
+impl<F> WithDebugOutput for MoveSegment<F> {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
-impl <T: JoypadAddresses + RngAddresses> MoveSegment<fn(&mut Gb<T>) -> bool, T> {
+impl<T> MoveSegment<fn(&mut Gb<T>) -> bool> {
   pub fn new(input: Input) -> Self {
     Self {
       input: input,
       check_func: Self::always_true,
       max_skips: 0,
       debug_output: false,
-      _rom: PhantomData,
     }
   }
   fn always_true(_: &mut Gb<T>) -> bool { true }
 }
 
-impl<F, T: JoypadAddresses + RngAddresses> Segment for MoveSegment<F, T> where F: Fn(&mut Gb<T>) -> bool {
-  type Rom = T;
-
+impl<F, T: JoypadAddresses + RngAddresses> Segment<T> for MoveSegment<F> where F: Fn(&mut Gb<T>) -> bool {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     iter.into_iter().flat_map(|mut s| {
       let mut result = vec![];
@@ -82,14 +77,15 @@ impl<F, T: JoypadAddresses + RngAddresses> Segment for MoveSegment<F, T> where F
 
 
 
-pub struct MoveSplitSegment<M> {
+pub struct MoveSplitSegment<R, M> {
   input: Input,
   metric: M,
   max_skips: u32,
   debug_output: bool,
   buffer_size: usize,
+  _rom: PhantomData<R>,
 }
-impl<M> MoveSplitSegment<M> {
+impl<R, M> MoveSplitSegment<R, M> {
   pub fn with_metric(input: Input, metric: M) -> Self {
     Self {
       input: input,
@@ -97,11 +93,12 @@ impl<M> MoveSplitSegment<M> {
       max_skips: 0,
       debug_output: false,
       buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      _rom: PhantomData,
     }
   }
   pub fn with_max_skips(mut self, max_skips: u32) -> Self { self.max_skips = max_skips; self }
 }
-impl<R: JoypadAddresses + RngAddresses> MoveSplitSegment<super::NullMetric<R>> {
+impl<R> MoveSplitSegment<R, super::NullMetric> {
   pub fn new(input: Input) -> Self {
     Self {
       input: input,
@@ -109,28 +106,26 @@ impl<R: JoypadAddresses + RngAddresses> MoveSplitSegment<super::NullMetric<R>> {
       max_skips: 0,
       debug_output: false,
       buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      _rom: PhantomData,
     }
   }
 }
-impl<M> WithDebugOutput for MoveSplitSegment<M> {
+impl<R, M> WithDebugOutput for MoveSplitSegment<R, M> {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
-impl<M> WithOutputBufferSize for MoveSplitSegment<M> {
+impl<R, M> WithOutputBufferSize for MoveSplitSegment<R, M> {
   fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
 }
 
-impl<R: JoypadAddresses + RngAddresses, M: Metric<Rom=R>> Segment for MoveSplitSegment<M> {
-  type Rom = R;
-
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> StateBuffer {
+impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> Segment<R> for MoveSplitSegment<R, M> {
+  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
     self.execute_split(gb, iter).to_sized_state_buffer(self.buffer_size)
   }
 }
-impl<R: JoypadAddresses + RngAddresses, M: Metric<Rom=R>> SplitSegment for MoveSplitSegment<M> {
+impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveSplitSegment<R, M> {
   type KeyType = M::ValueType;
-  type Rom = R;
 
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> HashMap<Self::KeyType, StateBuffer> {
+  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::KeyType, StateBuffer> {
     let mut result: HashMap<Self::KeyType, StateBuffer> = HashMap::new();
     for mut s in iter {
       let mut skips = 0;

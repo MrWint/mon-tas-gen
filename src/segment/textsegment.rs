@@ -3,37 +3,34 @@ use gb::*;
 use rom::*;
 use statebuffer::StateBuffer;
 use std::collections::BTreeMap;
-use std::marker::PhantomData;
 
 // intermediate buffers are larger by default so the goal buffer ends up with enough (varied) states.
 const TEXT_SEGMENT_DEFAULT_INTERMEDIATE_BUFFER_SIZE: usize = ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE << 2;
 
-pub struct TextSegment<R: JoypadAddresses + RngAddresses + TextAddresses> {
+pub struct TextSegment {
   skip_input: Input,
   debug_output: bool,
   expect_conflicting_inputs: bool,
-  _rom: PhantomData<R>,
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> super::WithDebugOutput for TextSegment<R> {
+impl super::WithDebugOutput for TextSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> TextSegment<R> {
+impl TextSegment {
   pub fn new(skip_input: Input) -> Self {
     TextSegment {
       skip_input: skip_input,
       debug_output: false,
       expect_conflicting_inputs: false,
-      _rom: PhantomData,
     }
   }
   // conflicting future inputs are expected, and the default behavior of dropping these states is employed without warning.
   pub fn expect_conflicting_inputs(mut self) -> Self { self.expect_conflicting_inputs = true; self }
 
-  fn is_print_letter_delay_frame(gb: &mut Gb<R>) -> bool {
+  fn is_print_letter_delay_frame<R: JoypadAddresses + RngAddresses + TextAddresses>(gb: &mut Gb<R>) -> bool {
     gb.input(Input::empty());
     super::is_correct_input_use(gb, R::TEXT_BEFORE_JOYPAD_ADDRESS, R::TEXT_JOYPAD_ADDRESS, R::TEXT_AFTER_JOYPAD_ADDRESS)
   }
-  fn progress_print_letter_delay_frame(&self, gb: &mut Gb<R>, s: State) -> Vec<(State, u32)> {
+  fn progress_print_letter_delay_frame<R: JoypadAddresses + RngAddresses + TextAddresses>(&self, gb: &mut Gb<R>, s: State) -> Vec<(State, u32)> {
     let mut result = vec![];
     let mut num_done = 0;
 
@@ -63,7 +60,7 @@ impl<R: JoypadAddresses + RngAddresses + TextAddresses> TextSegment<R> {
     }
     result
   }
-  fn check_stays_within_print_letter_delay(gb: &mut Gb<R>) -> (bool, u32) {
+  fn check_stays_within_print_letter_delay<R: JoypadAddresses + RngAddresses + TextAddresses>(gb: &mut Gb<R>) -> (bool, u32) {
     let mut num_cycles = 0;
     loop {
       if gb.step_until(&[R::TEXT_AFTER_JOYPAD_ADDRESS]) == 0 { return (true, num_cycles); }
@@ -82,9 +79,7 @@ impl<R: JoypadAddresses + RngAddresses + TextAddresses> TextSegment<R> {
     }
   }
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> super::Segment for TextSegment<R> {
-  type Rom = R;
-
+impl<R: JoypadAddresses + RngAddresses + TextAddresses> super::Segment<R> for TextSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
     let mut goal_buffer = StateBuffer::new();
     let mut active_states: BTreeMap<u32, StateBuffer> = BTreeMap::new();

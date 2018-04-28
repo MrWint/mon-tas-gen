@@ -4,22 +4,20 @@ use rom::*;
 use statebuffer::StateBuffer;
 use std::marker::PhantomData;
 
-pub struct IdentifyInputSegment<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> {
+pub struct IdentifyInputSegment {
   debug_output: bool,
-  _rom: PhantomData<R>,
 }
-impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> super::WithDebugOutput for IdentifyInputSegment<R> {
+impl super::WithDebugOutput for IdentifyInputSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
-impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> IdentifyInputSegment<R> {
+impl IdentifyInputSegment {
   pub fn new() -> Self {
     IdentifyInputSegment {
       debug_output: false,
-      _rom: PhantomData,
     }
   }
 
-  fn print_identification(gb: &mut Gb<R>, s: &State) {
+  fn print_identification<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses>(gb: &mut Gb<R>, s: &State) {
     for &(pre, input, post, name) in R::II_ADDRESSES {
       gb.restore(s);
       gb.input(Input::empty());
@@ -31,9 +29,7 @@ impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> IdentifyI
     println!("Input not identified");
   }
 }
-impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> super::Segment for IdentifyInputSegment<R> {
-  type Rom = R;
-
+impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> super::Segment<R> for IdentifyInputSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
     let mut goal_buffer = StateBuffer::new();
     for s in iter.into_iter() {

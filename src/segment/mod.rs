@@ -8,10 +8,8 @@ use std::iter::FromIterator;
 use std::marker::PhantomData;
 
 // Represents a transition from one decision point to another decision point.
-pub trait Segment {
-  type Rom: JoypadAddresses + RngAddresses;
-
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> StateBuffer;
+pub trait Segment<R> {
+  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer;
 }
 pub trait WithDebugOutput {
   fn with_debug_output(self, debug_output: bool) -> Self;
@@ -22,11 +20,10 @@ pub trait WithOutputBufferSize {
     self.with_buffer_size(::statebuffer::STATE_BUFFER_UNBOUNDED_MAX_SIZE)
   }
 }
-pub trait SplitSegment {
+pub trait SplitSegment<R> {
   type KeyType: Eq + Hash;
-  type Rom: JoypadAddresses + RngAddresses;
 
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> HashMap<Self::KeyType, StateBuffer>;
+  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::KeyType, StateBuffer>;
 }
 
 
@@ -46,14 +43,12 @@ impl<K: Eq + Hash> StateBufferHashMap for HashMap<K, StateBuffer> {
     StateBuffer::from_iter_unbounded(self.into_iter().flat_map(|(_, v)| v))
   }
 }
-pub trait Metric {
-  type Rom;
+pub trait Metric<R: JoypadAddresses + RngAddresses> {
   type ValueType: Eq + Hash;
 
-  fn evaluate(&self, gb: &mut Gb<Self::Rom>) -> Option<Self::ValueType>;
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType>;
 
-  fn split_states<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Self::Rom>, iter: I) -> HashMap<Self::ValueType, StateBuffer> 
-      where Self::Rom: JoypadAddresses + RngAddresses {
+  fn split_states<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::ValueType, StateBuffer> {
     let mut result: HashMap<Self::ValueType, StateBuffer> = HashMap::new();
     for s in iter {
       gb.restore(&s);
@@ -66,21 +61,32 @@ pub trait Metric {
     result
   }
 }
-pub struct NullMetric<T> {
-  _rom: PhantomData<T>,
+pub struct FnMetric<F> {
+  f: F,
 }
-impl<T> NullMetric<T> {
-  pub fn new() -> Self {
-    Self {
-      _rom: PhantomData,
-    }
+impl<F> FnMetric<F> {
+  pub fn new<R, V>(f: F) -> FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
+    FnMetric { f: f, }
   }
 }
-impl<T> Metric for NullMetric<T> {
-  type Rom = T;
+impl<R: JoypadAddresses + RngAddresses, F, V: Eq + Hash> Metric<R> for FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
+  type ValueType = V;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    (self.f)(gb)
+  }
+}
+
+pub struct NullMetric {}
+impl NullMetric {
+  pub fn new() -> Self {
+    Self {}
+  }
+}
+impl<R: JoypadAddresses + RngAddresses> Metric<R> for NullMetric {
   type ValueType = ();
 
-  fn evaluate(&self, _gb: &mut Gb<Self::Rom>) -> Option<Self::ValueType> {
+  fn evaluate(&self, _gb: &mut Gb<R>) -> Option<Self::ValueType> {
     Some(())
   }
 }
@@ -116,6 +122,7 @@ mod moveloopsegment;
 pub use self::moveloopsegment::MoveLoopSegment;
 mod movesegment;
 pub use self::movesegment::MoveSegment;
+pub use self::movesegment::MoveSplitSegment;
 mod skiptextssegment;
 pub use self::skiptextssegment::SkipTextsSegment;
 mod textsegment;

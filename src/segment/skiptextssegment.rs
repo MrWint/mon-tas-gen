@@ -2,27 +2,22 @@ use gambatte::Input;
 use gb::*;
 use rom::*;
 use statebuffer::StateBuffer;
-use std::marker::PhantomData;
 
-pub struct SkipTextsSegment<R: JoypadAddresses + RngAddresses + TextAddresses> {
+pub struct SkipTextsSegment {
   num_texts: u32,
   confirm_input: Input,
-  _rom: PhantomData<R>,
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> SkipTextsSegment<R> {
+impl SkipTextsSegment {
   pub fn new(num_texts: u32, confirm_input: Input) -> Self {
     assert!(num_texts > 0);
     assert!(!confirm_input.contains(Input::A) || !confirm_input.contains(Input::B));
     SkipTextsSegment {
       num_texts: num_texts,
       confirm_input: confirm_input,
-      _rom: PhantomData,
     }
   }
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> super::Segment for SkipTextsSegment<R> {
-  type Rom = R;
-
+impl<R: JoypadAddresses + RngAddresses + TextAddresses> super::Segment<R> for SkipTextsSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
     let skip_input = if self.confirm_input.contains(Input::A) { Input::B } else { Input::A };
     let text_segment = super::TextSegment::new(skip_input);
