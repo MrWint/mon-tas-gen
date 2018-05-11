@@ -1,11 +1,11 @@
-use gambatte::Input;
 use gb::*;
 use rom::*;
 use statebuffer::StateBuffer;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::iter::FromIterator;
-use std::marker::PhantomData;
+
 
 // Represents a transition from one decision point to another decision point.
 pub trait Segment<R> {
@@ -21,7 +21,7 @@ pub trait WithOutputBufferSize {
   }
 }
 pub trait SplitSegment<R> {
-  type KeyType: Eq + Hash;
+  type KeyType: Eq + Hash + Debug;
 
   fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::KeyType, StateBuffer>;
 }
@@ -31,8 +31,10 @@ pub trait StateBufferHashMap {
   fn to_state_buffer(self) -> StateBuffer;
   fn to_sized_state_buffer(self, size: usize) -> StateBuffer;
   fn to_unbounded_state_buffer(self) -> StateBuffer;
+  fn is_all_full(&self) -> bool;
+  fn to_string(&self) -> String;
 }
-impl<K: Eq + Hash> StateBufferHashMap for HashMap<K, StateBuffer> {
+impl<K: Eq + Hash + Debug> StateBufferHashMap for HashMap<K, StateBuffer> {
   fn to_state_buffer(self) -> StateBuffer {
     StateBuffer::from_iter(self.into_iter().flat_map(|(_, v)| v))
   }
@@ -42,52 +44,11 @@ impl<K: Eq + Hash> StateBufferHashMap for HashMap<K, StateBuffer> {
   fn to_unbounded_state_buffer(self) -> StateBuffer {
     StateBuffer::from_iter_unbounded(self.into_iter().flat_map(|(_, v)| v))
   }
-}
-pub trait Metric<R: JoypadAddresses + RngAddresses> {
-  type ValueType: Eq + Hash;
-
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType>;
-
-  fn split_states<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::ValueType, StateBuffer> {
-    let mut result: HashMap<Self::ValueType, StateBuffer> = HashMap::new();
-    for s in iter {
-      gb.restore(&s);
-      if let Some(value) = self.evaluate(gb) {
-        gb.restore(&s);
-        gb.step();
-        result.entry(value).or_insert(StateBuffer::new()).add_state(gb.save());
-      }
-    }
-    result
+  fn is_all_full(&self) -> bool {
+    !self.is_empty() && self.values().all(|sb| sb.is_full())
   }
-}
-pub struct FnMetric<F> {
-  f: F,
-}
-impl<F> FnMetric<F> {
-  pub fn new<R, V>(f: F) -> FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
-    FnMetric { f: f, }
-  }
-}
-impl<R: JoypadAddresses + RngAddresses, F, V: Eq + Hash> Metric<R> for FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
-  type ValueType = V;
-
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    (self.f)(gb)
-  }
-}
-
-pub struct NullMetric {}
-impl NullMetric {
-  pub fn new() -> Self {
-    Self {}
-  }
-}
-impl<R: JoypadAddresses + RngAddresses> Metric<R> for NullMetric {
-  type ValueType = ();
-
-  fn evaluate(&self, _gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    Some(())
+  fn to_string(&self) -> String {
+    format!("{:?}", self.iter().map(|(k, v)| (k, format!("{}", v))).collect::<HashMap<_,_>>())
   }
 }
 
@@ -114,6 +75,15 @@ fn is_correct_input_use<R: JoypadAddresses>(gb: &mut Gb<R>, pre_address: i32, us
 
 pub mod overworld;
 
+mod metric;
+pub use self::metric::Metric;
+pub use self::metric::FnMetric;
+pub use self::metric::NullMetric;
+pub use self::metric::Gen2DVMetric;
+pub use self::metric::DVs;
+
+mod applyindividuallysegment;
+pub use self::applyindividuallysegment::ApplyIndividuallySegment;
 mod delaysegment;
 pub use self::delaysegment::DelaySegment;
 mod identifyinputsegment;
@@ -122,7 +92,6 @@ mod moveloopsegment;
 pub use self::moveloopsegment::MoveLoopSegment;
 mod movesegment;
 pub use self::movesegment::MoveSegment;
-pub use self::movesegment::MoveSplitSegment;
 mod skiptextssegment;
 pub use self::skiptextssegment::SkipTextsSegment;
 mod textsegment;

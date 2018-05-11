@@ -23,6 +23,7 @@ impl WalkStepSegment {
   }
   #[allow(dead_code)]
   pub fn into(mut self, into_result: OverworldInteractionResult) -> Self { self.into_result = into_result; self }
+  #[allow(dead_code)]
   pub fn with_max_skips(mut self, max_skips: u32) -> Self { self.max_skips = max_skips; self }
 }
 impl WithDebugOutput for WalkStepSegment {

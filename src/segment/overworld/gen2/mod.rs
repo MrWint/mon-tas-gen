@@ -1,12 +1,15 @@
 use gambatte::Input;
 use gb::*;
 use rom::*;
+use segment::*;
 
 
 mod map;
 pub use self::map::Map;
 mod jumpledgesegment;
 pub use self::jumpledgesegment::JumpLedgeSegment;
+mod skipscriptsegment;
+pub use self::skipscriptsegment::SkipScriptSegment;
 mod turnsegment;
 pub use self::turnsegment::TurnSegment;
 mod walkstepsegment;
@@ -18,7 +21,7 @@ pub use self::warpsegment::WarpSegment;
 
 
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub enum OverworldInteractionResult {
   NoOverworldInput,
   PlayerEventsNotCalled,
@@ -44,7 +47,7 @@ pub enum OverworldInteractionResult {
   Unknown,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub enum PlayerEventScript {
   MapScript,
   SeenByTrainer,
@@ -82,6 +85,15 @@ fn dir_to_input(dir: u8) -> Input {
     2 => Input::LEFT,
     3 => Input::RIGHT,
     _ => panic!("got invalid direction {}", dir),
+  }
+}
+
+pub struct OverworldInteractionMetric {}
+impl<R: JoypadAddresses + Gen2MapEventsAddresses> Metric<R> for OverworldInteractionMetric {
+  type ValueType = OverworldInteractionResult;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    Some(get_overworld_interaction_result(gb))
   }
 }
 

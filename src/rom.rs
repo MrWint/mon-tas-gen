@@ -102,17 +102,8 @@ pub trait Gen2MapAddresses {
   const PLAYER_X_MEM_ADDRESS: u16; // wPlayerStandingMapX
   const PLAYER_Y_MEM_ADDRESS: u16; // wPlayerStandingMapY
 }
-impl Gen2MapAddresses for Crystal {
-  const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc800; // wOverworldMap
-  const MAP_WIDTH_MEM_ADDRESS: u16 = 0xd19f; // wMapWidth
-  const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd19e; // wMapHeight
-  const TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd1e0; // wTilesetCollisionAddress
-  const TILESET_COLLISION_BANK_MEM_ADDRESS: u16 = 0xd1df; // wTilesetCollisionBank
-  const TILE_COLLISION_TABLE_ADDRESS: i32 = 0x13_4E1F; // TileCollisionTable
-  const MAP_OBJECTS_MEM_ADDRESS: u16 = 0xd71e; // wMapObjects
-  const EVENT_FLAGS_MEM_ADDRESS: u16 = 0xda72; // wEventFlags
-  const PLAYER_X_MEM_ADDRESS: u16 = 0xD4E6; // wPlayerStandingMapX
-  const PLAYER_Y_MEM_ADDRESS: u16 = 0xD4E7; // wPlayerStandingMapY
+pub trait Gen2DVAddresses {
+  const AFTER_DV_GENERATION_ADDRESS: i32; // GeneratePartyMonStats.initializeDVs
 }
 
 // Gen 1
@@ -503,4 +494,19 @@ impl Gen2MapEventsAddresses for Crystal {
   const PLAYER_EVENTS_SELECT_MENU_ADDRESS: i32 = 0x25_6B4B; // CheckMenuOW.Select
   const PLAYER_EVENTS_NO_EVENTS_ADDRESS: i32 = 0x25_6846; // PlayerEvents.noEvents
   const PLAYER_DIRECTION_MEM_ADDRESS: u16 = 0xD4DE; // wPlayerDirection
+}
+impl Gen2MapAddresses for Crystal {
+  const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc800; // wOverworldMap
+  const MAP_WIDTH_MEM_ADDRESS: u16 = 0xd19f; // wMapWidth
+  const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd19e; // wMapHeight
+  const TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd1e0; // wTilesetCollisionAddress
+  const TILESET_COLLISION_BANK_MEM_ADDRESS: u16 = 0xd1df; // wTilesetCollisionBank
+  const TILE_COLLISION_TABLE_ADDRESS: i32 = 0x13_4E1F; // TileCollisionTable
+  const MAP_OBJECTS_MEM_ADDRESS: u16 = 0xd71e; // wMapObjects
+  const EVENT_FLAGS_MEM_ADDRESS: u16 = 0xda72; // wEventFlags
+  const PLAYER_X_MEM_ADDRESS: u16 = 0xD4E6; // wPlayerStandingMapX
+  const PLAYER_Y_MEM_ADDRESS: u16 = 0xD4E7; // wPlayerStandingMapY
+}
+impl Gen2DVAddresses for Crystal {
+  const AFTER_DV_GENERATION_ADDRESS: i32 = 0x03_59B5; // GeneratePartyMonStats.initializeDVs
 }

@@ -1,7 +1,7 @@
 use gambatte::Input;
 use gb::*;
 use rom::*;
-use segment::WithDebugOutput;
+use segment::*;
 use statebuffer::StateBuffer;
 use super::{OverworldInteractionResult,PlayerEventScript};
 
@@ -25,15 +25,22 @@ impl WithDebugOutput for WarpSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> ::segment::Segment<T> for WarpSegment {
+impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Segment<T> for WarpSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
-    let sb = ::segment::MoveSegment::with_check(self.input, |gb: &mut Gb<T>| {
-      let result = super::get_overworld_interaction_result(gb);
-      if result != OverworldInteractionResult::Warped {
-        println!("WarpSegment warping failed: {:?}", result); false
-      } else { true }
-    }).with_debug_output(self.debug_output).execute(gb, iter);
-    let sb = ::segment::MoveLoopSegment::new(|gb: &mut Gb<T>| super::get_overworld_interaction_result(gb) == OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp)).with_debug_output(self.debug_output).execute(gb, sb);
-    ::segment::MoveLoopSegment::new(|gb: &mut Gb<T>| super::get_overworld_interaction_result(gb) == OverworldInteractionResult::ForcedMovement).with_debug_output(self.debug_output).execute(gb, sb)
+    let sb = MoveSegment::with_metric(self.input, WarpMetric {}).with_debug_output(self.debug_output).execute(gb, iter);
+    let sb = MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp))).with_debug_output(self.debug_output).execute(gb, sb);
+    MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ForcedMovement)).with_debug_output(self.debug_output).execute(gb, sb)
+  }
+}
+
+struct WarpMetric {}
+impl<R: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Metric<R> for WarpMetric {
+  type ValueType = ();
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    let result = super::get_overworld_interaction_result(gb);
+    if result != OverworldInteractionResult::Warped {
+      println!("WarpSegment warping failed: {:?}", result); None
+    } else { Some(()) }
   }
 }
