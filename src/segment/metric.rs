@@ -90,3 +90,34 @@ impl<R: JoypadAddresses + Gen2DVAddresses> Metric<R> for Gen2DVMetric {
     })
   }
 }
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum MoveOrder {
+  PlayerFirst,
+  EnemyFirst,
+}
+#[allow(dead_code)]
+pub struct Gen2MoveOrderMetric {}
+impl<R: JoypadAddresses + Gen2DetermineMoveOrderAddresses> Metric<R> for Gen2MoveOrderMetric {
+  type ValueType = MoveOrder;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    let hit = gb.run_until_or_next_input_use(&[R::MOVE_ORDER_PLAYER_FIRST_ADDRESS, R::MOVE_ORDER_ENEMY_FIRST_ADDRESS]);
+    if hit == R::MOVE_ORDER_PLAYER_FIRST_ADDRESS { return Some(MoveOrder::PlayerFirst); }
+    if hit == R::MOVE_ORDER_ENEMY_FIRST_ADDRESS { return Some(MoveOrder::EnemyFirst); }
+    return None;
+  }
+}
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct AIChosenMove(u8);
+#[allow(dead_code)]
+pub struct Gen2AIChooseMoveMetric {}
+impl<R: JoypadAddresses + Gen2AIChooseMoveAddresses> Metric<R> for Gen2AIChooseMoveMetric {
+  type ValueType = AIChosenMove;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
+    Some(AIChosenMove(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS)))
+  }
+}

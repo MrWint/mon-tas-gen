@@ -76,7 +76,7 @@
                     "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../x86_64-w64-mingw32/include",
                     "${workspaceFolder}/libgambatte/include",
                     "${workspaceFolder}/libgambatte/src"
-                    ],
+                ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
             },
@@ -84,5 +84,5 @@
             "cppStandard": "c++17"
         }
     ],
-    "version": 3
+    "version": 4
 }

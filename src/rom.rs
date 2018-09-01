@@ -105,6 +105,15 @@ pub trait Gen2MapAddresses {
 pub trait Gen2DVAddresses {
   const AFTER_DV_GENERATION_ADDRESS: i32; // GeneratePartyMonStats.initializeDVs
 }
+pub trait Gen2DetermineMoveOrderAddresses {
+  const DETERMINE_MOVE_ORDER_START_ADDRESS: i32; // DetermineMoveOrder
+  const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32; // DetermineMoveOrder.player_first
+  const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32; // DetermineMoveOrder.enemy_first
+}
+pub trait Gen2AIChooseMoveAddresses {
+  const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32; // BattleTurn.not_disconnected
+  const CUR_ENEMY_MOVE_MEM_ADDRESS: u16; // wCurEnemyMove
+}
 
 // Gen 1
 #[allow(dead_code)]
@@ -509,4 +518,13 @@ impl Gen2MapAddresses for Crystal {
 }
 impl Gen2DVAddresses for Crystal {
   const AFTER_DV_GENERATION_ADDRESS: i32 = 0x03_59B5; // GeneratePartyMonStats.initializeDVs
+}
+impl Gen2DetermineMoveOrderAddresses for Crystal {
+  const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_4314; // DetermineMoveOrder
+  const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_43F1; // DetermineMoveOrder.player_first
+  const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_43F3; // DetermineMoveOrder.enemy_first
+}
+impl Gen2AIChooseMoveAddresses for Crystal {
+  const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0x0F_4174; // BattleTurn.not_disconnected
+  const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xC6E4; // wCurEnemyMove
 }
