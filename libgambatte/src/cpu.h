@@ -25,6 +25,7 @@
 namespace gambatte {
 
 class CPU {
+// Loosen visibility to allow direct Memory access.
 public:
 
 	Memory memory;
@@ -72,15 +73,15 @@ public:
 		memory.setInputGetter(getInput);
 	}
 
-	void setReadCallback(void (*callback)(unsigned)) {
+	void setReadCallback(MemoryCallback callback) {
 		memory.setReadCallback(callback);
 	}
 
-	void setWriteCallback(void (*callback)(unsigned)) {
+	void setWriteCallback(MemoryCallback callback) {
 		memory.setWriteCallback(callback);
 	}
 
-	void setExecCallback(void (*callback)(unsigned)) {
+	void setExecCallback(MemoryCallback callback) {
 		memory.setExecCallback(callback);
 	}
 

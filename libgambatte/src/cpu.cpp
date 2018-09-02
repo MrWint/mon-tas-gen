@@ -40,9 +40,12 @@ CPU::CPU()
   L(0x4D),
   skip(false),
   numInterruptAddresses(),
-  tracecallback(0) {}
+  tracecallback(0)
+{
+}
 
 long CPU::runFor(const unsigned long cycles) {
+	memory.setBasetime(cycleCounter_);
 	process(cycles/* << memory.isDoubleSpeed()*/);
 	
 	const long csb = memory.cyclesSinceBlit(cycleCounter_);
@@ -504,47 +507,50 @@ void CPU::process(const unsigned long cycles) {
 				cycleCounter += cycles + (-cycles & 3);
 			}
 		} else while (cycleCounter < memory.nextEventTime()) {
+			unsigned char opcode = 0x00;
+			
 			int FullPC = PC;
+
 			if (PC >= 0x4000 && PC <= 0x7FFF)
 				FullPC |= memory.curRomBank() << 16;
 
 			for (int i = 0; i < numInterruptAddresses; i++) {
 				if (FullPC == interruptAddresses[i]) {
 					hitInterruptAddress = interruptAddresses[i];
-					memory.setEndtime(cycleCounter, 0); // causes the processing of this frame to end early
+					memory.setEndtime(cycleCounter, 0);
 					break;
 				}
 			}
-      if (hitInterruptAddress) continue; // leave if hit interrupt
 
-			unsigned char opcode = 0x00;
-			
-			if (tracecallback) {
-				int result[14];
-				result[0] = cycleCounter;
-				result[1] = PC;
-				result[2] = SP;
-				result[3] = A;
-				result[4] = B;
-				result[5] = C;
-				result[6] = D;
-				result[7] = E;
-				result[8] = F();
-				result[9] = H;
-				result[10] = L;
-				result[11] = skip;
-				PC_READ_FIRST(opcode);
-				result[12] = opcode;
-				result[13] = memory.debugGetLY();
-				tracecallback((void *)result);
-			}
-			else {
-				PC_READ_FIRST(opcode);
-			}
+			if (!hitInterruptAddress)
+			{
+				if (tracecallback) {
+					int result[14];
+					result[0] = cycleCounter;
+					result[1] = PC;
+					result[2] = SP;
+					result[3] = A;
+					result[4] = B;
+					result[5] = C;
+					result[6] = D;
+					result[7] = E;
+					result[8] = F();
+					result[9] = H;
+					result[10] = L;
+					result[11] = skip;
+					PC_READ_FIRST(opcode);
+					result[12] = opcode;
+					result[13] = memory.debugGetLY();
+					tracecallback((void *)result);
+				}
+				else {
+					PC_READ_FIRST(opcode);
+				}
 
-			if (skip) {
-				PC = (PC - 1) & 0xFFFF;
-				skip = false;
+				if (skip) {
+					PC = (PC - 1) & 0xFFFF;
+					skip = false;
+				}
 			}
 			
 			switch (opcode) {
