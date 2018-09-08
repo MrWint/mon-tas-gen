@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::marker::PhantomData;
 
-pub trait Metric<R: JoypadAddresses> {
+pub trait Metric<R> {
   type ValueType: Eq + Hash + Debug;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType>;
@@ -14,13 +14,12 @@ pub trait Metric<R: JoypadAddresses> {
   }
 }
 
-
 pub struct Filter<R, M, F> {
   metric: M,
   f: F,
   _rom: PhantomData<R>,
 }
-impl<R: JoypadAddresses, M: Metric<R>, F> Metric<R> for Filter<R, M, F> where F: Fn(&M::ValueType) -> bool {
+impl<R, M: Metric<R>, F> Metric<R> for Filter<R, M, F> where F: Fn(&M::ValueType) -> bool {
   type ValueType = M::ValueType;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
@@ -37,7 +36,7 @@ impl<F> FnMetric<F> {
     FnMetric { f: f, }
   }
 }
-impl<R: JoypadAddresses, F, V: Eq + Hash + Debug> Metric<R> for FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
+impl<R, F, V: Eq + Hash + Debug> Metric<R> for FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
   type ValueType = V;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
@@ -52,7 +51,7 @@ impl NullMetric {
     Self {}
   }
 }
-impl<R: JoypadAddresses> Metric<R> for NullMetric {
+impl<R> Metric<R> for NullMetric {
   type ValueType = ();
 
   fn evaluate(&self, _gb: &mut Gb<R>) -> Option<Self::ValueType> {
