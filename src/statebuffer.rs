@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fs::File;
 use std::iter::FromIterator;
+use util::*;
 
 pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 10;
 pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 256;
@@ -49,7 +50,7 @@ impl StateBuffer {
   pub fn add_state(&mut self, s: State) {
     assert!(s.is_at_input, "Invalid state added to StateBuffer!");
     if let Some(old_s) = self.states.get(&s.rng_state) {
-      if old_s.frame <= s.frame { return; }
+      if old_s.cycle_count <= s.cycle_count { return; }
     }
     self.states.insert(s.rng_state, s);
     self.prune();
@@ -60,10 +61,10 @@ impl StateBuffer {
   fn prune(&mut self) {
     while self.states.len() > self.max_size {
       let mut tbr_key = 0;
-      let mut tbr_key_frame = 0;
+      let mut tbr_key_cycle_count = 0;
       let mut tbr_key_metric = 0;
       for s in self.states.values() {
-        if s.frame < tbr_key_frame { continue; }
+        if s.cycle_count < tbr_key_cycle_count { continue; }
         let s_metric = StateBuffer::get_metric(s);
         let mut metric_diff_sum = 0;
         for s2 in self.states.values() {
@@ -73,9 +74,9 @@ impl StateBuffer {
           let diff = ((min(mx - mn, mn + 0x100 - mx) as f64).sqrt() * 256f64) as u32;
           metric_diff_sum += diff;
         }
-        if s.frame > tbr_key_frame || (s.frame == tbr_key_frame && metric_diff_sum < tbr_key_metric) {
+        if s.cycle_count > tbr_key_cycle_count || (s.cycle_count == tbr_key_cycle_count && metric_diff_sum < tbr_key_metric) {
           tbr_key = s.rng_state;
-          tbr_key_frame = s.frame;
+          tbr_key_cycle_count = s.cycle_count;
           tbr_key_metric = metric_diff_sum;
         }
       }
@@ -138,11 +139,11 @@ impl<'a> IntoIterator for &'a StateBuffer {
 
 impl fmt::Display for StateBuffer {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    let max_frame = self.states.values().map(|s| s.frame).max().unwrap_or(0);
-    let min_frame = self.states.values().map(|s| s.frame).min().unwrap_or(0);
+    let max_cycle_count = self.states.values().map(|s| s.cycle_count).max().unwrap_or(0);
+    let min_cycle_count = self.states.values().map(|s| s.cycle_count).min().unwrap_or(0);
     let max_dsum = self.states.values().map(|s| StateBuffer::get_metric(s)).max().unwrap_or(0);
     let min_dsum = self.states.values().map(|s| StateBuffer::get_metric(s)).min().unwrap_or(0);
 
-    write!(f, "StateBuffer len {}, frames {}-{}, dsums {:#x}-{:#x}", self.states.len(), min_frame, max_frame, min_dsum, max_dsum)
+    write!(f, "StateBuffer len {}, times {}-{}, dsums {:#x}-{:#x}", self.states.len(), to_human_readable_time(min_cycle_count), to_human_readable_time(max_cycle_count), min_dsum, max_dsum)
   }
 }

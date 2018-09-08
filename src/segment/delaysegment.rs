@@ -4,10 +4,11 @@ use segment::*;
 use statebuffer::StateBuffer;
 use std::collections::HashMap;
 use std::marker::PhantomData;
+use util::*;
 
 const DELAY_SEGMENT_DEFAULT_MAX_SKIPS: u32 = 1000;
-const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u32 = 3;
-const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u32 = 10;
+const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u64 = 3 * 35112;
+const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u64 = 10 * 35112;
 
 pub struct DelaySegment<R, S> {
   segment: S,
@@ -40,25 +41,25 @@ impl<R: JoypadAddresses + RngAddresses, _S> DelaySegment<R, _S> {
 
     let mut active_states: Vec<State> = iter.into_iter().collect();
     let mut skips = 0;
-    let mut full_frame = ::std::u32::MAX >> 1;
-    let mut nonempty_frame = ::std::u32::MAX >> 1;
+    let mut full_cycle_count = ::std::u64::MAX >> 1;
+    let mut nonempty_cycle_count = ::std::u64::MAX >> 1;
     while !active_states.is_empty() {
       if self.debug_output { println!("DelaySegment processing {} active states at {} skips", active_states.len(), skips); }
       let mut next_states = vec![];
-      let mut cur_min_frame =  ::std::u32::MAX >> 1;
+      let mut cur_min_cycle_count =  ::std::u64::MAX >> 1;
       for s in active_states.iter() {
         gb.restore(s);
-        cur_min_frame = ::std::cmp::min(cur_min_frame, s.frame);
+        cur_min_cycle_count = ::std::cmp::min(cur_min_cycle_count, s.cycle_count);
 
         if skips > self.max_skips {
           // if self.debug_output { println!("DelaySegment interrupting search (maxDelay)"); }
           continue;
         }
-        if s.frame > full_frame + DELAY_SEGMENT_FULL_CUTOFF_DELAY {
+        if s.cycle_count > full_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY {
           // if self.debug_output { println!("DelaySegment interrupting search (fullFrame)"); }
           continue;
         }
-        if s.frame > nonempty_frame + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY {
+        if s.cycle_count > nonempty_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY {
           // if self.debug_output { println!("DelaySegment interrupting search (nonemptyFrame)"); }
           continue;
         }
@@ -70,13 +71,13 @@ impl<R: JoypadAddresses + RngAddresses, _S> DelaySegment<R, _S> {
       for (value, states) in segment.execute_split(gb, active_states).into_iter() {
         result.entry(value).or_insert(StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
-      if !result.is_empty() && cur_min_frame < nonempty_frame {
-        nonempty_frame = cur_min_frame;
-        if self.debug_output { println!("DelaySegment set nonempty_frame to {}", nonempty_frame); }
+      if !result.is_empty() && cur_min_cycle_count < nonempty_cycle_count {
+        nonempty_cycle_count = cur_min_cycle_count;
+        if self.debug_output { println!("DelaySegment set nonempty_cycle_count to {}", to_human_readable_time(nonempty_cycle_count)); }
       }
-      if result.is_all_full() && cur_min_frame < full_frame {
-        full_frame = cur_min_frame;
-        if self.debug_output { println!("DelaySegment set full_frame to {}", full_frame); }
+      if result.is_all_full() && cur_min_cycle_count < full_cycle_count {
+        full_cycle_count = cur_min_cycle_count;
+        if self.debug_output { println!("DelaySegment set full_cycle_count to {}", to_human_readable_time(full_cycle_count)); }
       }
 
       active_states = next_states;

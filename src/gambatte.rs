@@ -277,6 +277,7 @@ impl Gambatte {
     registers
   }
   /// Reads the current state of the Gameboy's DIV counter (used for RNG), without causing emulation side-effects.
+  /// The result is a value in [0x0, 0x3fff].
   #[allow(dead_code)]
   pub fn read_div_state(&self) -> u16 {
     unsafe {
