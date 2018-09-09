@@ -43,6 +43,13 @@ impl<R, F, V: Eq + Hash + Debug> Metric<R> for FnMetric<F> where F: Fn(&mut Gb<R
     (self.f)(gb)
   }
 }
+impl<R, F, V: Eq + Hash + Debug> Metric<R> for F where F: Fn(&mut Gb<R>) -> Option<V> {
+  type ValueType = V;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    self(gb)
+  }
+}
 
 
 pub struct NullMetric {}
