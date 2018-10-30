@@ -20,6 +20,7 @@
 #define GAMBATTE_H
 
 #include "gbint.h"
+#include "callbacks.h"
 #include "inputgetter.h"
 #include "rtccallback.h"
 #include <string>
@@ -91,9 +92,9 @@ public:
 	/** Sets the callback used for getting input state. */
 	void setInputGetter(InputGetter *getInput);
 	
-	void setReadCallback(void (*callback)(unsigned));
-	void setWriteCallback(void (*callback)(unsigned));
-	void setExecCallback(void (*callback)(unsigned));
+	void setReadCallback(MemoryCallback);
+	void setWriteCallback(MemoryCallback);
+	void setExecCallback(MemoryCallback);
 	void setCDCallback(CDCallback);
 	void setTraceCallback(void (*callback)(void *));
 	void setScanlineCallback(void (*callback)(), int sl);
@@ -129,6 +130,7 @@ public:
 
 	template<bool isReader>void SyncState(NewState *ns);
 
+	// Loosen visibility to allow direct CPU access.
 	struct Priv {
 		gambatte::CPU cpu;
 		unsigned loadflags;

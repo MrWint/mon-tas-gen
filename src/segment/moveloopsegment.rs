@@ -45,18 +45,15 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveLo
       loop {
         gb.input(self.input);
         if let Some(value) = self.metric.evaluate(gb) {
-          if gb.skipped_relevant_inputs { // restore state if metric overran next input
-            gb.restore(&s);
-            gb.input(self.input);
-          }
-          if !gb.is_at_input { gb.step(); }
-          result.entry(value).or_insert(StateBuffer::with_max_size(self.buffer_size)).add_state(gb.save());
+          result.entry(value).or_insert(StateBuffer::with_max_size(self.buffer_size)).add_state(s);
           if self.debug_output { println!("MoveLoopSegment left after {} skips", skips); }
           break;
         }
-        gb.restore(&s);
-        gb.input(self.input);
-        gb.step();
+        if gb.skipped_relevant_inputs { // restore state if metric overran next input
+          gb.restore(&s);
+          gb.input(self.input);
+        }
+        if !gb.is_at_input { gb.step(); }
         s = gb.save();
         skips += 1;
       }

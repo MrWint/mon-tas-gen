@@ -16,7 +16,10 @@ pub struct MoveSegment<R, M> {
   buffer_size: usize,
   _rom: PhantomData<R>,
 }
-impl<R, M> MoveSegment<R, M> {
+impl<R: JoypadAddresses + RngAddresses, F: Metric<R>, V> MoveSegment<R, F> where F: Fn(&mut Gb<R>) -> Option<V> {
+  pub fn with_metric_fn(input: Input, f: F) -> Self { Self::with_metric(input, f) }
+}
+impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> MoveSegment<R, M> {
   pub fn with_metric(input: Input, metric: M) -> Self {
     Self {
       input: input,
@@ -59,15 +62,15 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveSe
   fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::KeyType, StateBuffer> {
     let mut result: HashMap<Self::KeyType, StateBuffer> = HashMap::new();
     for mut s in iter {
+      gb.restore(&s);
       let mut skips = 0;
       loop {
         if self.debug_output && skips == 0 {
-          gb.restore(&s);
           gb.input(self.input);
           let hit = gb.step_until(R::JOYPAD_USE_ADDRESSES);
           println!("MoveSegment use at pc {:04x} {}", hit, gb.get_stack_trace_string());
+          gb.restore(&s);
         }
-        gb.restore(&s);
         gb.input(self.input);
         if let Some(value) = self.metric.evaluate(gb) {
           if gb.skipped_relevant_inputs { // restore state if metric overran next input

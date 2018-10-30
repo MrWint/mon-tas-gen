@@ -1,16 +1,22 @@
 use gb::State;
-use std::cmp::{max,min};
+use std::cmp::min;
 use std::collections::HashMap;
 use std::fmt;
 use std::fs::File;
 use std::iter::FromIterator;
+use util::*;
 
 pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 10;
 pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 256;
 
+/// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
+/// ```StateBuffer```s have a maximum size, and prune excess states if they become too full.
+/// The decision which states to prune is made based on the cycle_count and the RNG state of the ```State```.
 #[derive(Serialize, Deserialize)]
 pub struct StateBuffer {
+  /// Maps RNG states to stored ```State```s. If two ```State```s have the same RNG state, they are assumed to exhibit identical future behavior.
   states: HashMap<u32, State>,
+  /// Maximum number of ```State```s which can be stored in this buffer.
   max_size: usize,
 }
 
@@ -46,44 +52,43 @@ impl StateBuffer {
     sb
   }
 
+  /// Adds a state to the buffer.
   pub fn add_state(&mut self, s: State) {
     assert!(s.is_at_input, "Invalid state added to StateBuffer!");
     if let Some(old_s) = self.states.get(&s.rng_state) {
-      if old_s.frame <= s.frame { return; }
+      if old_s.cycle_count <= s.cycle_count { return; }
     }
     self.states.insert(s.rng_state, s);
     self.prune();
   }
+  /// Adds multiple states to the buffer.
   pub fn add_all<I: IntoIterator<Item=State>>(&mut self, iter: I) {
     for s in iter.into_iter() { self.add_state(s); }
   }
+  /// Removes states until it doesn't exceed ```max_size``` anymore.
+  /// It successively removes the state with the highest cycle count, or if there are ties the state which is most similar to other states.
+  /// The similarity of states is estimated by their D-Sum, where the similarity score for a state s0 is sum_s(sqrt(dsum_difference(s0,s))).
   fn prune(&mut self) {
     while self.states.len() > self.max_size {
       let mut tbr_key = 0;
-      let mut tbr_key_frame = 0;
-      let mut tbr_key_metric = 0;
+      let mut tbr_key_metric = ::std::f64::INFINITY;
+      let max_cycle_count = self.states.values().map(|s| s.cycle_count).max().unwrap();
       for s in self.states.values() {
-        if s.frame < tbr_key_frame { continue; }
-        let s_metric = StateBuffer::get_metric(s);
-        let mut metric_diff_sum = 0;
+        if s.cycle_count < max_cycle_count { continue; }
+        let s_dsum = s.get_d_sum();
+        let mut dsum_difference_metric = 0.0;
         for s2 in self.states.values() {
-          let s2_metric = StateBuffer::get_metric(s2);
-          let mx = max(s_metric, s2_metric);
-          let mn = min(s_metric, s2_metric);
-          let diff = ((min(mx - mn, mn + 0x100 - mx) as f64).sqrt() * 256f64) as u32;
-          metric_diff_sum += diff;
+          let s2_dsum = s2.get_d_sum();
+          let dsum_difference: u8 = min(s_dsum.wrapping_sub(s2_dsum), s2_dsum.wrapping_sub(s_dsum));
+          dsum_difference_metric += (dsum_difference as f64).sqrt();
         }
-        if s.frame > tbr_key_frame || (s.frame == tbr_key_frame && metric_diff_sum < tbr_key_metric) {
+        if dsum_difference_metric < tbr_key_metric {
           tbr_key = s.rng_state;
-          tbr_key_frame = s.frame;
-          tbr_key_metric = metric_diff_sum;
+          tbr_key_metric = dsum_difference_metric;
         }
       }
       self.states.remove(&tbr_key);
     }
-  }
-  fn get_metric(s: &State) -> u32 {
-    return ((s.rng_state >> 0) + (s.rng_state >> 8)) & 0xff; // DSum
   }
 
   pub fn is_empty(&self) -> bool {
@@ -138,11 +143,11 @@ impl<'a> IntoIterator for &'a StateBuffer {
 
 impl fmt::Display for StateBuffer {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    let max_frame = self.states.values().map(|s| s.frame).max().unwrap_or(0);
-    let min_frame = self.states.values().map(|s| s.frame).min().unwrap_or(0);
-    let max_dsum = self.states.values().map(|s| StateBuffer::get_metric(s)).max().unwrap_or(0);
-    let min_dsum = self.states.values().map(|s| StateBuffer::get_metric(s)).min().unwrap_or(0);
+    let max_cycle_count = self.states.values().map(|s| s.cycle_count).max().unwrap_or(0);
+    let min_cycle_count = self.states.values().map(|s| s.cycle_count).min().unwrap_or(0);
+    let max_dsum = self.states.values().map(|s| s.get_d_sum()).max().unwrap_or(0);
+    let min_dsum = self.states.values().map(|s| s.get_d_sum()).min().unwrap_or(0);
 
-    write!(f, "StateBuffer len {}, frames {}-{}, dsums {:#x}-{:#x}", self.states.len(), min_frame, max_frame, min_dsum, max_dsum)
+    write!(f, "StateBuffer len {}, times {}-{}, dsums {:#x}-{:#x}", self.states.len(), to_human_readable_time(min_cycle_count), to_human_readable_time(max_cycle_count), min_dsum, max_dsum)
   }
 }

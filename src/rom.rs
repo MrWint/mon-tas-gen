@@ -10,7 +10,7 @@ pub trait JoypadAddresses {
   const JOYPAD_READ_LOCKED_ADDRESS: i32; // address in VBlank after reading both nybbles is done and the values are locked. Assumed to be after reading hi/lo without any branches or interrupts
   const JOYPAD_USE_ADDRESSES: &'static [i32]; // addresses of usages of joypad inputs, if none of these are hit inbetween VBlank reads, the input is assumed to be irrelevant
   const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)]; // JOYPAD_USE_ADDRESSES which have a discard option. (use add, keep add, discard add)
-  const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16)]; // JOYPAD_USE_ADDRESSES which have a ignore mask option. (use add, ignored inputs)
+  const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)]; // JOYPAD_USE_ADDRESSES which have a ignore mask option. (use add, ignored inputs, skip add)
 }
 pub trait RngAddresses {
   const RNG_MEM_ADDRESS: u16;
@@ -105,6 +105,15 @@ pub trait Gen2MapAddresses {
 pub trait Gen2DVAddresses {
   const AFTER_DV_GENERATION_ADDRESS: i32; // GeneratePartyMonStats.initializeDVs
 }
+pub trait Gen2DetermineMoveOrderAddresses {
+  const DETERMINE_MOVE_ORDER_START_ADDRESS: i32; // DetermineMoveOrder
+  const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32; // DetermineMoveOrder.player_first
+  const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32; // DetermineMoveOrder.enemy_first
+}
+pub trait Gen2AIChooseMoveAddresses {
+  const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32; // BattleTurn.not_disconnected
+  const CUR_ENEMY_MOVE_MEM_ADDRESS: u16; // wCurEnemyMove
+}
 
 // Gen 1
 #[allow(dead_code)]
@@ -130,7 +139,7 @@ macro_rules! impl_red_blue_common_addresses {
         0x3_4000, // _Joypad
       ];
       const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[(0x3_4000, 0x3_401E, 0x3_4034)];
-      const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16)] = &[(0x3_4000, 0xCD6B)]; // wJoyIgnore
+      const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_4000, 0xCD6B, 0x3_4002)]; // wJoyIgnore
     }
     impl RngAddresses for $t {
       const RNG_MEM_ADDRESS: u16 = 0xffd3;
@@ -208,7 +217,7 @@ impl JoypadAddresses for Yellow {
     0x3_402D, // _Joypad
   ];
   const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[(0x3_402D, 0x3_404D, 0x3_4063)];
-  const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16)] = &[(0x3_402D, 0xCD6B)]; // wJoyIgnore
+  const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_402D, 0xCD6B, 0x3_402F)]; // wJoyIgnore
 }
 impl RngAddresses for Yellow {
   const RNG_MEM_ADDRESS: u16 = 0xffd3;
@@ -279,7 +288,7 @@ macro_rules! impl_gold_silver_common_addresses {
         0x0_0940, // in GetJoypad
       ];
       const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[];
-      const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16)] = &[];
+      const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[];
     }
     impl RngAddresses for $t {
       const RNG_MEM_ADDRESS: u16 = 0xffe3;
@@ -340,7 +349,7 @@ impl JoypadAddresses for Crystal {
     0x24_692D, // in SlotsAction_WaitReel3
   ];
   const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[];
-  const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16)] = &[];
+  const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[];
 }
 impl RngAddresses for Crystal {
   const RNG_MEM_ADDRESS: u16 = 0xffe1;
@@ -509,4 +518,13 @@ impl Gen2MapAddresses for Crystal {
 }
 impl Gen2DVAddresses for Crystal {
   const AFTER_DV_GENERATION_ADDRESS: i32 = 0x03_59B5; // GeneratePartyMonStats.initializeDVs
+}
+impl Gen2DetermineMoveOrderAddresses for Crystal {
+  const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_4314; // DetermineMoveOrder
+  const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_43F1; // DetermineMoveOrder.player_first
+  const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_43F3; // DetermineMoveOrder.enemy_first
+}
+impl Gen2AIChooseMoveAddresses for Crystal {
+  const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0x0F_4174; // BattleTurn.not_disconnected
+  const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xC6E4; // wCurEnemyMove
 }

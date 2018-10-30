@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 use std::os::raw::c_void;
+use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
 bitflags! {
   #[derive(Serialize, Deserialize)]
@@ -74,18 +75,35 @@ extern {
   fn readDivState(gb: *mut c_void) -> u16;
 }
 
+/// Thin Rust FFI wrapper around libgambatte Gameboy emulator.
+/// 
+/// # Examples
+///
+/// ```
+/// use montas::gambatte::Gambatte;
+///
+/// Gambatte::init_screens(/* num_screens= */ 1, /* scale_factor= */ 3);
+///
+/// let mut gb = Gambatte::create_on_screen(/* screen= */ 0, /* equal_length_frames= */ false);
+/// gb.load_gbc_bios("roms/gbc_bios.bin");
+/// gb.load_rom("roms/crystal.gbc");
+/// ```
 pub struct Gambatte {
+  /// Pointer to  gambatte object used to identify the instance in FFI calls.
   gb: *mut c_void,
+  /// Byte content of the loaded Gameboy ROM.
   rom_data: Vec<u8>,
 }
 
 impl Gambatte {
+  /// Initialize SDL window to render video output of Gambatte instances on.
   pub fn init_screens(num_screens: u32, scale_factor: u32) {
     unsafe {
       initSdlOutput(num_screens, scale_factor);
     }
   }
 
+  /// Create a new Gambatte instance not attached to any output screen.
   #[allow(dead_code)]
   pub fn create(equal_length_frames: bool) -> Gambatte {
     unsafe {
@@ -95,6 +113,7 @@ impl Gambatte {
       }
     }
   }
+  /// Create a new Gambatte instance attached to an output screen. Requires a screen to be created using ```init_screens``` beforehand.
   #[allow(dead_code)]
   pub fn create_on_screen(screen: i32, equal_length_frames: bool) -> Gambatte {
     unsafe {
@@ -105,12 +124,14 @@ impl Gambatte {
     }
   }
 
+  /// Loads the GBC BIOS ROM from a file.
   pub fn load_gbc_bios(&self, file_name: &str) {
     let bios_data = Gambatte::load_file(file_name);
     unsafe {
       loadGbcBios(self.gb, bios_data.as_ptr());
     }
   }
+  /// Loads the game ROM from a file.
   pub fn load_rom(&mut self, file_name: &str) {
     self.rom_data = Gambatte::load_file(file_name);
     unsafe {
@@ -118,28 +139,33 @@ impl Gambatte {
     }
   }
 
+  /// Changes the input buttons pressed, indefinitely until it is changed again.
   pub fn set_input(&self, input: Input) {
     unsafe {
       setInput(self.gb, input.bits() as u32);
     }
   }
+  /// Runs the emulation until the next frame (as defined by BizHawk's timing).
   #[allow(dead_code)]
   pub fn step(&self) {
     unsafe {
       step(self.gb);
     }
   }
+  /// Runs the emulation until the next frame (as defined by BizHawk's timing), or until the execution reaches one of the given addresses.
   pub fn step_until(&self, addresses: &[i32]) -> i32 {
     unsafe {
       stepUntil(self.gb, addresses.as_ptr(), addresses.len() as i32)
     }
   }
+  /// Performs a hard reset of the Gameboy.
   #[allow(dead_code)]
   pub fn reset(&self) {
     unsafe {
       reset(self.gb);
     }
   }
+  /// Runs the emulation until the execution reaches one of the given addresses.
   pub fn run_until(&self, addresses: &[i32]) -> i32 {
     loop {
       unsafe {
@@ -149,44 +175,51 @@ impl Gambatte {
     }
   }
 
+  /// Restores a stored internal Gambatte state from the given byte data.
   pub fn load_state(&self, data: &[u8]) {
     unsafe {
       let actual_len = loadState(self.gb, data.as_ptr(), data.len() as i32);
       assert!(actual_len <= data.len() as i32, "load failed, actual length {} larger than provided buffer length {}", actual_len, data.len());
     }
   }
+  /// Stores the current internal Gambatte state to byte data.
   pub fn save_state(&self) -> Vec<u8> {
-    static mut LAST_SAVE_STATE_SIZE: i32 = 0;
-    unsafe { // No thread safety
-      let mut data: Vec<u8> = Vec::with_capacity(LAST_SAVE_STATE_SIZE as usize);
-      loop {
-        data.resize(LAST_SAVE_STATE_SIZE as usize, 0);
-        let actual_len = saveState(self.gb, data.as_mut_ptr(), data.len() as i32);
-        if actual_len < LAST_SAVE_STATE_SIZE {
-          println!("shrink save state size from {} to {}", LAST_SAVE_STATE_SIZE, actual_len);
-          LAST_SAVE_STATE_SIZE = actual_len;
-          data.truncate(LAST_SAVE_STATE_SIZE as usize);
-          data.shrink_to_fit();
-        }
-        if actual_len == LAST_SAVE_STATE_SIZE { break; }
-        println!("expand save state size from {} to {}", LAST_SAVE_STATE_SIZE, actual_len);
-        LAST_SAVE_STATE_SIZE = actual_len;
+    static LAST_SAVE_STATE_SIZE: AtomicUsize = ATOMIC_USIZE_INIT; // Cached last state size, to avoid multiple attempts.
+
+    let mut save_state_size_guess = LAST_SAVE_STATE_SIZE.load(Ordering::Relaxed);
+    let mut data: Vec<u8> = Vec::with_capacity(save_state_size_guess);
+    loop {
+      data.resize(save_state_size_guess, 0);
+      let actual_len = unsafe { saveState(self.gb, data.as_mut_ptr(), data.len() as i32) as usize };
+      if actual_len < save_state_size_guess {
+        println!("shrink save state size from {} to {}", save_state_size_guess, actual_len);
+        LAST_SAVE_STATE_SIZE.store(actual_len, Ordering::Relaxed);
+        data.truncate(actual_len);
+        data.shrink_to_fit();
+        break;
       }
-      data
+      if actual_len == save_state_size_guess { break; }
+      println!("expand save state size from {} to {}", save_state_size_guess, actual_len);
+      LAST_SAVE_STATE_SIZE.store(actual_len, Ordering::Relaxed);
+      save_state_size_guess = actual_len;
     }
+    data
   }
 
+  /// Number of frames (as defined by BizHawk's timing) that have been emulated so far, including the current frame if not on a frame boundary.
   pub fn frame(&self) -> u32 {
     unsafe {
       getNumFrames(self.gb)
     }
   }
+  /// Whether the emulation is currently stopped at the boundary between two frames (as defined by BizHawk's timing).
   #[allow(dead_code)]
   pub fn is_on_frame_boundaries(&self) -> bool {
     unsafe {
       isOnFrameBoundaries(self.gb)
     }
   }
+  /// Total number of sound samples that have been emitted so far (~35112 per frame, depending on the timing method).
   #[allow(dead_code)]
   pub fn get_cycle_count(&self) -> u64 {
     unsafe {
@@ -194,14 +227,17 @@ impl Gambatte {
     }
   }
 
+  /// Returns the byte at the given ROM address.
   #[allow(dead_code)]
   pub fn read_rom(&self, address: i32) -> u8 {
     self.rom_data[Gambatte::convert_address(address)]
   }
+  /// Returns the 2-byte word (Little Endian) starting at the given ROM address.
   #[allow(dead_code)]
   pub fn read_rom_word_le(&self, address: i32) -> u16 {
     return ((self.read_rom(address + 1) as u16) << 8) + self.read_rom(address) as u16;
   }
+  /// Converts ROM addresses from input form (bank*0x10000 + address) to byte position in the ROM data.
   fn convert_address(address: i32) -> usize {
     let bank = address as usize >> 16;
     let add = address as usize & 0xffff;
@@ -209,26 +245,31 @@ impl Gambatte {
     return add + bank.saturating_sub(1)*0x4000;
   }
 
+  /// Reads a byte from the given address from the memory bus, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_memory(&self, address: u16) -> u8 {
     unsafe {
       readMemory(self.gb, address)
     }
   }
+  /// Reads a 2-byte word (Big Endian) from the given address from the memory bus, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_memory_word_be(&self, address: u16) -> u16 {
     return ((self.read_memory(address) as u16) << 8) + self.read_memory(address + 1) as u16;
   }
+  /// Reads a 2-byte word (Little Endian) from the given address from the memory bus, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_memory_word_le(&self, address: u16) -> u16 {
     return ((self.read_memory(address + 1) as u16) << 8) + self.read_memory(address) as u16;
   }
+  /// Writes a byte to the memory bus, as if written by the game, including side-effects and memory-mapped areas.
   #[allow(dead_code)]
   pub fn write_memory(&self, address: u16, value: u8) {
     unsafe {
       writeMemory(self.gb, address, value);
     }
   }
+  /// Reads the current state of the Gameboy's registers, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_registers(&self) -> Registers {
     let mut registers = Registers::default();
@@ -237,6 +278,8 @@ impl Gambatte {
     }
     registers
   }
+  /// Reads the current state of the Gameboy's DIV counter (used for RNG), without causing emulation side-effects.
+  /// The result is a value in [0x0, 0x3fff].
   #[allow(dead_code)]
   pub fn read_div_state(&self) -> u16 {
     unsafe {
@@ -244,6 +287,7 @@ impl Gambatte {
     }
   }
 
+  /// Helper function to load the byte contents of a file into memory.
   fn load_file(file_name: &str) -> Vec<u8> {
     let mut result: Vec<u8> = vec![];
     let mut f = File::open(file_name).expect("file not found");

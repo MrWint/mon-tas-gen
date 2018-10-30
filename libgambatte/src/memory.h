@@ -27,25 +27,9 @@ static unsigned char const agbOverride[0xD] = { 0xFF, 0x00, 0xCD, 0x03, 0x35, 0x
 #include "interrupter.h"
 #include "tima.h"
 #include "newstate.h"
+#include "callbacks.h"
 
 namespace gambatte {
-enum { BG_PALETTE = 0, SP1_PALETTE = 1, SP2_PALETTE = 2 };
-
-typedef void (*CDCallback)(int32_t addr, int32_t addrtype, int32_t flags);
-
-enum eCDLog_AddrType
-{
-	eCDLog_AddrType_ROM, eCDLog_AddrType_HRAM, eCDLog_AddrType_WRAM, eCDLog_AddrType_CartRAM,
-	eCDLog_AddrType_None
-};
-
-enum eCDLog_Flags
-{
-	eCDLog_Flags_ExecFirst = 1,
-	eCDLog_Flags_ExecOperand = 2,
-	eCDLog_Flags_Data = 4,
-};
-
 class InputGetter;
 class FilterInfo;
 
@@ -59,12 +43,15 @@ public:
 	bool cgbSwitching;
 	bool agbMode;
 	bool gbIsCgb_;
+	bool stopped;
 	unsigned short &SP;
 	unsigned short &PC;
+	unsigned long basetime;
+	unsigned long halttime;
 
-	void (*readCallback)(unsigned);
-	void (*writeCallback)(unsigned);
-	void (*execCallback)(unsigned);
+	MemoryCallback readCallback;
+	MemoryCallback writeCallback;
+	MemoryCallback execCallback;
 	CDCallback cdCallback;
 	void(*linkCallback)();
 
@@ -144,12 +131,14 @@ public:
 		return cc < intreq.eventTime(BLIT) ? -1 : static_cast<long>((cc - intreq.eventTime(BLIT)) >> isDoubleSpeed());
 	}
 
-	void halt() { intreq.halt(); }
+	void halt(unsigned long cycleCounter) { halttime = cycleCounter; intreq.halt(); }
 	void ei(unsigned long cycleCounter) { if (!ime()) { intreq.ei(cycleCounter); } }
 
 	void di() { intreq.di(); }
 
 	unsigned ff_read(const unsigned P, const unsigned long cycleCounter) {
+		if (readCallback)
+			readCallback(P, (cycleCounter - basetime) >> 1);
 		return P < 0xFF80 ? nontrivial_ff_read(P, cycleCounter) : ioamhram[P - 0xFE00];
 	}
 
@@ -222,7 +211,7 @@ public:
 
 	unsigned read(const unsigned P, const unsigned long cycleCounter) {
 		if (readCallback)
-			readCallback(P);
+			readCallback(P, (cycleCounter - basetime) >> 1);
 		if(cdCallback)
 		{
 			CDMapResult map = CDMap(P);
@@ -237,7 +226,7 @@ public:
 
 	unsigned read_excb(const unsigned P, const unsigned long cycleCounter, bool first) {
 		if (execCallback)
-			execCallback(P);
+			execCallback(P, (cycleCounter - basetime) >> 1);
 		if(cdCallback)
 		{
 			CDMapResult map = CDMap(P);
@@ -270,7 +259,7 @@ public:
 		} else
 			nontrivial_write(P, data, cycleCounter);
 		if (writeCallback)
-			writeCallback(P);
+			writeCallback(P, (cycleCounter - basetime) >> 1);
 		if(cdCallback)
 		{
 			CDMapResult map = CDMap(P);
@@ -284,6 +273,8 @@ public:
 			ioamhram[P - 0xFE00] = data;
 		} else
 			nontrivial_ff_write(P, data, cycleCounter);
+		if (writeCallback)
+			writeCallback(P, (cycleCounter - basetime) >> 1);
 		if(cdCallback)
 		{
 			CDMapResult map = CDMap(P);
@@ -301,13 +292,13 @@ public:
 		this->getInput = getInput;
 	}
 
-	void setReadCallback(void (*callback)(unsigned)) {
+	void setReadCallback(MemoryCallback callback) {
 		this->readCallback = callback;
 	}
-	void setWriteCallback(void (*callback)(unsigned)) {
+	void setWriteCallback(MemoryCallback callback) {
 		this->writeCallback = callback;
 	}
-	void setExecCallback(void (*callback)(unsigned)) {
+	void setExecCallback(MemoryCallback callback) {
 		this->execCallback = callback;
 	}
 	void setCDCallback(CDCallback cdc) {
@@ -326,6 +317,7 @@ public:
 		this->linkCallback = callback;
 	}
 
+	void setBasetime(unsigned long cc) { basetime = cc; }
 	void setEndtime(unsigned long cc, unsigned long inc);
 	
 	void setSoundBuffer(uint_least32_t *const buf) { sound.setBuffer(buf); }

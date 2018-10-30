@@ -41,8 +41,8 @@ unsigned long LCD::gbcToRgb32(const unsigned bgr15) {
 	unsigned long const g = bgr15 >>  5 & 0x1F;
 	unsigned long const b = bgr15 >> 10 & 0x1F;
 
+	// Use manual color conversion instead of palettes.
 	return ((r * 13 + g * 2 + b) >> 1) << 16 | (g * 3 + b) << 9 | (r * 3 + g * 2 + b * 11) >> 1;
-//	return cgbColorsRgb32[bgr15 & 0x7FFF];
 }
 
 
