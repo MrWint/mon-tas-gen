@@ -1,30 +1,19 @@
-extern crate bincode;
-#[macro_use] extern crate bitflags;
-extern crate serde;
-#[macro_use] extern crate serde_derive;
-extern crate flate2;
+extern crate montas;
 
-use gambatte::*;
-use gambatte::inputs::*;
-use gb::*;
-use rom::*;
-use segment::*;
-#[allow(unused_imports)] use segment::overworld::gen2;
-use statebuffer::StateBuffer;
+use montas::ftii;
+use montas::gambatte::*;
+use montas::gambatte::inputs::*;
+use montas::gb::*;
+use montas::rom::*;
+use montas::segment::*;
+#[allow(unused_imports)] use montas::segment::overworld::gen2;
+use montas::statebuffer::StateBuffer;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::io::Write;
 use std::thread::sleep;
 use std::time::Duration;
-
-mod ftii;
-mod gambatte;
-mod gb;
-mod rom;
-mod segment;
-mod statebuffer;
-mod util;
 
 fn main() {
   Gambatte::init_screens(1 /* num screens */, 3 /* scale */);
@@ -81,57 +70,57 @@ impl Segment<Blue> for BlueTestSegment {
     let sb = SkipTextsSegment::new(7, B).execute(gb, sb); // skip texts until game start
     let sb = TextSegment::new(A).execute(gb, sb); // ...awaits, let's go
     println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
 
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
 
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
 
-    let sb = MoveSegment::with_metric(A, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(A, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
     sb.save("blue_test");
     let sb = StateBuffer::load("blue_test");
     let sb = SkipTextsSegment::new(6, B).execute(gb, sb); // it's dangerous to go outside, take this
     let sb = TextSegment::new(A).expect_conflicting_inputs().execute(gb, sb); // come with me
     let sb = MoveSegment::new(B).execute(gb, sb); // come with me
     let sb = IdentifyInputSegment::new().execute(gb, sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", segment::overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+    let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
     let sb = IdentifyInputSegment::new().execute(gb, sb);
     sleep(Duration::from_millis(1000));
     sb

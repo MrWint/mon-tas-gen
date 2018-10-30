@@ -80,9 +80,11 @@ extern {
 /// # Examples
 ///
 /// ```
+/// use montas::gambatte::Gambatte;
+///
 /// Gambatte::init_screens(/* num_screens= */ 1, /* scale_factor= */ 3);
 ///
-/// let gb = Gambatte::create_on_screen(/* screen= */ 0, /* equal_length_frames= */ false);
+/// let mut gb = Gambatte::create_on_screen(/* screen= */ 0, /* equal_length_frames= */ false);
 /// gb.load_gbc_bios("roms/gbc_bios.bin");
 /// gb.load_rom("roms/crystal.gbc");
 /// ```

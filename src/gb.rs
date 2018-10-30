@@ -21,7 +21,7 @@ impl State {
   /// Returns the D-Sum of this state.
   pub fn get_d_sum(&self) -> u8 {
     assert!(self.is_at_input, "Can't determine D-Sum of state which was not at a decision point.");
-    (self.rng_state + (self.rng_state << 8)) as u8
+    (self.rng_state + (self.rng_state >> 8)) as u8
   }
 }
 
