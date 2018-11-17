@@ -4,6 +4,7 @@ use montas::ftii;
 use montas::gambatte::*;
 use montas::gambatte::inputs::*;
 use montas::gb::*;
+use montas::gbexecutor::*;
 use montas::rom::*;
 use montas::segment::*;
 #[allow(unused_imports)] use montas::segment::overworld::gen2;
@@ -16,6 +17,21 @@ use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
+  // let mut gbe = SingleGb::<Crystal>::with_screen();
+  let mut gbe = GbPool::<Crystal>::with_screen();
+  let s = gbe.get_initial_state();
+  let sb = gbe.execute_segment(vec![s], A);
+  let sb = gbe.execute_segment(sb, START);
+  let sb = gbe.execute_segment(sb, D);
+  let sb = gbe.execute_segment(sb, L|A);
+  let sb = gbe.execute_segment(sb, B);
+  let sb = gbe.execute_segment(sb, A);
+  let sb = gbe.execute_text_segment(sb, 1, A); // choose Boy
+  let sb = gbe.execute_text_segment(sb, 3, B);
+  let _sb = gbe.execute_text_segment(sb, 4, A); // time: 10:..
+  if true {return;}
+
+
   Gambatte::init_screens(1 /* num screens */, 3 /* scale */);
   // playback_inputs(load_inputs("temp/crystal_test.txt"));
   // convert_efl();

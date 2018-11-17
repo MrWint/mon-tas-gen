@@ -183,6 +183,11 @@ extern "C" void initSdlOutput(int numScreens, int scaleFactor) {
   sdl.init(numScreens, scaleFactor);
 }
 
+extern "C" void handleSdlEvents() {
+	SDL_Event e;
+	while (SDL_PollEvent(&e)); // work through events to keep window responsive
+}
+
 extern "C" GambatteSdl* createGb(int screen, bool equalLengthFrames) {
   GambatteSdl* gb = new GambatteSdl(screen, equalLengthFrames);
 	return gb;

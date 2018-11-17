@@ -51,6 +51,7 @@ pub struct Registers {
 #[link(name = "gambatte")]
 extern {
   fn initSdlOutput(numScreens: u32, scaleFactor: u32);
+  fn handleSdlEvents();
   fn createGb(screen: i32, equal_length_frames: bool) -> *mut c_void;
   fn destroyGb(gb: *mut c_void);
   fn loadGbcBios(gb: *mut c_void, biosdata: *const u8);
@@ -100,6 +101,13 @@ impl Gambatte {
   pub fn init_screens(num_screens: u32, scale_factor: u32) {
     unsafe {
       initSdlOutput(num_screens, scale_factor);
+    }
+  }
+
+  /// Work through SDL events to keep window responsive.
+  pub fn handle_sdl_events() {
+    unsafe {
+      handleSdlEvents();
     }
   }
 

@@ -6,7 +6,7 @@ use std::fs::File;
 use std::iter::FromIterator;
 use util::*;
 
-pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 10;
+pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
 pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 256;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
