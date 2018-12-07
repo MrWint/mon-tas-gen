@@ -16,7 +16,7 @@ impl<R, S> ApplyIndividuallySegment<R, S> {
   #[allow(dead_code)]
   pub fn new(segment: S) -> Self {
     Self {
-      segment: segment,
+      segment,
       debug_output: false,
       buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       _rom: PhantomData,
@@ -36,13 +36,29 @@ impl<R: JoypadAddresses + RngAddresses, S: Segment<R>> Segment<R> for ApplyIndiv
   }
 }
 impl<R: JoypadAddresses + RngAddresses, S: SplitSegment<R>> SplitSegment<R> for ApplyIndividuallySegment<R, S> {
-  type KeyType = S::KeyType;
+  type Key = S::Key;
 
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::KeyType, StateBuffer> {
-    let mut result: HashMap<S::KeyType, StateBuffer> = HashMap::new();
+  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
     for s in iter {
       for (value, states) in self.segment.execute_split(gb, vec![s]).into_iter() {
-        result.entry(value).or_insert(StateBuffer::with_max_size(self.buffer_size)).add_all(states);
+        result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
+      }
+    }
+    result
+  }
+}
+
+
+
+impl<R: Rom, S: ParallelSegment<R>> ParallelSegment<R> for ApplyIndividuallySegment<R, S> {
+  type Key = S::Key;
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
+    for s in iter {
+      for (value, states) in self.segment.execute_parallel(gbe, vec![s]).into_iter() {
+        result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
     }
     result

@@ -6,14 +6,14 @@ use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 bitflags! {
   #[derive(Serialize, Deserialize)]
   pub struct Input: u8 {
-    const DOWN   = 0b10000000;
-    const UP     = 0b01000000;
-    const LEFT   = 0b00100000;
-    const RIGHT  = 0b00010000;
-    const START  = 0b00001000;
-    const SELECT = 0b00000100;
-    const B      = 0b00000010;
-    const A      = 0b00000001;
+    const DOWN   = 0b1000_0000;
+    const UP     = 0b0100_0000;
+    const LEFT   = 0b0010_0000;
+    const RIGHT  = 0b0001_0000;
+    const START  = 0b0000_1000;
+    const SELECT = 0b0000_0100;
+    const B      = 0b0000_0010;
+    const A      = 0b0000_0001;
   }
 }
 #[allow(dead_code)]
@@ -28,9 +28,9 @@ pub mod inputs {
   pub const D: Input         = Input::DOWN;
   pub const L: Input         = Input::LEFT;
   pub const R: Input         = Input::RIGHT;
-  pub const HI_INPUTS: Input = Input { bits: 0b11110000 };
-  pub const LO_INPUTS: Input = Input { bits: 0b00001111 };
-  pub const NIL: Input       = Input { bits: 0b00000000 };
+  pub const HI_INPUTS: Input = Input { bits: 0b1111_0000 };
+  pub const LO_INPUTS: Input = Input { bits: 0b0000_1111 };
+  pub const NIL: Input       = Input { bits: 0b0000_0000 };
 }
 
 #[derive(Default)]
@@ -150,7 +150,7 @@ impl Gambatte {
   /// Changes the input buttons pressed, indefinitely until it is changed again.
   pub fn set_input(&self, input: Input) {
     unsafe {
-      setInput(self.gb, input.bits() as u32);
+      setInput(self.gb, u32::from(input.bits()));
     }
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing).
@@ -243,14 +243,14 @@ impl Gambatte {
   /// Returns the 2-byte word (Little Endian) starting at the given ROM address.
   #[allow(dead_code)]
   pub fn read_rom_word_le(&self, address: i32) -> u16 {
-    return ((self.read_rom(address + 1) as u16) << 8) + self.read_rom(address) as u16;
+    (u16::from(self.read_rom(address + 1)) << 8) + u16::from(self.read_rom(address))
   }
   /// Converts ROM addresses from input form (bank*0x10000 + address) to byte position in the ROM data.
   fn convert_address(address: i32) -> usize {
     let bank = address as usize >> 16;
     let add = address as usize & 0xffff;
     assert!(add < 0x8000 && (add >= 0x4000 || bank == 0));
-    return add + bank.saturating_sub(1)*0x4000;
+    add + bank.saturating_sub(1)*0x4000
   }
 
   /// Reads a byte from the given address from the memory bus, without causing emulation side-effects.
@@ -263,12 +263,12 @@ impl Gambatte {
   /// Reads a 2-byte word (Big Endian) from the given address from the memory bus, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_memory_word_be(&self, address: u16) -> u16 {
-    return ((self.read_memory(address) as u16) << 8) + self.read_memory(address + 1) as u16;
+    (u16::from(self.read_memory(address)) << 8) + u16::from(self.read_memory(address + 1))
   }
   /// Reads a 2-byte word (Little Endian) from the given address from the memory bus, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_memory_word_le(&self, address: u16) -> u16 {
-    return ((self.read_memory(address + 1) as u16) << 8) + self.read_memory(address) as u16;
+    (u16::from(self.read_memory(address + 1)) << 8) + u16::from(self.read_memory(address))
   }
   /// Writes a byte to the memory bus, as if written by the game, including side-effects and memory-mapped areas.
   #[allow(dead_code)]

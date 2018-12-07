@@ -15,7 +15,7 @@ fn meta_test() {
   let mut gb = Gb::<Crystal>::create(Gambatte::create_on_screen(0 /* screen */, false /* equal length frames */));
   let states = vec![gb.save()];
 
-  let sb = DelaySegment::new(MoveSegment::with_metric(A, NullMetric::new())).with_debug_output(true).execute(&mut gb, states);
+  let sb = DelaySegment::new(MoveSegment::with_metric(A, NullMetric {})).with_debug_output(true).execute(&mut gb, states);
   let sb = MoveSegment::new(START).with_max_skips(10).execute(&mut gb, sb);
   let sb = MoveSegment::new(D).execute(&mut gb, sb); // options
   let sb = MoveSegment::new(L|A).execute(&mut gb, sb); // fast options

@@ -2,6 +2,7 @@ use gambatte::Input;
 use gb::*;
 use rom::*;
 
+#[derive(Default)]
 pub struct Map {
   debug_output: bool,
   allow_water_tiles: bool,
@@ -16,19 +17,9 @@ impl ::segment::WithDebugOutput for Map {
 }
 impl Map {
   #[allow(dead_code)]
-  pub fn new() -> Self {
-    Self {
-      debug_output: false,
-      allow_water_tiles: false,
-      width: 0,
-      height: 0,
-      tile_collision: vec![],
-      tile_allowed_movements: vec![],
-    }
-  }
-  #[allow(dead_code)]
   pub fn with_water_tiles(mut self) -> Self { self.allow_water_tiles = true; self }
 
+  #[allow(clippy::cyclomatic_complexity)]
   pub fn load_gen2_map<T: JoypadAddresses + RngAddresses + Gen2MapAddresses>(mut self, gb: &mut Gb<T>) -> Self {
     let map_block_width = gb.gb.read_memory(T::MAP_WIDTH_MEM_ADDRESS) as usize + 6;
     let map_block_height = gb.gb.read_memory(T::MAP_HEIGHT_MEM_ADDRESS) as usize + 6;
@@ -43,12 +34,12 @@ impl Map {
         blocks.push(gb.gb.read_memory(T::OVERWORLD_MAP_MEM_ADDRESS + offset));
       }
 
-      let tileset_collision_data_base_address = gb.gb.read_memory(T::TILESET_COLLISION_BANK_MEM_ADDRESS) as i32 * 0x1_0000 + gb.gb.read_memory_word_le(T::TILESET_COLLISION_PTR_MEM_ADDRESS) as i32;
+      let tileset_collision_data_base_address = (i32::from(gb.gb.read_memory(T::TILESET_COLLISION_BANK_MEM_ADDRESS)) << 16) + i32::from(gb.gb.read_memory_word_le(T::TILESET_COLLISION_PTR_MEM_ADDRESS));
       for y in 0..self.height {
         for x in 0..self.width {
           let block = blocks[map_block_width * (y >> 1) + (x >> 1)];
           let tile = if block == 0 { 0xff } else {
-            gb.gb.read_rom(tileset_collision_data_base_address + block as i32*4 + (y as i32 & 1)*2 + (x as i32 & 1))
+            gb.gb.read_rom(tileset_collision_data_base_address + i32::from(block) * 4 + (y as i32 & 1)*2 + (x as i32 & 1))
           };
           self.tile_collision.push(tile);
         }
@@ -70,7 +61,7 @@ impl Map {
           let ny = (y as isize + dy) as usize;
           if forbidden_cur_tiles.contains(&self.tile_collision[self.width * y + x]) { continue; } // direction forbidden
           if forbidden_new_tiles.contains(&self.tile_collision[self.width * ny + nx]) { continue; } // direction forbidden
-          let new_tile_collision_type = gb.gb.read_rom(T::TILE_COLLISION_TABLE_ADDRESS + self.tile_collision[self.width * ny + nx] as i32) & 0xf;
+          let new_tile_collision_type = gb.gb.read_rom(T::TILE_COLLISION_TABLE_ADDRESS + i32::from(self.tile_collision[self.width * ny + nx])) & 0xf;
           if new_tile_collision_type != 0 && (new_tile_collision_type != 1 || !self.allow_water_tiles) { continue; } // target tile not passable
           allowed_inputs |= input;
         }
@@ -99,7 +90,7 @@ impl Map {
           let ny = (y as isize + dy) as usize;
           self.tile_allowed_movements[self.width * ny + nx] -= block_input;
         }
-        if gb.gb.read_memory(object_base_address + 8) & 0xf == 2 && [0x06, 0x07, 0x08, 0x09].contains(&movement){ // is stationary trainer
+        if gb.gb.read_memory(object_base_address + 8) & 0xf == 2 && [0x06, 0x07, 0x08, 0x09].contains(&movement) { // is stationary trainer
           let script_pointer = gb.gb.read_memory_word_le(object_base_address + 0xa);
           let event_flag_index = gb.gb.read_memory_word_le(script_pointer);
           if gb.gb.read_memory(T::EVENT_FLAGS_MEM_ADDRESS + event_flag_index/8) & (1 << (event_flag_index % 8)) == 0 { // not already fought
@@ -113,7 +104,7 @@ impl Map {
             };
             let mut nx = x as usize;
             let mut ny = y as usize;
-            for _ in 1..(range + 1) {
+            for _ in 1..=range {
               if ny as isize + dy < 0 || ny as isize + dy >= self.height as isize { break; } // out of bounds
               if nx as isize + dx < 0 || nx as isize + dx >= self.width as isize { break; } // out of bounds
               nx = (nx as isize + dx) as usize;

@@ -38,13 +38,34 @@ pub enum OverworldInteractionResult {
   PhoneCall,
   ForcedMovement, // including Whirlpool
   Turned,
-  Walked(Input), // including biking, ice, surfing
+  Walked(Input, WalkType), // including biking, ice, surfing
   JumpedLedge,
-  Interact, // includes signs, trainers, tiles, hidden items, ...
+  Interact(InteractType), // includes signs, trainers, tiles, hidden items, ...
   StartMenu,
   SelectMenu,
   NoEvents,
   Unknown,
+}
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum WalkType {
+  Walk,
+  Bike,
+  BikeUphill,
+  Ice,
+  Surf,
+  StepOutOfWater,
+}
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum InteractType {
+  ObjectScript,
+  ObjectItemball,
+  ObjectTrainer,
+  BgRead,
+  BgHiddenItem,
+  BgThenRead,
+  TileCollision,
 }
 
 #[derive(Debug, Eq, Hash, PartialEq)]
@@ -97,6 +118,7 @@ impl<R: JoypadAddresses + Gen2MapEventsAddresses> Metric<R> for OverworldInterac
   }
 }
 
+#[allow(clippy::cyclomatic_complexity)]
 pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen2MapEventsAddresses>(gb: &mut Gb<R>) -> OverworldInteractionResult {
   if !super::super::is_correct_input_use(gb, R::OVERWORLD_BEFORE_JOYPAD_ADDRESS, R::OVERWORLD_JOYPAD_ADDRESS, R::OVERWORLD_AFTER_JOYPAD_ADDRESS) {
     return OverworldInteractionResult::NoOverworldInput;
@@ -144,20 +166,16 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen2MapEventsAddres
     OverworldInteractionResult::SeenByTrainer
   } else if hit == R::PLAYER_EVENTS_MAP_CONNECTION_ADDRESS {
     OverworldInteractionResult::MapConnection
-  } else if hit == R::PLAYER_EVENTS_WARP_ADDRESS {
-    OverworldInteractionResult::Warped
-  } else if hit == R::PLAYER_EVENTS_FALL_ADDRESS {
+  } else if hit == R::PLAYER_EVENTS_WARP_ADDRESS || hit == R::PLAYER_EVENTS_FALL_ADDRESS {
     OverworldInteractionResult::Warped
   } else if hit == R::PLAYER_EVENTS_MAP_COORD_EVENT_ADDRESS {
     OverworldInteractionResult::MapCoordEvent
-  } else if hit == R::PLAYER_EVENTS_COUNT_STEP_EVENT_ADDRESS {
-    OverworldInteractionResult::CountStepEvent
-  } else if hit == R::PLAYER_EVENTS_HATCH_ADDRESS {
+  } else if hit == R::PLAYER_EVENTS_COUNT_STEP_EVENT_ADDRESS || hit == R::PLAYER_EVENTS_HATCH_ADDRESS {
     OverworldInteractionResult::CountStepEvent
   } else if hit == R::PLAYER_EVENTS_RANDOM_ENCOUNTER_ADDRESS {
     let species = gb.gb.read_memory(R::PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS);
     let level = gb.gb.read_memory(R::PLAYER_EVENTS_RANDOM_ENCOUNTER_LEVEL_MEM_ADDRESS);
-    OverworldInteractionResult::RandomEncounter { species: species, level: level }
+    OverworldInteractionResult::RandomEncounter { species, level }
   } else if hit == R::PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS {
     OverworldInteractionResult::ReentryScript
   } else if hit == R::PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS {
@@ -166,48 +184,46 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen2MapEventsAddres
     OverworldInteractionResult::EndBugContest
   } else if hit == R::PLAYER_EVENTS_PHONE_CALL_ADDRESS {
     OverworldInteractionResult::PhoneCall
-  } else if hit == R::PLAYER_EVENTS_WHIRLPOOL_FORCED_MOVEMENT_ADDRESS {
-    OverworldInteractionResult::ForcedMovement
-  } else if hit == R::PLAYER_EVENTS_FORCED_MOVEMENT_ADDRESS {
+  } else if hit == R::PLAYER_EVENTS_WHIRLPOOL_FORCED_MOVEMENT_ADDRESS || hit == R::PLAYER_EVENTS_FORCED_MOVEMENT_ADDRESS {
     OverworldInteractionResult::ForcedMovement
   } else if hit == R::PLAYER_EVENTS_TURNING_ADDRESS {
     OverworldInteractionResult::Turned
   } else if hit == R::PLAYER_EVENTS_STEP_WALK_ADDRESS {
     let dir = gb.gb.read_memory(R::PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS);
-    OverworldInteractionResult::Walked(dir_to_input(dir))
+    OverworldInteractionResult::Walked(dir_to_input(dir), WalkType::Walk)
   } else if hit == R::PLAYER_EVENTS_STEP_BIKE_ADDRESS {
     let dir = gb.gb.read_memory(R::PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS);
-    OverworldInteractionResult::Walked(dir_to_input(dir))
+    OverworldInteractionResult::Walked(dir_to_input(dir), WalkType::Bike)
   } else if hit == R::PLAYER_EVENTS_STEP_BIKE_UPHILL_ADDRESS {
     let dir = gb.gb.read_memory(R::PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS);
-    OverworldInteractionResult::Walked(dir_to_input(dir))
+    OverworldInteractionResult::Walked(dir_to_input(dir), WalkType::BikeUphill)
   } else if hit == R::PLAYER_EVENTS_STEP_ICE_ADDRESS {
     let dir = gb.gb.read_memory(R::PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS);
-    OverworldInteractionResult::Walked(dir_to_input(dir))
+    OverworldInteractionResult::Walked(dir_to_input(dir), WalkType::Ice)
   } else if hit == R::PLAYER_EVENTS_STEP_SURF_ADDRESS {
     let dir = gb.gb.read_memory(R::PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS);
-    OverworldInteractionResult::Walked(dir_to_input(dir))
+    OverworldInteractionResult::Walked(dir_to_input(dir), WalkType::Surf)
   } else if hit == R::PLAYER_EVENTS_STEP_OUT_OF_WATER_ADDRESS {
     let dir = gb.gb.read_memory(R::PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS);
-    OverworldInteractionResult::Walked(dir_to_input(dir))
+    OverworldInteractionResult::Walked(dir_to_input(dir), WalkType::StepOutOfWater)
   } else if hit == R::PLAYER_EVENTS_JUMP_LEDGE_ADDRESS {
     OverworldInteractionResult::JumpedLedge
   } else if hit == R::PLAYER_EVENTS_EDGE_WARP_ADDRESS {
     OverworldInteractionResult::Warped
   } else if hit == R::PLAYER_EVENTS_INTERACT_OBJECT_SCRIPT_ADDRESS {
-    OverworldInteractionResult::Interact
+    OverworldInteractionResult::Interact(InteractType::ObjectScript)
   } else if hit == R::PLAYER_EVENTS_INTERACT_OBJECT_ITEMBALL_ADDRESS {
-    OverworldInteractionResult::Interact
+    OverworldInteractionResult::Interact(InteractType::ObjectItemball)
   } else if hit == R::PLAYER_EVENTS_INTERACT_OBJECT_TRAINER_ADDRESS {
-    OverworldInteractionResult::Interact
+    OverworldInteractionResult::Interact(InteractType::ObjectTrainer)
   } else if hit == R::PLAYER_EVENTS_INTERACT_BG_READ_ADDRESS {
-    OverworldInteractionResult::Interact
+    OverworldInteractionResult::Interact(InteractType::BgRead)
   } else if hit == R::PLAYER_EVENTS_INTERACT_BG_HIDDEN_ITEM_ADDRESS {
-    OverworldInteractionResult::Interact
+    OverworldInteractionResult::Interact(InteractType::BgHiddenItem)
   } else if hit == R::PLAYER_EVENTS_INTERACT_BG_THENREAD_ADDRESS {
-    OverworldInteractionResult::Interact
+    OverworldInteractionResult::Interact(InteractType::BgThenRead)
   } else if hit == R::PLAYER_EVENTS_INTERACT_TILE_COLLISION_ADDRESS {
-    OverworldInteractionResult::Interact
+    OverworldInteractionResult::Interact(InteractType::TileCollision)
   } else if hit == R::PLAYER_EVENTS_START_MENU_ADDRESS {
     OverworldInteractionResult::StartMenu
   } else if hit == R::PLAYER_EVENTS_SELECT_MENU_ADDRESS {
@@ -217,7 +233,7 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen2MapEventsAddres
   } else {
     OverworldInteractionResult::Unknown
   };
-  if let OverworldInteractionResult::Walked(dir) = result {
+  if let OverworldInteractionResult::Walked(dir, walk_type) = result {
     let hit = gb.step_until(&[ // maybe use run_until_or_next_input_use
         R::PLAYER_EVENTS_INTERACT_OBJECT_SCRIPT_ADDRESS,
         R::PLAYER_EVENTS_INTERACT_OBJECT_ITEMBALL_ADDRESS,
@@ -231,25 +247,25 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen2MapEventsAddres
         R::PLAYER_EVENTS_NO_EVENTS_ADDRESS,
     ]);
     if hit == R::PLAYER_EVENTS_INTERACT_OBJECT_SCRIPT_ADDRESS {
-      OverworldInteractionResult::Interact
+      OverworldInteractionResult::Interact(InteractType::ObjectScript)
     } else if hit == R::PLAYER_EVENTS_INTERACT_OBJECT_ITEMBALL_ADDRESS {
-      OverworldInteractionResult::Interact
+      OverworldInteractionResult::Interact(InteractType::ObjectItemball)
     } else if hit == R::PLAYER_EVENTS_INTERACT_OBJECT_TRAINER_ADDRESS {
-      OverworldInteractionResult::Interact
+      OverworldInteractionResult::Interact(InteractType::ObjectTrainer)
     } else if hit == R::PLAYER_EVENTS_INTERACT_BG_READ_ADDRESS {
-      OverworldInteractionResult::Interact
+      OverworldInteractionResult::Interact(InteractType::BgRead)
     } else if hit == R::PLAYER_EVENTS_INTERACT_BG_HIDDEN_ITEM_ADDRESS {
-      OverworldInteractionResult::Interact
+      OverworldInteractionResult::Interact(InteractType::BgHiddenItem)
     } else if hit == R::PLAYER_EVENTS_INTERACT_BG_THENREAD_ADDRESS {
-      OverworldInteractionResult::Interact
+      OverworldInteractionResult::Interact(InteractType::BgThenRead)
     } else if hit == R::PLAYER_EVENTS_INTERACT_TILE_COLLISION_ADDRESS {
-      OverworldInteractionResult::Interact
+      OverworldInteractionResult::Interact(InteractType::TileCollision)
     } else if hit == R::PLAYER_EVENTS_START_MENU_ADDRESS {
       OverworldInteractionResult::StartMenu
     } else if hit == R::PLAYER_EVENTS_SELECT_MENU_ADDRESS {
       OverworldInteractionResult::SelectMenu
     } else if hit == R::PLAYER_EVENTS_NO_EVENTS_ADDRESS {
-      if dir.is_empty() { OverworldInteractionResult::NoEvents } else { OverworldInteractionResult::Walked(dir) }
+      if dir.is_empty() { OverworldInteractionResult::NoEvents } else { OverworldInteractionResult::Walked(dir, walk_type) }
     } else {
       OverworldInteractionResult::Unknown
     }

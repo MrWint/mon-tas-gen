@@ -6,8 +6,8 @@ use std::fs::File;
 use std::iter::FromIterator;
 use util::*;
 
-pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
-pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 256;
+pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 256;
+pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 4096;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
 /// ```StateBuffer```s have a maximum size, and prune excess states if they become too full.
@@ -20,22 +20,31 @@ pub struct StateBuffer {
   max_size: usize,
 }
 
-impl StateBuffer {
-  pub fn new() -> Self {
+impl Default for StateBuffer {
+  fn default() -> Self {
     StateBuffer {
-      states: HashMap::new(),
+      states: HashMap::with_capacity(STATE_BUFFER_DEFAULT_MAX_SIZE),
+      max_size: STATE_BUFFER_DEFAULT_MAX_SIZE,
+    }
+  }
+}
+impl StateBuffer {
+  pub fn new() -> Self { Default::default() }
+  pub fn empty() -> Self {
+    StateBuffer {
+      states: HashMap::with_capacity(0),
       max_size: STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
   pub fn with_max_size(max_size: usize) -> Self {
     StateBuffer {
-      states: HashMap::new(),
-      max_size: max_size,
+      states: HashMap::with_capacity(max_size),
+      max_size,
     }
   }
   pub fn unbounded() -> Self {
     StateBuffer {
-      states: HashMap::new(),
+      states: HashMap::with_capacity(STATE_BUFFER_UNBOUNDED_MAX_SIZE),
       max_size: STATE_BUFFER_UNBOUNDED_MAX_SIZE,
     }
   }
@@ -75,20 +84,37 @@ impl StateBuffer {
       let max_cycle_count = self.states.values().map(|s| s.cycle_count).max().unwrap();
       for s in self.states.values() {
         if s.cycle_count < max_cycle_count { continue; }
-        let s_dsum = s.get_d_sum();
-        let mut dsum_difference_metric = 0.0;
-        for s2 in self.states.values() {
-          let s2_dsum = s2.get_d_sum();
-          let dsum_difference: u8 = min(s_dsum.wrapping_sub(s2_dsum), s2_dsum.wrapping_sub(s_dsum));
-          dsum_difference_metric += (dsum_difference as f64).sqrt();
-        }
-        if dsum_difference_metric < tbr_key_metric {
+        let metric = self.get_dsum_metric(s);
+        // let metric = self.get_div_state_metric(s);
+        if metric < tbr_key_metric {
           tbr_key = s.rng_state;
-          tbr_key_metric = dsum_difference_metric;
+          tbr_key_metric = metric;
         }
       }
       self.states.remove(&tbr_key);
     }
+  }
+  #[allow(dead_code)]
+  fn get_dsum_metric(&self, s: &State) -> f64 {
+    let s_dsum = s.get_d_sum();
+    let mut dsum_difference_metric = 0.0;
+    for s2 in self.states.values() {
+      let s2_dsum = s2.get_d_sum();
+      let dsum_difference: u8 = min(s_dsum.wrapping_sub(s2_dsum), s2_dsum.wrapping_sub(s_dsum));
+      dsum_difference_metric += f64::from(dsum_difference).sqrt();
+    }
+    dsum_difference_metric
+  }
+  #[allow(dead_code)]
+  fn get_div_state_metric(&self, s: &State) -> f64 {
+    let div_state = s.get_div_state();
+    let mut div_state_difference_metric = 0.0;
+    for s2 in self.states.values() {
+      let s2_div_state = s2.get_div_state();
+      let div_state_difference: u16 = min(div_state.wrapping_sub(s2_div_state) & 0x3fff, s2_div_state.wrapping_sub(div_state) & 0x3fff);
+      div_state_difference_metric += f64::from(div_state_difference).sqrt();
+    }
+    div_state_difference_metric
   }
 
   pub fn is_empty(&self) -> bool {
@@ -126,6 +152,7 @@ impl FromIterator<State> for StateBuffer {
 fn _into_iterator_get_value_fn(pair: (u32, State)) -> State { pair.1 }
 impl IntoIterator for StateBuffer {
   type Item = State;
+  #[allow(clippy::type_complexity)]
   type IntoIter = ::std::iter::Map<::std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {
@@ -147,7 +174,9 @@ impl fmt::Display for StateBuffer {
     let min_cycle_count = self.states.values().map(|s| s.cycle_count).min().unwrap_or(0);
     let max_dsum = self.states.values().map(|s| s.get_d_sum()).max().unwrap_or(0);
     let min_dsum = self.states.values().map(|s| s.get_d_sum()).min().unwrap_or(0);
+    let max_div = self.states.values().map(|s| s.get_div_state()).max().unwrap_or(0);
+    let min_div = self.states.values().map(|s| s.get_div_state()).min().unwrap_or(0);
 
-    write!(f, "StateBuffer len {}, times {}-{}, dsums {:#x}-{:#x}", self.states.len(), to_human_readable_time(min_cycle_count), to_human_readable_time(max_cycle_count), min_dsum, max_dsum)
+    write!(f, "StateBuffer len {}, times {}-{}, dsums {:#x}-{:#x}, divs {:#x}-{:#x}", self.states.len(), to_human_readable_time(min_cycle_count), to_human_readable_time(max_cycle_count), min_dsum, max_dsum, min_div, max_div)
   }
 }

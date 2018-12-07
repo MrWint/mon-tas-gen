@@ -17,8 +17,8 @@ impl SkipTextsSegment {
     assert!(num_texts > 0);
     assert!(!confirm_input.contains(Input::A) || !confirm_input.contains(Input::B));
     SkipTextsSegment {
-      num_texts: num_texts,
-      confirm_input: confirm_input,
+      num_texts,
+      confirm_input,
       buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }

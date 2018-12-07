@@ -32,11 +32,12 @@ impl WithDebugOutput for WalkToSegment {
 }
 
 impl<T: JoypadAddresses + RngAddresses + Gen2MapAddresses + Gen2MapEventsAddresses> ::segment::Segment<T> for WalkToSegment {
+  #[allow(clippy::cyclomatic_complexity)]
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     let initial_states: Vec<_> = iter.into_iter().collect();
     assert!(!initial_states.is_empty());
     gb.restore(&initial_states[0]);
-    let map = super::map::Map::new().load_gen2_map(gb);
+    let map = super::map::Map::default().load_gen2_map(gb);
     if self.debug_output {
       println!("WalkToSegment navigate to ({}, {})", self.dest_x as isize-6, self.dest_y as isize-6);
       println!("tile collisions:");
@@ -97,7 +98,7 @@ impl<T: JoypadAddresses + RngAddresses + Gen2MapAddresses + Gen2MapEventsAddress
       for x in 0..map.width {
         for y in 0..map.height {
           if distances[map.width * y + x] == cur_dist {
-            let sb = ::std::mem::replace(buffers.get_mut(map.width * y + x).unwrap(), StateBuffer::new());
+            let sb = ::std::mem::replace(&mut buffers[map.width * y + x], StateBuffer::new());
             if sb.is_empty() { continue; }
             if self.debug_output { println!("processing states at ({},{}) with dist {}, statebuffer {}", x as isize-6, y as isize-6, cur_dist, sb); }
             for s in sb.into_iter() {
@@ -111,7 +112,7 @@ impl<T: JoypadAddresses + RngAddresses + Gen2MapAddresses + Gen2MapEventsAddress
 
                 gb.restore(&s);
                 let mut s = gb.save();
-                for _skips in 0..MAX_WALK_STEP_SKIPS+1 {
+                for _skips in 0..=MAX_WALK_STEP_SKIPS {
                   let facing_dir = match gb.gb.read_memory(T::PLAYER_DIRECTION_MEM_ADDRESS) & 0b1100 {
                     0x0 => Input::DOWN,
                     0x4 => Input::UP,

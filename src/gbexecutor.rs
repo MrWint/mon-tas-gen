@@ -1,7 +1,6 @@
 use gambatte::*;
 use gb::*;
 use rom::*;
-use segment::*;
 use statebuffer::*;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -11,52 +10,24 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-pub trait GbExecutor<R: JoypadAddresses + RngAddresses + TextAddresses> {
-  fn execute<O: Send + 'static, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<O>) + Send + Clone + 'static>(&mut self, states: I, f: F) -> SdlUpdatingIter<O>;
+pub trait StateKey: Eq + Hash + Debug + Send + 'static {}
+impl<T: Eq + Hash + Debug + Send + 'static> StateKey for T {}
+
+pub trait GbExecutor<R: Rom> {
+  fn execute<K: StateKey, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> SdlUpdatingIter<(K, State)>;
   fn get_initial_state(&mut self) -> State;
-
-  fn execute_fn_sized<I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>) + Send + Clone + 'static>(&mut self, sb: I, f: F, buffer_size: usize) -> StateBuffer {
-    
-    StateBuffer::from_iter_sized(self.execute(sb, move |gb, s, tx| {
-      gb.restore(&s);
-      f(gb);
-      tx.send(gb.save()).unwrap();
-    }), buffer_size)
-  }
-
-  fn execute_split_fn_sized<K: Eq + Hash + Debug + Send + 'static, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Clone + 'static>(&mut self, sb: I, f: F, buffer_size: usize) -> HashMap<K, StateBuffer> {
-    let mut result: HashMap<K, StateBuffer> = HashMap::new();
-    for (value, s) in self.execute(sb, f) {
-      result.entry(value).or_insert(StateBuffer::with_max_size(buffer_size)).add_state(s);
-    }
-    result
-  }
-
-  fn execute_segment<I: IntoIterator<Item=State>>(&mut self, sb: I, input: Input) -> StateBuffer {
-    self.execute(sb, move |gb, s, tx| {
-      tx.send(MoveSegment::new(input).with_max_skips(10).execute(gb, vec![s])).unwrap();
-    }).flatten().collect()
-  }
-
-  fn execute_text_segment<I: IntoIterator<Item=State>>(&mut self, sb: I, num: u32, input: Input) -> StateBuffer {
-    self.execute(sb, move |gb, s, tx| {
-      tx.send(SkipTextsSegment::new(num, input).execute(gb, vec![s])).unwrap();
-    }).flatten().collect()
-  }
 }
 
 pub struct SingleGb<R> {
   gb: Gb<R>,
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> GbExecutor<R> for SingleGb<R> {
-  fn execute<O: Send + 'static, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<O>) + Send + Clone + 'static>(&mut self, states: I, f: F) -> SdlUpdatingIter<O> {
-    let (tx, rx) = channel::<O>();
-
-    for s in states {
+impl<R: Rom> GbExecutor<R> for SingleGb<R> {
+  fn execute<K: StateKey, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, sb: I, f: F) -> SdlUpdatingIter<(K, State)> {
+    let (tx, rx) = channel::<(K, State)>();
+    for s in sb {
       f(&mut self.gb, s, tx.clone());
     }
-
-    SdlUpdatingIter { rx: rx }
+    SdlUpdatingIter { rx }
   }
 
   fn get_initial_state(&mut self) -> State {
@@ -78,20 +49,11 @@ impl<R: BasicRomInfo + JoypadAddresses + RngAddresses> SingleGb<R> {
   }
 }
 
-trait FnBox<R>: Send {
-  fn call_box(self: Box<Self>, gb: &mut Gb<R>);
-}
-impl<R, F: FnOnce(&mut Gb<R>) + Send> FnBox<R> for F {
-  fn call_box(self: Box<F>, gb: &mut Gb<R>) {
-    (*self)(gb)
-  }
+pub struct GbPool<R: Rom> {
+  jobs: Sender<Box<FnOnce(&mut Gb<R>) + Send>>,
 }
 
-pub struct GbPool<R: 'static> {
-  jobs: Sender<Box<FnBox<R>>>,
-}
-
-impl<R: BasicRomInfo + JoypadAddresses> GbPool<R> {
+impl<R: Rom> GbPool<R> {
   pub fn with_screen() -> GbPool<R> {
     Self::new(true)
   }
@@ -105,7 +67,7 @@ impl<R: BasicRomInfo + JoypadAddresses> GbPool<R> {
       Gambatte::init_screens(num_threads as u32 /* num screens */, 1 /* scale */);
     }
 
-    let (tx, rx) = channel::<Box<FnBox<R>>>();
+    let (tx, rx) = channel::<Box<FnOnce(&mut Gb<R>) + Send>>();
 
     let job_receiver = Arc::new(Mutex::new(rx));
 
@@ -118,7 +80,7 @@ impl<R: BasicRomInfo + JoypadAddresses> GbPool<R> {
         loop {
           let message = job_receiver.lock().expect("Worker thread unable to lock job_receiver").recv();
           match message {
-            Ok(job) => job.call_box(&mut gb),
+            Ok(job) => job(&mut gb),
             Err(..) => break, // The Pool was dropped.
           };
         }
@@ -132,35 +94,59 @@ impl<R: BasicRomInfo + JoypadAddresses> GbPool<R> {
 }
 
 pub struct SdlUpdatingIter<T> {
-    rx: Receiver<T>
+    rx: Receiver<T>,
 }
 impl<T> Iterator for SdlUpdatingIter<T> {
-    type Item = T;
-    fn next(&mut self) -> Option<T> {
-      loop {
-        match self.rx.recv_timeout(Duration::from_millis(10)) {
-          Ok(item) => return Some(item),
-          Err(::std::sync::mpsc::RecvTimeoutError::Disconnected) => return None,
-          Err(::std::sync::mpsc::RecvTimeoutError::Timeout) => Gambatte::handle_sdl_events(),
-        }
+  type Item = T;
+  fn next(&mut self) -> Option<T> {
+    loop {
+      match self.rx.recv_timeout(Duration::from_millis(10)) {
+        Ok(item) => return Some(item),
+        Err(::std::sync::mpsc::RecvTimeoutError::Disconnected) => return None,
+        Err(::std::sync::mpsc::RecvTimeoutError::Timeout) => Gambatte::handle_sdl_events(),
       }
+    }
+  }
+}
+impl<K: StateKey> SdlUpdatingIter<(K, State)> {
+  #[allow(dead_code)]
+  pub fn into_state_buffer_map(self, buffer_size: usize) -> HashMap<K, StateBuffer> {
+    let mut result: HashMap<K, StateBuffer> = HashMap::new();
+    for (value, s) in self {
+      result.entry(value).or_insert_with(|| StateBuffer::with_max_size(buffer_size)).add_state(s);
+    }
+    result
+  }
+}
+impl SdlUpdatingIter<((), State)> {
+  #[allow(dead_code)]
+  pub fn into_state_buffer(self, buffer_size: usize) -> StateBuffer {
+    let mut result = StateBuffer::with_max_size(buffer_size);
+    for (_, s) in self {
+      result.add_state(s);
+    }
+    result
   }
 }
 
-impl<R: BasicRomInfo + JoypadAddresses + RngAddresses + TextAddresses> GbExecutor<R> for GbPool<R> {
-  fn execute<O: Send + 'static, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<O>) + Send + Clone + 'static>(&mut self, states: I, f: F) -> SdlUpdatingIter<O> {
-    let (tx, rx) = channel::<O>();
+type GbFn<'a, R, K> = Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync + 'a;
+impl<R: Rom> GbExecutor<R> for GbPool<R> {
+  fn execute<K: StateKey, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> SdlUpdatingIter<(K, State)> {
+    // Wrap functon in an Arc.
+    let f: Arc<GbFn<R, K>> = Arc::new(f);
+    // Erase lifetime constraints: The resulting iterator must be fully consumed before the life time of F ends (ideally within the same statement) for this to be safe.
+    let f: Arc<GbFn<'static, R, K>> = unsafe { ::std::mem::transmute(f) };
+
+    let (tx, rx) = channel::<(K, State)>();
 
     for s in states.into_iter() {
       let tx = tx.clone();
-      let f = f.clone();
-      let job = Box::new(move |gb: &mut Gb<R>| {
-        f(gb, s, tx)
-      });
+      let f = Arc::clone(&f);
+      let job = Box::new(move |gb: &mut Gb<R>| { f(gb, s, tx) });
       self.jobs.send(job).unwrap();
     }
 
-    SdlUpdatingIter { rx: rx }
+    SdlUpdatingIter { rx }
   }
 
   fn get_initial_state(&mut self) -> State {

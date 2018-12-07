@@ -1,3 +1,5 @@
+#![feature(unsized_locals)]
+
 extern crate bincode;
 #[macro_use] extern crate bitflags;
 extern crate serde;

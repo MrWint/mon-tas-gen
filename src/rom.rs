@@ -1,4 +1,9 @@
 // traits
+
+/// Minimal set of defined addresses to be usable in the Gb<R> wrapper.
+pub trait Rom: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static {}
+impl<R: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static> Rom for R {} 
+
 pub trait BasicRomInfo {
   const ROM_NAME: &'static str;
 }
@@ -21,6 +26,7 @@ pub trait TextAddresses {
   const TEXT_AFTER_JOYPAD_ADDRESS: i32; // in PrintLetterDelay, after call to Joypad happened
   const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32; // in PrintLetterDelay, after wait loop is done
   const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16; // variable which is checked in the busy-wait loop in PrintLetterDelay
+  const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32]; // addresses of usages of joypad inputs which are safe for PrintLetterDelay to spill into. Should generally be idempotent to neutral inputs without losing additional frames.
 }
 pub trait Gen1OverworldAddresses {
   const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32; // in JoypadOverworld, before call to Joypad happened
@@ -42,6 +48,7 @@ pub trait Gen1OverworldAddresses {
   const OVERWORLD_WATER_COLLISION_ADDRESS: i32;
   const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32;
   const OVERWORLD_WALKED_ADDRESS: i32;
+  const OVERWORLD_NO_ACTION_ADDRESS: i32;
 }
 pub trait Gen2MapEventsAddresses {
   const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32;
@@ -102,8 +109,15 @@ pub trait Gen2MapAddresses {
   const PLAYER_X_MEM_ADDRESS: u16; // wPlayerStandingMapX
   const PLAYER_Y_MEM_ADDRESS: u16; // wPlayerStandingMapY
 }
+pub trait Gen1DVAddresses {
+  const AFTER_DV_GENERATION_ADDRESSES: &'static [i32]; // addresses after DVs have been rolled into register a and b
+}
 pub trait Gen2DVAddresses {
   const AFTER_DV_GENERATION_ADDRESS: i32; // GeneratePartyMonStats.initializeDVs
+}
+pub trait TrainerIDAddresses {
+  const TRAINER_ID_AFTER_GENERATION_ADDRESS: i32; // after trainer ID is determined
+  const TRAINER_ID_MEM_ADDRESS: u16; // wPlayerID
 }
 pub trait Gen2DetermineMoveOrderAddresses {
   const DETERMINE_MOVE_ORDER_START_ADDRESS: i32; // DetermineMoveOrder
@@ -150,6 +164,9 @@ macro_rules! impl_red_blue_common_addresses {
       const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_38F9;
       const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_390F;
       const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5;
+      const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[
+        0x0_3883, // WaitForTextScrollButtonPress
+      ];
     }
     impl Gen1OverworldAddresses for $t {
       const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32 = 0x0_0F57;
@@ -171,6 +188,17 @@ macro_rules! impl_red_blue_common_addresses {
       const OVERWORLD_WATER_COLLISION_ADDRESS: i32 = 0x0_1001; // CollisionCheckOnWater.setCarry
       const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32 = 0x0_0931; // HandleBlackOut
       const OVERWORLD_WALKED_ADDRESS: i32 = 0x0_06B4; // CheckWarpsNoCollision
+      const OVERWORLD_NO_ACTION_ADDRESS: i32 = 0x0_04CD; // OverworldLoopLessDelay.noDirectionButtonsPressed
+    }
+    impl Gen1DVAddresses for $t {
+      const AFTER_DV_GENERATION_ADDRESSES: &'static [i32] = &[
+        0x03_73B3, // _AddPartyMon.next4
+        0x0F_6B33, // LoadEnemyMonData.storeDVs
+      ];
+    }
+    impl TrainerIDAddresses for $t {
+      const TRAINER_ID_AFTER_GENERATION_ADDRESS: i32 = 0x03_7860; // in InitPlayerData2
+      const TRAINER_ID_MEM_ADDRESS: u16 = 0xD359; // wPlayerID
     }
     impl InputIdentificationAddresses for $t {
       const II_ADDRESSES: &'static [(i32, i32, i32, &'static str)] = &[
@@ -228,6 +256,41 @@ impl TextAddresses for Yellow {
   const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_38EE;
   const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_3904;
   const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5;
+  const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[
+    0x0_3879, // WaitForTextScrollButtonPress
+  ];
+}
+impl Gen1OverworldAddresses for Yellow {
+  const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32 = 0x0_0C5B;
+  const OVERWORLD_JOYPAD_ADDRESS: i32 = 0x3_402D; // _Joypad
+  const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32 = 0x0_0C5E;
+  const OVERWORLD_WARP_FOUND_ADDRESS: i32 = 0x0_054A; // WarpFound2
+  const OVERWORLD_WARP_MAP_MEM_ADDRESS: u16 = 0xFF8B; // hWarpDestinationMap
+  const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16 = 0xD42E; // wDestinationWarpID
+  const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0794; // HandleFlyWarpOrDungeonWarp
+  const OVERWORLD_DISPLAY_TEXT_ADDRESS: i32 = 0x0_02DE; // at call DisplayTextID
+  const OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS: u16 = 0xFF8C; // hSpriteIndexOrTextID
+  const OVERWORLD_INIT_BATTLE_COMMON_ADDRESS: i32 = 0x3D_601D; // asm_f601d
+  const OVERWORLD_BATTLE_SPECIES_MEM_ADDRESS: u16 = 0xCFD7; // wEnemyMonSpecies2
+  const OVERWORLD_BATTLE_LEVEL_MEM_ADDRESS: u16 = 0xD126; // wCurEnemyLVL
+  const OVERWORLD_TURNING_DONE_ADDRESS: i32 = 0x0_0381; // at .handleDirectionButtonPress -> jp OverworldLoop
+  const OVERWORLD_MOVING_DIRECTION_MEM_ADDRESS: u16 = 0xD527; // wPlayerMovingDirection
+  const OVERWORLD_LAND_COLLISION_ADDRESS: i32 = 0x0_0A75; // CollisionCheckOnLand.setCarry
+  const OVERWORLD_LAND_COLLISION_NO_WARP_ADDRESS: i32 = 0x0_0242; // OverworldLoop
+  const OVERWORLD_WATER_COLLISION_ADDRESS: i32 = 0x0_0D08; // CollisionCheckOnWater.setCarry
+  const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32 = 0x0_0762; // HandleBlackOut
+  const OVERWORLD_WALKED_ADDRESS: i32 = 0x0_04BD; // CheckWarpsNoCollision
+  const OVERWORLD_NO_ACTION_ADDRESS: i32 = 0x0_02F8; // OverworldLoopLessDelay.noDirectionButtonsPressed
+}
+impl Gen1DVAddresses for Yellow {
+      const AFTER_DV_GENERATION_ADDRESSES: &'static [i32] = &[
+        0x03_722F, // _AddPartyMon.next4
+        0x0F_6CB9, // LoadEnemyMonData.storeDVs
+      ];
+}
+impl TrainerIDAddresses for Yellow {
+  const TRAINER_ID_AFTER_GENERATION_ADDRESS: i32 = 0x03_76e6; // in InitPlayerData2
+  const TRAINER_ID_MEM_ADDRESS: u16 = 0xD358; // wPlayerID
 }
 impl InputIdentificationAddresses for Yellow {
   const II_ADDRESSES: &'static [(i32, i32, i32, &'static str)] = &[
@@ -299,6 +362,7 @@ macro_rules! impl_gold_silver_common_addresses {
       const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_320D;
       const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_322A;
       const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xCEE9;
+      const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[];
     }
     impl InputIdentificationAddresses for $t {
       const II_ADDRESSES: &'static [(i32, i32, i32, &'static str)] = &[
@@ -360,6 +424,7 @@ impl TextAddresses for Crystal {
   const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_3168;
   const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_3185;
   const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xCFB2;
+  const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[];
 }
 impl InputIdentificationAddresses for Crystal {
   const II_ADDRESSES: &'static [(i32, i32, i32, &'static str)] = &[
@@ -477,9 +542,9 @@ impl Gen2MapEventsAddresses for Crystal {
   const PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS: u16 = 0xD22E; // wTempWildMonSpecies
   const PLAYER_EVENTS_RANDOM_ENCOUNTER_LEVEL_MEM_ADDRESS: u16 = 0xD143; // wCurPartyLevel
   const PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS: i32 = 0x25_7C41; // RunMemScript.runScript
-  const PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS: i32 = 0x_25_6936; // RunSceneScript.runScript
-  const PLAYER_EVENTS_END_BUG_CONTEST_ADDRESS: i32 = 0x_25_6966; // CheckTimeEvents.end_bug_contest
-  const PLAYER_EVENTS_PHONE_CALL_ADDRESS: i32 = 0x_24_40A2; // CheckPhoneCall.call
+  const PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS: i32 = 0x25_6936; // RunSceneScript.runScript
+  const PLAYER_EVENTS_END_BUG_CONTEST_ADDRESS: i32 = 0x25_6966; // CheckTimeEvents.end_bug_contest
+  const PLAYER_EVENTS_PHONE_CALL_ADDRESS: i32 = 0x24_40A2; // CheckPhoneCall.call
   const PLAYER_EVENTS_WHIRLPOOL_FORCED_MOVEMENT_ADDRESS: i32 = 0x20_40C2; // DoPlayerMovement.CheckTile_whirlpool
   const PLAYER_EVENTS_FORCED_MOVEMENT_ADDRESS: i32 = 0x20_413E; // DoPlayerMovement.continue_walk
   const PLAYER_EVENTS_TURNING_ADDRESS: i32 = 0x20_4167; // DoPlayerMovement.CheckTurning_turning

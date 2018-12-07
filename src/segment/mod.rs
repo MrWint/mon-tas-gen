@@ -1,15 +1,19 @@
 use gb::*;
+use gbexecutor::*;
 use rom::*;
 use statebuffer::StateBuffer;
 use std::collections::HashMap;
-use std::fmt::Debug;
-use std::hash::Hash;
 use std::iter::FromIterator;
 
 
 /// Represents a transition from one decision point to another decision point.
 pub trait Segment<R> {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer;
+}
+pub trait ParallelSegment<R: Rom> {
+  type Key: StateKey;
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
 }
 pub trait WithDebugOutput {
   fn with_debug_output(self, debug_output: bool) -> Self;
@@ -21,27 +25,27 @@ pub trait WithOutputBufferSize {
   }
 }
 pub trait SplitSegment<R> {
-  type KeyType: Eq + Hash + Debug;
+  type Key: StateKey;
 
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::KeyType, StateBuffer>;
+  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::Key, StateBuffer>;
 }
 
 
 pub trait StateBufferHashMap {
-  fn to_state_buffer(self) -> StateBuffer;
-  fn to_sized_state_buffer(self, size: usize) -> StateBuffer;
-  fn to_unbounded_state_buffer(self) -> StateBuffer;
+  fn merge_state_buffers(self) -> StateBuffer;
+  fn merge_state_buffers_sized(self, size: usize) -> StateBuffer;
+  fn merge_state_buffers_unbounded(self) -> StateBuffer;
   fn is_all_full(&self) -> bool;
   fn to_string(&self) -> String;
 }
-impl<K: Eq + Hash + Debug> StateBufferHashMap for HashMap<K, StateBuffer> {
-  fn to_state_buffer(self) -> StateBuffer {
+impl<K: StateKey, S: ::std::hash::BuildHasher> StateBufferHashMap for HashMap<K, StateBuffer, S> {
+  fn merge_state_buffers(self) -> StateBuffer {
     StateBuffer::from_iter(self.into_iter().flat_map(|(_, v)| v))
   }
-  fn to_sized_state_buffer(self, size: usize) -> StateBuffer {
+  fn merge_state_buffers_sized(self, size: usize) -> StateBuffer {
     StateBuffer::from_iter_sized(self.into_iter().flat_map(|(_, v)| v), size)
   }
-  fn to_unbounded_state_buffer(self) -> StateBuffer {
+  fn merge_state_buffers_unbounded(self) -> StateBuffer {
     StateBuffer::from_iter_unbounded(self.into_iter().flat_map(|(_, v)| v))
   }
   fn is_all_full(&self) -> bool {
@@ -49,6 +53,14 @@ impl<K: Eq + Hash + Debug> StateBufferHashMap for HashMap<K, StateBuffer> {
   }
   fn to_string(&self) -> String {
     format!("{:?}", self.iter().map(|(k, v)| (k, format!("{}", v))).collect::<HashMap<_,_>>())
+  }
+}
+pub trait SingleStateBuffer {
+  fn into_state_buffer(self) -> StateBuffer;
+}
+impl<S: ::std::hash::BuildHasher> SingleStateBuffer for HashMap<(), StateBuffer, S> {
+  fn into_state_buffer(self) -> StateBuffer {
+    self.into_iter().next().map_or(StateBuffer::empty(), |(_, v)| v)
   }
 }
 
@@ -77,11 +89,13 @@ fn is_correct_input_use<R: JoypadAddresses>(gb: &mut Gb<R>, pre_address: i32, us
 pub mod overworld;
 
 mod metric;
-pub use self::metric::Metric;
+pub use self::metric::*;
 pub use self::metric::FnMetric;
 pub use self::metric::NullMetric;
+pub use self::metric::Gen1DVMetric;
 pub use self::metric::Gen2DVMetric;
 pub use self::metric::DVs;
+pub use self::metric::TrainerIDMetric;
 
 mod applyindividuallysegment;
 pub use self::applyindividuallysegment::ApplyIndividuallySegment;

@@ -8,7 +8,6 @@ use montas::gambatte::inputs::*;
 use montas::gb::*;
 use montas::rom::*;
 use montas::segment::*;
-use montas::segment::*;
 use test::{Bencher, black_box};
 
 // #[bench]
