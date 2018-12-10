@@ -20,6 +20,10 @@ use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
+  test_gambattesdl();
+  // test_gambattedll();
+  if true {return;}
+
   // let mut gbe = SingleGb::<Crystal>::no_screen();
   let mut gbe = GbPool::<Crystal>::no_screen();
   let s = gbe.get_initial_state();
@@ -42,6 +46,35 @@ fn main() {
 
   // BlueTestSegment::run();
   // YellowTestSegment::run();
+}
+
+#[allow(dead_code)]
+fn test_gambattesdl() {
+  let sdl = montas::gambattesdl::Sdl::init_sdl(2, 3);
+  let mut gambatte1 = montas::gambattesdl::Gambatte::create_on_screen(sdl.clone(), 0, false);
+  gambatte1.load_gbc_bios("roms/gbc_bios.bin");
+  gambatte1.load_rom("roms/yellow.gbc");
+  let mut gambatte2 = montas::gambattesdl::Gambatte::create_on_screen(sdl, 1, false);
+  gambatte2.load_gbc_bios("roms/gbc_bios.bin");
+  gambatte2.load_rom("roms/crystal.gbc");
+  for _ in 0..10000 {
+    gambatte1.step();
+    gambatte2.step();
+    sleep(Duration::from_millis(2));
+  }
+}
+
+#[allow(dead_code)]
+fn test_gambattedll() {
+  montas::gambatte::Gambatte::init_screens(1 /* num screens */, 1 /* scale */);
+
+  let mut gambatte = montas::gambatte::Gambatte::create_on_screen(0, false);
+  gambatte.load_gbc_bios("roms/gbc_bios.bin");
+  gambatte.load_rom("roms/yellow.gbc");
+  for _ in 0..10000 {
+    gambatte.step();
+    sleep(Duration::from_millis(2));
+  }
 }
 
 fn test_segment_end<R: Rom>(gb: &mut Gb<R>, sb: &StateBuffer, file_name: &str) {
