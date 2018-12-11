@@ -20,7 +20,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
-  test_gambattesdl();
+  // test_gambattesdl();
   // test_gambattedll();
   // if true {return;}
 
@@ -39,7 +39,7 @@ fn main() {
   // if true {return;}
 
 
-  // playback_inputs(load_inputs("temp/blue_NSC.txt"));
+  playback_inputs(load_inputs("temp/blue_NSC.txt"));
   // convert_efl();
   // if true {return;}
 

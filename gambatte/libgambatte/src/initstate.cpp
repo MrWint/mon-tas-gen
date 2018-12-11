@@ -1291,7 +1291,6 @@ void gambatte::setInitState(SaveState &state, const bool cgb, const bool gbaCgbM
 	state.spu.ch3.nr3 = 0;
 	state.spu.ch3.nr4 = 0;
 	state.spu.ch3.wavePos = 0;
-	state.spu.ch3.sampleBuf = 0;
 	state.spu.ch3.master = false;
 	
 	state.spu.ch4.lcounter.counter = SoundUnit::COUNTER_DISABLED;

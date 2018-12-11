@@ -37,8 +37,6 @@ Channel3::Channel3() :
 	nr3(0),
 	nr4(0),
 	wavePos(0),
-	rShift(4),
-	sampleBuf(0),
 	master(false),
 	cgb(false)
 {}
@@ -48,13 +46,6 @@ void Channel3::setNr0(const unsigned data) {
 	
 	if (!(data & 0x80))
 		disableMaster();
-}
-
-void Channel3::setNr2(const unsigned data) {
-	rShift = (data >> 5 & 3U) - 1;
-	
-	if (rShift > 3)
-		rShift = 4;
 }
 
 void Channel3::setNr4(const unsigned data) {
@@ -80,14 +71,10 @@ void Channel3::setNr4(const unsigned data) {
 
 void Channel3::reset() {
 	cycleCounter = 0x1000 | (cycleCounter & 0xFFF); // cycleCounter >> 12 & 7 represents the frame sequencer position.
-
-// 	lengthCounter.reset();
-	sampleBuf = 0;
 }
 
 void Channel3::init(const bool cgb) {
 	this->cgb = cgb;
-	lengthCounter.init(cgb);
 }
 
 void Channel3::setStatePtrs(SaveState &state) {
@@ -103,11 +90,9 @@ void Channel3::loadState(const SaveState &state) {
 	nr3 = state.spu.ch3.nr3;
 	nr4 = state.spu.ch3.nr4;
 	wavePos = state.spu.ch3.wavePos & 0x1F;
-	sampleBuf = state.spu.ch3.sampleBuf;
 	master = state.spu.ch3.master;
 	
 	nr0 = state.mem.ioamhram.get()[0x11A] & 0x80;
-	setNr2(state.mem.ioamhram.get()[0x11C]);
 }
 
 void Channel3::updateWaveCounter(const unsigned long cc) {
@@ -120,17 +105,15 @@ void Channel3::updateWaveCounter(const unsigned long cc) {
 
 		wavePos += periods + 1;
 		wavePos &= 0x1F;
-
-		sampleBuf = waveRam[wavePos >> 1];
 	}
 }
 
 void Channel3::update(unsigned long cycles) {
 	cycleCounter += cycles;
 	
-	while (lengthCounter.getCounter() <= cycleCounter) {
+	if (lengthCounter.getCounter() <= cycleCounter) {
 		updateWaveCounter(lengthCounter.getCounter());
-		lengthCounter.event();
+		lengthCounter.event(); // Can only trigger once, disables afterwards.
 	}
 	updateWaveCounter(cycleCounter);
 	
@@ -159,11 +142,8 @@ SYNCFUNC(Channel3)
 	NSS(nr3);
 	NSS(nr4);
 	NSS(wavePos);
-	NSS(rShift);
-	NSS(sampleBuf);
 
 	NSS(master);
-	NSS(cgb);
 }
 
 }

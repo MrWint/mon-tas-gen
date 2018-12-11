@@ -157,7 +157,6 @@ struct SaveState {
 			unsigned char nr3;
 			unsigned char nr4;
 			unsigned char wavePos;
-			unsigned char sampleBuf;
 			bool master;
 		} ch3;
 		

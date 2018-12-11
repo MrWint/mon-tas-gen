@@ -18,7 +18,6 @@
  ***************************************************************************/
 #include "channel4.h"
 #include "../savestate.h"
-#include <algorithm>
 
 namespace gambatte {
 
@@ -35,7 +34,7 @@ void Channel4::setNr1(const unsigned data) {
 }
 
 void Channel4::setNr2(const unsigned data) {
-	if(envelopeUnit.nr2Change(data)) master = false;
+	if (envelopeUnit.nr2Change(data)) master = false;
 }
 
 void Channel4::setNr4(const unsigned data) {
@@ -45,17 +44,12 @@ void Channel4::setNr4(const unsigned data) {
 	
 	if (data & 0x80) { //init-bit
 		nr4 &= 0x7F;
-
 		master = !envelopeUnit.nr4Init();
 	}
 }
 
 void Channel4::reset() {
 	cycleCounter = 0x1000 | (cycleCounter & 0xFFF); // cycleCounter >> 12 & 7 represents the frame sequencer position.
-}
-
-void Channel4::init(const bool cgb) {
-	lengthCounter.init(cgb);
 }
 
 void Channel4::loadState(const SaveState &state) {

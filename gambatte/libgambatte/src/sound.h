@@ -69,7 +69,6 @@ public:
 
 	void set_nr30(unsigned data) { ch3.setNr0(data); }
 	void set_nr31(unsigned data) { ch3.setNr1(data); }
-	void set_nr32(unsigned data) { ch3.setNr2(data); }
 	void set_nr33(unsigned data) { ch3.setNr3(data); }
 	void set_nr34(unsigned data) { ch3.setNr4(data); }
 	unsigned waveRamRead(unsigned index) const { return ch3.waveRamRead(index); }
@@ -79,7 +78,6 @@ public:
 	void set_nr42(unsigned data) { ch4.setNr2(data); }
 	void set_nr44(unsigned data) { ch4.setNr4(data); }
 
-	void map_so();
 	unsigned getStatus() const;
 
 	template<bool isReader>void SyncState(NewState *ns);

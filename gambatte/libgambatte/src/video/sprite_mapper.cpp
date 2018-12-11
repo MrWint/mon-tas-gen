@@ -125,7 +125,6 @@ SYNCFUNC(SpriteMapper::OamReader)
 	NSS(lu);
 	NSS(lastChange);
 	NSS(largeSpritesSrc);
-	NSS(cgb_);
 }
 
 void SpriteMapper::OamReader::enableDisplay(const unsigned long cc) {

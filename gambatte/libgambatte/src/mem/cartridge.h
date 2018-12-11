@@ -29,19 +29,6 @@
 
 namespace gambatte {
 
-	//DOOM
-//enum eAddressMappingType
-//{
-//	eAddressMappingType_ROM,
-//	eAddressMappingType_RAM
-//};
-//
-//struct AddressMapping
-//{
-//	int32_t address;
-//	eAddressMappingType type;
-//};
-
 class Mbc {
 public:
 	virtual ~Mbc() {}

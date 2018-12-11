@@ -79,7 +79,6 @@ public:
 	void update(unsigned long cycles);
 	
 	void reset();
-	void init(bool cgb);
 	void loadState(const SaveState &state);
 
 	template<bool isReader>void SyncState(NewState *ns);

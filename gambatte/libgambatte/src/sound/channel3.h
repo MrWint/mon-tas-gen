@@ -50,9 +50,7 @@ class Channel3 {
 	unsigned char nr3;
 	unsigned char nr4;
 	unsigned char wavePos;
-	unsigned char rShift;
-	unsigned char sampleBuf;
-	
+
 	bool master;
 	bool cgb;
 	
@@ -67,7 +65,6 @@ public:
 	void loadState(const SaveState &state);
 	void setNr0(unsigned data);
 	void setNr1(unsigned data) { lengthCounter.nr1Change(data, nr4, cycleCounter); }
-	void setNr2(unsigned data);
 	void setNr3(unsigned data) { nr3 = data; }
 	void setNr4(unsigned data);
 	void update(unsigned long cycles);

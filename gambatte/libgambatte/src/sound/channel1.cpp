@@ -171,10 +171,6 @@ void Channel1::reset() {
 	setEvent();
 }
 
-void Channel1::init(const bool cgb) {
-	lengthCounter.init(cgb);
-}
-
 void Channel1::loadState(const SaveState &state) {
 	sweepUnit.loadState(state);
 	dutyUnit.loadState(state.spu.ch1.duty, state.spu.ch1.nr4);

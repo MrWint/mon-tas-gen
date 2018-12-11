@@ -20,8 +20,8 @@
 #define SOUND_CHANNEL4_H
 
 #include "gbint.h"
-#include "master_disabler.h"
 #include "length_counter.h"
+#include "master_disabler.h"
 #include "envelope_unit.h"
 #include "newstate.h"
 
@@ -50,7 +50,6 @@ public:
 	void update(unsigned long cycles);
 	
 	void reset();
-	void init(bool cgb);
 	void loadState(const SaveState &state);
 
 	template<bool isReader>void SyncState(NewState *ns);

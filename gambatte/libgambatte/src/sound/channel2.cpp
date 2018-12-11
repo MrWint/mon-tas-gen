@@ -34,8 +34,7 @@ void Channel2::setNr1(const unsigned data) {
 }
 
 void Channel2::setNr2(const unsigned data) {
-	if (envelopeUnit.nr2Change(data))
-		master = false;
+	if (envelopeUnit.nr2Change(data)) master = false;
 }
 
 void Channel2::setNr4(const unsigned data) {
@@ -51,10 +50,6 @@ void Channel2::setNr4(const unsigned data) {
 
 void Channel2::reset() {
 	cycleCounter = 0x1000 | (cycleCounter & 0xFFF); // cycleCounter >> 12 & 7 represents the frame sequencer position.
-}
-
-void Channel2::init(const bool cgb) {
-	lengthCounter.init(cgb);
 }
 
 void Channel2::loadState(const SaveState &state) {

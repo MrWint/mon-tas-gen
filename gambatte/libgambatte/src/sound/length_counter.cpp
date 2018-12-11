@@ -26,7 +26,6 @@ LengthCounter::LengthCounter(MasterDisabler &disabler, const unsigned mask) :
 	disableMaster(disabler),
 	lengthMask(mask)
 {
-	init(false);
 	nr1Change(0, 0, 0);
 }
 
@@ -67,10 +66,6 @@ void LengthCounter::nr4Change(const unsigned oldNr4, const unsigned newNr4, cons
 		counter = COUNTER_DISABLED;
 }
 
-void LengthCounter::init(const bool cgb) {
-	this->cgb = cgb;
-}
-
 void LengthCounter::loadState(const SaveState::SPU::LCounter &lstate, const unsigned long cc) {
 	counter = std::max(lstate.counter, cc);
 	lengthCounter = lstate.lengthCounter;
@@ -80,7 +75,6 @@ SYNCFUNC(LengthCounter)
 {
 	NSS(counter);
 	NSS(lengthCounter);
-	NSS(cgb);
 }
 
 }

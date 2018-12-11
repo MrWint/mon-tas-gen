@@ -35,13 +35,10 @@ class Channel2 {
 	EnvelopeUnit envelopeUnit;
 	
 	unsigned long cycleCounter;
-	unsigned long soMask;
 	
 	unsigned char nr4;
 	bool master;
-	
-	void setEvent();
-	
+
 public:
 	Channel2();
 	void setNr1(unsigned data);
@@ -53,7 +50,6 @@ public:
 	void update(unsigned long cycles);
 	
 	void reset();
-	void init(bool cgb);
 	void loadState(const SaveState &state);
 
 	template<bool isReader>void SyncState(NewState *ns);

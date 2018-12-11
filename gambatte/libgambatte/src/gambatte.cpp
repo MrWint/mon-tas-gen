@@ -41,9 +41,6 @@ struct GB::Priv {
 GB::GB() : p_(new Priv) {}
 
 GB::~GB() {
-	//if (p_->cpu.loaded())
-	//	p_->cpu.saveSavedata();
-	
 	delete p_;
 }
 
@@ -101,9 +98,6 @@ void GB::setRTCCallback(std::uint32_t (*callback)(void*), void* context) {
 }
 
 int GB::load(const char *romfiledata, unsigned romfilelength, const std::uint32_t now, const unsigned flags, const unsigned div) {
-	//if (p_->cpu.loaded())
-	//	p_->cpu.saveSavedata();
-	
 	const int failed = p_->cpu.load(romfiledata, romfilelength, flags & FORCE_DMG, flags & MULTICART_COMPAT);
 	
 	if (!failed) {
@@ -112,7 +106,6 @@ int GB::load(const char *romfiledata, unsigned romfilelength, const std::uint32_
 		p_->loadflags = flags;
 		setInitState(state, !(flags & FORCE_DMG), flags & GBA_CGB, now, div);
 		p_->cpu.loadState(state);
-		//p_->cpu.loadSavedata();
 	}
 	
 	return failed;
@@ -183,7 +176,6 @@ std::uint16_t GB::getDivState() {
 SYNCFUNC(GB)
 {
 	SSS(p_->cpu);
-	NSS(p_->loadflags);
 }
 
 }

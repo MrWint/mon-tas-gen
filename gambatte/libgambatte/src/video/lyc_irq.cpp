@@ -102,7 +102,6 @@ SYNCFUNC(LycIrq)
 	NSS(statRegSrc_);
 	NSS(lycReg_);
 	NSS(statReg_);
-	NSS(cgb_);
 }
 
 }

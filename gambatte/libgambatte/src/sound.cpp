@@ -50,10 +50,7 @@ PSG::PSG()
 }
 
 void PSG::init(const bool cgb) {
-	ch1.init(cgb);
-	ch2.init(cgb);
 	ch3.init(cgb);
-	ch4.init(cgb);
 }
 
 void PSG::reset() {
@@ -74,7 +71,6 @@ void PSG::loadState(const SaveState &state) {
 	ch4.loadState(state);
 	
 	lastUpdate = state.cpu.cycleCounter;
-	map_so();
 	enabled = state.mem.ioamhram.get()[0x126] >> 7 & 1;
 }
 
@@ -102,10 +98,6 @@ void PSG::resetCounter(const unsigned long newCc, const unsigned long oldCc, con
 
 unsigned PSG::fillBuffer() {
 	return bufferPos;
-}
-
-void PSG::map_so() {
-	ch1.setSo();
 }
 
 unsigned PSG::getStatus() const {

@@ -150,10 +150,6 @@ void MemPtrs::disconnectOamDmaAreas() {
 
 SYNCFUNC(MemPtrs)
 {
-	NSS(memchunk_len);
-	NSS(memchunk_saveoffs);
-	NSS(memchunk_savelen);
-
 	PSS(memchunk_ + memchunk_saveoffs, memchunk_savelen);
 
 	MSS(rmem_[0x0]);
@@ -195,8 +191,6 @@ SYNCFUNC(MemPtrs)
 	MSS(vrambankptr_);
 	MSS(rsrambankptr_);
 	MSS(wsrambankptr_);
-	MSS(rambankdata_);
-	MSS(wramdataend_);
 	NSS(oamDmaSrc_);
 	NSS(curRomBank_);
 }

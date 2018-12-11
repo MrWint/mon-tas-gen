@@ -713,8 +713,6 @@ void Memory::nontrivial_ff_write(const unsigned P, unsigned data, const unsigned
 		sound.set_nr22(data);
 		break;
 	case 0x18:
-		if (!sound.isEnabled()) return;
-		sound.generate_samples(cycleCounter, isDoubleSpeed());
 		return;
 	case 0x19:
 		if (!sound.isEnabled()) return;
@@ -735,8 +733,6 @@ void Memory::nontrivial_ff_write(const unsigned P, unsigned data, const unsigned
 		return;
 	case 0x1C:
 		if (!sound.isEnabled()) return;
-		sound.generate_samples(cycleCounter, isDoubleSpeed());
-		sound.set_nr32(data);
 		data |= 0x9F;
 		break;
 	case 0x1D:
@@ -762,7 +758,6 @@ void Memory::nontrivial_ff_write(const unsigned P, unsigned data, const unsigned
 		break;
 	case 0x22:
 		if (!sound.isEnabled()) return;
-		sound.generate_samples(cycleCounter, isDoubleSpeed());
 		break;
 	case 0x23:
 		if (!sound.isEnabled()) return;
@@ -772,12 +767,9 @@ void Memory::nontrivial_ff_write(const unsigned P, unsigned data, const unsigned
 		break;
 	case 0x24:
 		if (!sound.isEnabled()) return;
-		sound.generate_samples(cycleCounter, isDoubleSpeed());
 		break;
 	case 0x25:
 		if (!sound.isEnabled()) return;
-		sound.generate_samples(cycleCounter, isDoubleSpeed());
-		sound.map_so();
 		break;
 	case 0x26:
 		if ((ioamhram[0x126] ^ data) & 0x80) {
@@ -885,9 +877,6 @@ void Memory::nontrivial_ff_write(const unsigned P, unsigned data, const unsigned
 		display.wxChange(data, cycleCounter);
 		break;
 	case 0x4C:
-		if (biosMode) {
-			//flagClockReq(&intreq);
-		}
 		break;
 	case 0x4D:
 		if (isCgb())
@@ -1097,8 +1086,6 @@ SYNCFUNC(Memory)
 	NSS(lastOamDmaUpdate);
 	NSS(biosMode);
 	NSS(cgbSwitching);
-	NSS(agbMode);
-	NSS(gbIsCgb_);
 	NSS(stopped);
 	NSS(halttime);
 
@@ -1106,7 +1093,6 @@ SYNCFUNC(Memory)
 	SSS(tima);
 	SSS(display);
 	SSS(sound);
-	//SSS(interrupter); // no state
 
 	NSS(dmaSource);
 	NSS(dmaDestination);
