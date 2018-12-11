@@ -76,6 +76,15 @@ extern {
   fn readDivState(gb: *mut c_void) -> u16;
 }
 
+#[derive(Clone)]
+pub struct Sdl {}
+impl Sdl {
+  pub fn init_sdl(num_screens: u32, scale_factor: u32) -> Sdl {
+    unsafe { initSdlOutput(num_screens, scale_factor); }
+    Sdl {}
+  }
+}
+
 /// Thin Rust FFI wrapper around libgambatte Gameboy emulator.
 /// 
 /// # Examples
@@ -123,7 +132,7 @@ impl Gambatte {
   }
   /// Create a new Gambatte instance attached to an output screen. Requires a screen to be created using ```init_screens``` beforehand.
   #[allow(dead_code)]
-  pub fn create_on_screen(screen: i32, equal_length_frames: bool) -> Gambatte {
+  pub fn create_on_screen(_sdl: Sdl, screen: i32, equal_length_frames: bool) -> Gambatte {
     unsafe {
       Gambatte {
         gb: createGb(screen, equal_length_frames),
@@ -155,13 +164,13 @@ impl Gambatte {
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing).
   #[allow(dead_code)]
-  pub fn step(&self) {
+  pub fn step(&mut self) {
     unsafe {
       step(self.gb);
     }
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing), or until the execution reaches one of the given addresses.
-  pub fn step_until(&self, addresses: &[i32]) -> i32 {
+  pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
     unsafe {
       stepUntil(self.gb, addresses.as_ptr(), addresses.len() as i32)
     }
@@ -174,7 +183,7 @@ impl Gambatte {
     }
   }
   /// Runs the emulation until the execution reaches one of the given addresses.
-  pub fn run_until(&self, addresses: &[i32]) -> i32 {
+  pub fn run_until(&mut self, addresses: &[i32]) -> i32 {
     loop {
       unsafe {
         let hit = stepUntil(self.gb, addresses.as_ptr(), addresses.len() as i32);

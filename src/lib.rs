@@ -12,8 +12,9 @@ extern crate flate2;
 extern crate num_cpus;
 
 pub mod ftii;
-pub mod gambatte;
+pub mod gambattedll;
 pub mod gambattesdl;
+pub mod gambatte { pub use gambattesdl::*; }
 pub mod gb;
 pub mod gbexecutor;
 pub mod rom;

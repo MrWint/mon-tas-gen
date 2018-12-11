@@ -124,39 +124,47 @@ impl Gambatte {
   }
 
   /// Loads the GBC BIOS ROM from a file.
+  #[inline]
   pub fn load_gbc_bios(&self, bios_data: &[u8]) {
     unsafe {
       gambatte_loadgbcbios(self.gb, bios_data.as_ptr());
     }
   }
   /// Loads the game ROM from a file.
+  #[inline]
   pub fn load_rom(&self, rom_data: &[u8]) {
     unsafe {
       gambatte_load(self.gb, rom_data.as_ptr(), rom_data.len() as u32);
     }
   }
 
+  #[inline]
   pub unsafe fn set_video_buffer(&self, videobuf: *mut u32, pitch: i32) {
     gambatte_setvideobuffer(self.gb, videobuf, pitch);
   }
 
+  #[inline]
   pub fn set_input(&mut self, input: Input) {
     self.input_getter.input = input;
   }
   // Runs for at least the given number of samples. Returns whether a new video frame has been rendered.
+  #[inline]
   pub fn run_for(&self, samples: &mut u32) -> bool {
     unsafe {
       gambatte_runfor(self.gb, samples as *mut u32) >= 0
     }
   }
   /// Loads the game ROM from a file.
+  #[inline]
   pub fn set_hit_interrupt_address(&self, interrupts: &[i32]) {
     unsafe { gambatte_setinterruptaddresses(self.gb, interrupts.as_ptr(), interrupts.len() as i32); }
   }
+  #[inline]
   pub fn get_hit_interrupt_address(&self) -> i32 {
     unsafe { gambatte_gethitinterruptaddress(self.gb) }
   }
 
+  #[inline]
   pub fn reset(&self) {
     unsafe { gambatte_reset(self.gb, (u64::from(*self.frame + 1) * 4389 / 262_144) as u32); } // temporarily add a frame since BizHawk increases the frame before checking for resets, so current time is accurate.
   }
@@ -166,8 +174,9 @@ impl Gambatte {
     const EXTRA_DATA_LENGTH: usize = 5;
 
     let remaining_data_len = reader.get_ref().len() - reader.position() as usize;
-    let actual_len = unsafe { gambatte_newstateload(self.gb, reader.get_ref().as_ptr(), remaining_data_len as i32) } as usize;
+    let actual_len = unsafe { gambatte_newstateload(self.gb, reader.get_ref().as_ptr().offset(reader.position() as isize), remaining_data_len as i32) } as usize;
     assert!(actual_len + EXTRA_DATA_LENGTH <= remaining_data_len, "load failed, actual length {} larger than provided buffer length {}", actual_len + EXTRA_DATA_LENGTH, remaining_data_len);
+    reader.set_position(reader.position() + actual_len as u64);
 
     self.input_getter.input = Input::from_bits_truncate(reader.read_u8().unwrap());
     *self.frame = reader.read_u32::<LittleEndian>().unwrap();
@@ -180,32 +189,33 @@ impl Gambatte {
     let remaining_capacity = writer.get_ref().len() - writer.position() as usize;
     if save_state_size > remaining_capacity {
       let new_size = writer.position() as usize + save_state_size + EXTRA_DATA_LENGTH;
-      println!("save_state Vec too small, increase to {}", new_size);
+      println!("save_state Vec too small ({}), increase to {}", writer.get_ref().len(), new_size);
       writer.get_mut().resize(new_size, 0);
     }
     let actual_len = unsafe { gambatte_newstatesave(self.gb, writer.get_mut().as_mut_ptr(), save_state_size as i32) } as usize;
     assert!(actual_len == save_state_size);
+    writer.set_position(writer.position() + actual_len as u64);
 
     writer.write_u8(self.input_getter.input.bits()).unwrap();
     writer.write_u32::<LittleEndian>(*self.frame).unwrap();
   }
 
   /// Reads a byte from the given address from the memory bus, without causing emulation side-effects.
-  #[allow(dead_code)]
+  #[inline]
   pub fn read_memory(&self, address: u16) -> u8 {
     unsafe {
       gambatte_cpuread(self.gb, address)
     }
   }
   /// Writes a byte to the memory bus, as if written by the game, including side-effects and memory-mapped areas.
-  #[allow(dead_code)]
+  #[inline]
   pub fn write_memory(&self, address: u16, value: u8) {
     unsafe {
       gambatte_cpuwrite(self.gb, address, value);
     }
   }
   /// Reads the current state of the Gameboy's registers, without causing emulation side-effects.
-  #[allow(dead_code)]
+  #[inline]
   pub fn read_registers(&self) -> Registers {
     let mut registers = Registers::default();
     unsafe {
@@ -215,7 +225,7 @@ impl Gambatte {
   }
   /// Reads the current state of the Gameboy's DIV counter (used for RNG), without causing emulation side-effects.
   /// The result is a value in [0x0, 0x3fff].
-  #[allow(dead_code)]
+  #[inline]
   pub fn read_div_state(&self) -> u16 {
     unsafe {
       gambatte_getdivstate(self.gb)

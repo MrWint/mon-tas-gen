@@ -37,14 +37,14 @@ impl<R: Rom> GbExecutor<R> for SingleGb<R> {
 }
 impl<R: BasicRomInfo + JoypadAddresses + RngAddresses> SingleGb<R> {
   pub fn with_screen() -> Self {
-    Gambatte::init_screens(1 /* num screens */, 1 /* scale */);
+    let sdl = Sdl::init_sdl(1 /* num screens */, 1 /* scale */);
     SingleGb {
-      gb: Gb::<R>::create(Gambatte::create_on_screen(0 /* screen */, false /* equal length frames */)),
+      gb: Gb::<R>::create(Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */)),
     }
   }
   pub fn no_screen() -> Self {
     SingleGb {
-      gb: Gb::<R>::create(Gambatte::create_on_screen(-1 /* screen */, false /* equal length frames */)),
+      gb: Gb::<R>::create(Gambatte::create(false /* equal length frames */)),
     }
   }
 }
@@ -63,9 +63,7 @@ impl<R: Rom> GbPool<R> {
 
   fn new(has_screen: bool) -> GbPool<R> {
     let num_threads = ::num_cpus::get();
-    if has_screen {
-      Gambatte::init_screens(num_threads as u32 /* num screens */, 1 /* scale */);
-    }
+    let sdl = if has_screen { Some(Sdl::init_sdl(num_threads as u32 /* num screens */, 1 /* scale */)) } else { None };
 
     let (tx, rx) = channel::<Box<FnOnce(&mut Gb<R>) + Send>>();
 
@@ -74,8 +72,13 @@ impl<R: Rom> GbPool<R> {
     // Threadpool threads
     for i in 0..num_threads {
       let job_receiver = Arc::clone(&job_receiver);
+      let sdl = sdl.clone();
       thread::spawn(move || {
-        let mut gb = Gb::<R>::create(Gambatte::create_on_screen(if has_screen {i as i32} else {-1} /* screen */, false /* equal length frames */));
+        let mut gb = Gb::<R>::create(if has_screen {
+          Gambatte::create_on_screen(sdl.unwrap(), i as _ /* screen */, false /* equal length frames */)
+        } else {
+          Gambatte::create(false /* equal length frames */)
+        });
 
         loop {
           let message = job_receiver.lock().expect("Worker thread unable to lock job_receiver").recv();

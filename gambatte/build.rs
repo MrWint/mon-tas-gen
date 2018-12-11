@@ -5,7 +5,8 @@ use std::path::Path;
 fn main() {
   cc::Build::new()
       .cpp(true)
-      .flag("-Wno-unused-parameter")
+      .flag_if_supported("-Wno-unused-parameter")
+      .flag_if_supported("-Wno-array-bounds")
       .include(Path::new("libgambatte/include"))
       .include(Path::new("libgambatte/src"))
       .file("libgambatte/src/cinterface.cpp")

@@ -78,7 +78,7 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
 }
 impl <R: RngAddresses> Gb<R> {
   /// Saves the current execution state to a State object.
-  pub fn save(&self) -> State {
+  pub fn save(&mut self) -> State {
     assert!(!self.skipped_relevant_inputs);
     ::std::sync::Arc::new(RawState {
       // save inherent state

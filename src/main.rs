@@ -20,27 +20,26 @@ use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
-  test_gambattesdl();
+  // test_gambattesdl();
   // test_gambattedll();
-  if true {return;}
+  // if true {return;}
 
-  // let mut gbe = SingleGb::<Crystal>::no_screen();
-  let mut gbe = GbPool::<Crystal>::no_screen();
-  let s = gbe.get_initial_state();
-  let sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, vec![s]).into_state_buffer();
-  let sb = MoveSegment::new(START).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let sb = MoveSegment::new(D).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let sb = MoveSegment::new(L|A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let sb = MoveSegment::new(B).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let _sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  // let sb = gbe.execute_text_segment(sb, 1, A); // choose Boy
-  // let sb = gbe.execute_text_segment(sb, 3, B);
-  // let _sb = gbe.execute_text_segment(sb, 4, A); // time: 10:..
-  if true {return;}
+  // let mut gbe = SingleGb::<Crystal>::with_screen();
+  // // let mut gbe = GbPool::<Crystal>::no_screen();
+  // let s = gbe.get_initial_state();
+  // let sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, vec![s]).into_state_buffer();
+  // let sb = MoveSegment::new(START).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let sb = MoveSegment::new(D).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let sb = MoveSegment::new(L|A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let sb = MoveSegment::new(B).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let _sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // // let sb = gbe.execute_text_segment(sb, 1, A); // choose Boy
+  // // let sb = gbe.execute_text_segment(sb, 3, B);
+  // // let _sb = gbe.execute_text_segment(sb, 4, A); // time: 10:..
+  // if true {return;}
 
 
-  // Gambatte::init_screens(1 /* num screens */, 3 /* scale */);
-  // playback_inputs(load_inputs("temp/crystal_test.txt"));
+  playback_inputs(load_inputs("temp/blue_NSC.txt"));
   // convert_efl();
   // if true {return;}
 
@@ -57,22 +56,34 @@ fn test_gambattesdl() {
   let mut gambatte2 = montas::gambattesdl::Gambatte::create_on_screen(sdl, 1, false);
   gambatte2.load_gbc_bios("roms/gbc_bios.bin");
   gambatte2.load_rom("roms/crystal.gbc");
-  for _ in 0..10000 {
+  for _ in 0..5000 {
     gambatte1.step();
     gambatte2.step();
-    sleep(Duration::from_millis(2));
+    sleep(Duration::from_millis(0));
+  }
+  let state1 = gambatte1.save_state();
+  let state2 = gambatte2.save_state();
+  gambatte1.load_state(&state1);
+  gambatte2.load_state(&state2);
+  for _ in 0..5000 {
+    gambatte1.step();
+    gambatte2.step();
+    sleep(Duration::from_millis(0));
   }
 }
 
 #[allow(dead_code)]
 fn test_gambattedll() {
-  montas::gambatte::Gambatte::init_screens(1 /* num screens */, 1 /* scale */);
-
-  let mut gambatte = montas::gambatte::Gambatte::create_on_screen(0, false);
-  gambatte.load_gbc_bios("roms/gbc_bios.bin");
-  gambatte.load_rom("roms/yellow.gbc");
+  let sdl = montas::gambattedll::Sdl::init_sdl(2, 3);
+  let mut gambatte1 = montas::gambattedll::Gambatte::create_on_screen(sdl.clone(), 0, false);
+  gambatte1.load_gbc_bios("roms/gbc_bios.bin");
+  gambatte1.load_rom("roms/yellow.gbc");
+  let mut gambatte2 = montas::gambattedll::Gambatte::create_on_screen(sdl, 1, false);
+  gambatte2.load_gbc_bios("roms/gbc_bios.bin");
+  gambatte2.load_rom("roms/crystal.gbc");
   for _ in 0..10000 {
-    gambatte.step();
+    gambatte1.step();
+    gambatte2.step();
     sleep(Duration::from_millis(2));
   }
 }
@@ -99,8 +110,8 @@ pub struct BlueTestSegment {}
 impl BlueTestSegment {
   #[allow(dead_code)]
   fn run() {
-    Gambatte::init_screens(1 /* num screens */, 3 /* scale */);
-    let mut gb = Gb::<Blue>::create(Gambatte::create_on_screen(0 /* screen */, false /* equal length frames */));
+    let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+    let mut gb = Gb::<Blue>::create(Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */));
     let states = vec![gb.save()];
     let sb = BlueTestSegment{}.execute(&mut gb, states);
     test_segment_end(&mut gb, &sb, "temp/blue_test.txt");
@@ -195,8 +206,8 @@ pub struct YellowTestSegment {}
 impl YellowTestSegment {
   #[allow(dead_code)]
   fn run() {
-    Gambatte::init_screens(1 /* num screens */, 3 /* scale */);
-    let mut gb = Gb::<Yellow>::create(Gambatte::create_on_screen(0 /* screen */, false /* equal length frames */));
+    let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+    let mut gb = Gb::<Yellow>::create(Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */));
     let states = vec![gb.save()];
     let sb = YellowTestSegment{}.execute(&mut gb, states);
     test_segment_end(&mut gb, &sb, "temp/yellow_test.txt");
@@ -501,15 +512,16 @@ impl Segment<Crystal> for CrystalTestSegment {
 
 #[allow(dead_code)]
 fn convert_efl() {
+  let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let (hi_inputs, lo_inputs) = {
-    let mut gb = Gambatte::create_on_screen(0 /* screen */, false /* equal length frames */);
+    let mut gb = Gambatte::create_on_screen(sdl.clone(), 0 /* screen */, false /* equal length frames */);
     gb.load_gbc_bios("roms/gbc_bios.bin");
     gb.load_rom("roms/crystal.gbc");
     ftii::to_ftii::<Crystal>(gb, load_inputs("temp/crystal_test.txt"))
   };
 
   let inputs = {
-    let mut gb = Gambatte::create_on_screen(0 /* screen */, true /* equal length frames */);
+    let mut gb = Gambatte::create_on_screen(sdl, 0 /* screen */, true /* equal length frames */);
     gb.load_gbc_bios("roms/gbc_bios.bin");
     gb.load_rom("roms/crystal.gbc");
     ftii::from_ftii::<Crystal>(gb, hi_inputs, lo_inputs)
@@ -539,12 +551,14 @@ fn load_inputs(file_name: &str) -> Vec<Input> {
 
 #[allow(dead_code)]
 fn playback_inputs(inputs: Vec<Input>) {
-  let mut gb = Gambatte::create_on_screen(0 /* screen */, false /* equal length frames */);
+  let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+  let mut gb = Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */);
   gb.load_gbc_bios("roms/gbc_bios.bin");
-  gb.load_rom("roms/crystal.gbc");
+  gb.load_rom("roms/blue.gb");
   for input in inputs {
     gb.set_input(input);
     gb.step();
+    sleep(Duration::from_millis(1));
   }
 }
 

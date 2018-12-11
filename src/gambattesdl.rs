@@ -11,7 +11,6 @@ use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 use std::fs::File;
 use std::io::{Cursor, Read};
 use std::ptr::Unique;
-use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::time::Duration;
@@ -20,7 +19,7 @@ use std::time::Duration;
 pub struct Sdl {
   num_screens: u32,
   screen_update_tx: Sender<u32>,
-  surface_base_pointer: *mut u32,
+  surface_base_pointer: Unique<u32>,
   surface_pitch: i32,
 }
 
@@ -49,7 +48,6 @@ impl Sdl {
       {
         let pitch: i32 = surface.pitch() as i32 / ::std::mem::size_of::<u32>() as i32;
         let pointer: *mut u32 = unsafe {(*surface.raw()).pixels } as *mut u32;
-        println!("surface pointer: {:?} pitch {}", pointer, pitch);
         surface_base_ptr_tx.send((Unique::new(pointer).unwrap(), pitch)).unwrap(); // send base pointer back to main thread.
       }
 
@@ -72,13 +70,13 @@ impl Sdl {
     Sdl {
       num_screens,
       screen_update_tx,
-      surface_base_pointer: surface_base_pointer.as_ptr(),
+      surface_base_pointer: surface_base_pointer,
       surface_pitch,
     }
   }
 
   fn get_screen_buffer_pointer_and_pitch(&self, screen: u32) -> (*mut u32, i32) {
-    (unsafe { self.surface_base_pointer.offset(screen as isize * WIDTH as isize) }, self.surface_pitch)
+    (unsafe { self.surface_base_pointer.as_ptr().offset(screen as isize * WIDTH as isize) }, self.surface_pitch)
   }
 
   fn update_screen(&self, screen: u32) {
@@ -96,9 +94,12 @@ pub struct Gambatte {
   cycle_count: u64,
   sdl: Option<Sdl>,
   screen: u32,
+  save_state_size_guess: usize,
 }
 
 impl Gambatte {
+  pub fn handle_sdl_events() { /* Compatibility function, does nothing. */ }
+
   /// Create a new Gambatte instance not attached to any output screen.
   #[allow(dead_code)]
   pub fn create(equal_length_frames: bool) -> Gambatte {
@@ -112,6 +113,7 @@ impl Gambatte {
       cycle_count: 0,
       sdl: None,
       screen: 0,
+      save_state_size_guess: 0,
     }
   }
   /// Create a new Gambatte instance attached to an output screen.
@@ -218,25 +220,24 @@ impl Gambatte {
     self.cycle_count = reader.read_u64::<LittleEndian>().unwrap();
   }
   /// Stores the current internal Gambatte state to byte data.
-  pub fn save_state(&self) -> Vec<u8> {
-    static LAST_SAVE_STATE_SIZE: AtomicUsize = ATOMIC_USIZE_INIT; // Cached last state size, to avoid multiple attempts.
-
-    let save_state_size_guess = LAST_SAVE_STATE_SIZE.load(Ordering::Relaxed);
+  pub fn save_state(&mut self) -> Vec<u8> {
     let mut data: Vec<u8> = {
-      let mut writer = Cursor::new(Vec::with_capacity(save_state_size_guess));
+      let mut data = Vec::with_capacity(self.save_state_size_guess);
+      data.resize(self.save_state_size_guess, 0);
+      let mut writer = Cursor::new(data);
       self.gb.save_state(&mut writer);
       writer.write_u8(u8::from(self.is_on_frame_boundaries)).unwrap();
       writer.write_u32::<LittleEndian>(self.overflow_samples).unwrap();
       writer.write_u64::<LittleEndian>(self.cycle_count).unwrap();
       writer.into_inner()
     };
-    if data.len() < save_state_size_guess {
-      println!("shrink save state size from {} to {}", save_state_size_guess, data.len());
-      LAST_SAVE_STATE_SIZE.store(data.len(), Ordering::Relaxed);
+    if data.len() < self.save_state_size_guess {
+      println!("shrink save state size guess from {} to {}", self.save_state_size_guess, data.len());
+      self.save_state_size_guess = data.len();
       data.shrink_to_fit();
-    } else if data.len() != save_state_size_guess {
-      println!("expand save state size from {} to {}", save_state_size_guess, data.len());
-      LAST_SAVE_STATE_SIZE.store(data.len(), Ordering::Relaxed);
+    } else if data.len() > self.save_state_size_guess {
+      println!("expand save state size guess from {} to {}", self.save_state_size_guess, data.len());
+      self.save_state_size_guess = data.len();
     }
     data
   }

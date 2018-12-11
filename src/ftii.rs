@@ -1,7 +1,7 @@
 use gambatte::*;
 use rom::*;
 
-pub fn from_ftii<R: JoypadAddresses>(gb: Gambatte, hi_inputs: Vec<i32>, lo_inputs: Vec<i32>) -> Vec<Input> {
+pub fn from_ftii<R: JoypadAddresses>(mut gb: Gambatte, hi_inputs: Vec<i32>, lo_inputs: Vec<i32>) -> Vec<Input> {
   let mut inputs:  Vec<Input> = vec![];
 
   let mut frame_start = gb.save_state();
@@ -66,7 +66,7 @@ pub fn from_ftii<R: JoypadAddresses>(gb: Gambatte, hi_inputs: Vec<i32>, lo_input
   inputs
 }
 
-pub fn to_ftii<R: JoypadAddresses>(gb: Gambatte, inputs: Vec<Input>) -> (Vec<i32>, Vec<i32>) {
+pub fn to_ftii<R: JoypadAddresses>(mut gb: Gambatte, inputs: Vec<Input>) -> (Vec<i32>, Vec<i32>) {
 
   let mut cur_frame = 0;
   let mut hi_inputs: Vec<i32> = vec![];
