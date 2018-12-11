@@ -1270,21 +1270,12 @@ void gambatte::setInitState(SaveState &state, const bool cgb, const bool gbaCgbM
 	state.spu.ch1.sweep.shadow = 0;
 	state.spu.ch1.sweep.nr0 = 0;
 	state.spu.ch1.sweep.negging = false;
-	state.spu.ch1.duty.nextPosUpdate = (state.spu.cycleCounter & ~1ul) + 37 * 2;
 	state.spu.ch1.duty.nr3 = 0;
-	state.spu.ch1.duty.pos = 0;
-	state.spu.ch1.env.counter = SoundUnit::COUNTER_DISABLED;
-	state.spu.ch1.env.volume = 0;
 	state.spu.ch1.lcounter.counter = SoundUnit::COUNTER_DISABLED;
 	state.spu.ch1.lcounter.lengthCounter = 0;
 	state.spu.ch1.nr4 = 0;
 	state.spu.ch1.master = true;
 	
-	state.spu.ch2.duty.nextPosUpdate = SoundUnit::COUNTER_DISABLED;
-	state.spu.ch2.duty.nr3 = 0;
-	state.spu.ch2.duty.pos = 0;
-	state.spu.ch2.env.counter = SoundUnit::COUNTER_DISABLED;
-	state.spu.ch2.env.volume = 0;
 	state.spu.ch2.lcounter.counter = SoundUnit::COUNTER_DISABLED;
 	state.spu.ch2.lcounter.lengthCounter = 0;
 	state.spu.ch2.nr4 = 0;
@@ -1303,10 +1294,6 @@ void gambatte::setInitState(SaveState &state, const bool cgb, const bool gbaCgbM
 	state.spu.ch3.sampleBuf = 0;
 	state.spu.ch3.master = false;
 	
-	state.spu.ch4.lfsr.counter = state.spu.cycleCounter + 4;
-	state.spu.ch4.lfsr.reg = 0xFF;
-	state.spu.ch4.env.counter = SoundUnit::COUNTER_DISABLED;
-	state.spu.ch4.env.volume = 0;
 	state.spu.ch4.lcounter.counter = SoundUnit::COUNTER_DISABLED;
 	state.spu.ch4.lcounter.lengthCounter = 0;
 	state.spu.ch4.nr4 = 0;

@@ -29,8 +29,6 @@ struct GB::Priv {
 	unsigned loadflags;
 	unsigned layersMask;
 
-	uint_least32_t vbuff[160*144];
-	
 	Priv() : loadflags(0), layersMask(LAYER_MASK_BG | LAYER_MASK_OBJ)
 	{
 	}
@@ -69,19 +67,6 @@ void GB::setVideoBuffer(uint_least32_t *const videoBuf, const int pitch) {
 void GB::setLayers(unsigned mask)
 {
 	p_->cpu.setLayers(mask);
-}
-
-void GB::blitTo(gambatte::uint_least32_t *videoBuf, int pitch)
-{
-	gambatte::uint_least32_t *src = p_->vbuff;
-	gambatte::uint_least32_t *dst = videoBuf;
-
-	for (int i = 0; i < 144; i++)
-	{
-		std::memcpy(dst, src, sizeof(gambatte::uint_least32_t) * 160);
-		src += 160;
-		dst += pitch;
-	}
 }
 
 void GB::reset(const std::uint32_t now, const unsigned div) {
@@ -199,7 +184,6 @@ SYNCFUNC(GB)
 {
 	SSS(p_->cpu);
 	NSS(p_->loadflags);
-	// NSS(p_->vbuff); // video buffer is write-only, no need to store it as it can't affect emulation outcomes.
 }
 
 }

@@ -24,7 +24,6 @@
 #include "length_counter.h"
 #include "duty_unit.h"
 #include "envelope_unit.h"
-#include "static_output_tester.h"
 #include "newstate.h"
 
 namespace gambatte {
@@ -52,10 +51,7 @@ class Channel1 {
 		template<bool isReader>void SyncState(NewState *ns);
 	};
 	
-	friend class StaticOutputTester<Channel1,DutyUnit>;
-	
-	StaticOutputTester<Channel1,DutyUnit> staticOutputTest;
-	DutyMasterDisabler disableMaster;
+	MasterDisabler disableMaster;
 	LengthCounter lengthCounter;
 	DutyUnit dutyUnit;
 	EnvelopeUnit envelopeUnit;
@@ -78,7 +74,6 @@ public:
 	void setNr3(unsigned data);
 	void setNr4(unsigned data);
 	
-	void setSo();
 	bool isActive() const { return master; }
 	
 	void update(unsigned long cycles);

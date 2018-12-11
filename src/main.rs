@@ -20,7 +20,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
-  // test_gambattesdl();
+  test_gambattesdl();
   // test_gambattedll();
   // if true {return;}
 
@@ -39,7 +39,7 @@ fn main() {
   // if true {return;}
 
 
-  playback_inputs(load_inputs("temp/blue_NSC.txt"));
+  // playback_inputs(load_inputs("temp/blue_NSC.txt"));
   // convert_efl();
   // if true {return;}
 
@@ -62,9 +62,9 @@ fn test_gambattesdl() {
     sleep(Duration::from_millis(0));
   }
   let state1 = gambatte1.save_state();
-  let state2 = gambatte2.save_state();
+  // let state2 = gambatte2.save_state();
   gambatte1.load_state(&state1);
-  gambatte2.load_state(&state2);
+  // gambatte2.load_state(&state2);
   for _ in 0..5000 {
     gambatte1.step();
     gambatte2.step();

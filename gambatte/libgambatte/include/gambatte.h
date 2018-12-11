@@ -66,8 +66,6 @@ public:
 	  */
 	long runFor(unsigned &samples);
 
-	void blitTo(gambatte::uint_least32_t *videoBuf, int pitch);
-
 	void setLayers(unsigned mask);
 
 	/** Reset to initial state.

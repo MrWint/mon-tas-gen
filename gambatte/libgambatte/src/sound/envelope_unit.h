@@ -19,34 +19,20 @@
 #ifndef ENVELOPE_UNIT_H
 #define ENVELOPE_UNIT_H
 
-#include "sound_unit.h"
 #include "../savestate.h"
 #include "newstate.h"
 
 namespace gambatte {
 
-class EnvelopeUnit : public SoundUnit {
-public:
-	struct VolOnOffEvent {
-		virtual ~VolOnOffEvent() {}
-		virtual void operator()(unsigned long /*cc*/) {}
-	};
-	
+class EnvelopeUnit {
 private:
-	static VolOnOffEvent nullEvent;
-	VolOnOffEvent &volOnOffEvent;
 	unsigned char nr2;
-	unsigned char volume;
-	
+
 public:
-	explicit EnvelopeUnit(VolOnOffEvent &volOnOffEvent = nullEvent);
-	void event();
-	bool dacIsOn() const { return nr2 & 0xF8; }
-	unsigned getVolume() const { return volume; }
+	EnvelopeUnit() : nr2(0) {}
 	bool nr2Change(unsigned newNr2);
-	bool nr4Init(unsigned long cycleCounter);
-	void reset();
-	void loadState(const SaveState::SPU::Env &estate, unsigned nr2, unsigned long cc);
+	bool nr4Init() { return !(nr2 & 0xF8); }
+	void loadState(unsigned nr2)  { this->nr2 = nr2; }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

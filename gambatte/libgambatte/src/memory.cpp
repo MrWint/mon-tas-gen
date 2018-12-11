@@ -715,7 +715,6 @@ void Memory::nontrivial_ff_write(const unsigned P, unsigned data, const unsigned
 	case 0x18:
 		if (!sound.isEnabled()) return;
 		sound.generate_samples(cycleCounter, isDoubleSpeed());
-		sound.set_nr23(data);
 		return;
 	case 0x19:
 		if (!sound.isEnabled()) return;
@@ -764,7 +763,6 @@ void Memory::nontrivial_ff_write(const unsigned P, unsigned data, const unsigned
 	case 0x22:
 		if (!sound.isEnabled()) return;
 		sound.generate_samples(cycleCounter, isDoubleSpeed());
-		sound.set_nr43(data);
 		break;
 	case 0x23:
 		if (!sound.isEnabled()) return;

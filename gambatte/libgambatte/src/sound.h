@@ -65,7 +65,6 @@ public:
 
 	void set_nr21(unsigned data) { ch2.setNr1(data); }
 	void set_nr22(unsigned data) { ch2.setNr2(data); }
-	void set_nr23(unsigned data) { ch2.setNr3(data); }
 	void set_nr24(unsigned data) { ch2.setNr4(data); }
 
 	void set_nr30(unsigned data) { ch3.setNr0(data); }
@@ -78,7 +77,6 @@ public:
 
 	void set_nr41(unsigned data) { ch4.setNr1(data); }
 	void set_nr42(unsigned data) { ch4.setNr2(data); }
-	void set_nr43(unsigned data) { ch4.setNr3(data); }
 	void set_nr44(unsigned data) { ch4.setNr4(data); }
 
 	void map_so();

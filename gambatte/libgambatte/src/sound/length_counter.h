@@ -38,7 +38,6 @@ public:
 	void event();
 	void nr1Change(unsigned newNr1, unsigned nr4, unsigned long cc);
 	void nr4Change(unsigned oldNr4, unsigned newNr4, unsigned long cc);
-// 	void reset();
 	void init(bool cgb);
 	void loadState(const SaveState::SPU::LCounter &lstate, unsigned long cc);
 

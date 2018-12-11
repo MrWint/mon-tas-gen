@@ -23,7 +23,6 @@
 #include "length_counter.h"
 #include "master_disabler.h"
 #include "envelope_unit.h"
-#include "static_output_tester.h"
 #include "newstate.h"
 
 namespace gambatte {
@@ -34,8 +33,6 @@ class Channel2 {
 	MasterDisabler disableMaster;
 	LengthCounter lengthCounter;
 	EnvelopeUnit envelopeUnit;
-	
-	SoundUnit *nextEventUnit;
 	
 	unsigned long cycleCounter;
 	unsigned long soMask;
@@ -49,11 +46,8 @@ public:
 	Channel2();
 	void setNr1(unsigned data);
 	void setNr2(unsigned data);
-	void setNr3(unsigned data);
 	void setNr4(unsigned data);
 	
-	void setSo();
-	// void deactivate() { disableMaster(); setEvent(); }
 	bool isActive() const { return master; }
 	
 	void update(unsigned long cycles);

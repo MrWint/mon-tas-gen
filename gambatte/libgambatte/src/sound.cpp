@@ -106,8 +106,6 @@ unsigned PSG::fillBuffer() {
 
 void PSG::map_so() {
 	ch1.setSo();
-	ch2.setSo();
-	ch4.setSo();
 }
 
 unsigned PSG::getStatus() const {

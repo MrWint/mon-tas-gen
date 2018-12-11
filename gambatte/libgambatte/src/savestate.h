@@ -122,14 +122,7 @@ struct SaveState {
 	
 	struct SPU {
 		struct Duty {
-			unsigned long nextPosUpdate;
 			unsigned char nr3;
-			unsigned char pos;
-		};
-		
-		struct Env {
-			unsigned long counter;
-			unsigned char volume;
 		};
 		
 		struct LCounter {
@@ -145,15 +138,12 @@ struct SaveState {
 				bool negging;
 			} sweep;
 			Duty duty;
-			Env env;
 			LCounter lcounter;
 			unsigned char nr4;
 			bool master;
 		} ch1;
 		
 		struct {
-			Duty duty;
-			Env env;
 			LCounter lcounter;
 			unsigned char nr4;
 			bool master;
@@ -172,11 +162,6 @@ struct SaveState {
 		} ch3;
 		
 		struct {
-			struct {
-				unsigned long counter;
-				unsigned short reg;
-			} lfsr;
-			Env env;
 			LCounter lcounter;
 			unsigned char nr4;
 			bool master;

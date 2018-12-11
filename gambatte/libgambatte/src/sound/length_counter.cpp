@@ -67,13 +67,6 @@ void LengthCounter::nr4Change(const unsigned oldNr4, const unsigned newNr4, cons
 		counter = COUNTER_DISABLED;
 }
 
-/*void LengthCounter::reset() {
-	counter = COUNTER_DISABLED;
-	
-	if (cgb)
-		lengthCounter = lengthMask + 1;
-}*/
-
 void LengthCounter::init(const bool cgb) {
 	this->cgb = cgb;
 }
