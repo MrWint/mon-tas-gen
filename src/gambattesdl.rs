@@ -200,9 +200,13 @@ impl Gambatte {
   }
   /// Runs the emulation until the execution reaches one of the given addresses.
   pub fn run_until(&mut self, addresses: &[i32]) -> i32 {
+    self.gb.set_hit_interrupt_addresses(addresses);
     loop {
-      let hit = self.step_until(addresses);
-      if hit != 0 { return hit; }
+      let hit_address = self.step_internal();
+      if hit_address != 0 {
+        self.gb.clear_hit_interrupt_addresses();
+        return hit_address;
+      }
     }
   }
 

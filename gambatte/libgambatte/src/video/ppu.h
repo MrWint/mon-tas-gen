@@ -33,16 +33,14 @@ class PPUFrameBuf {
 	uint_least32_t *buf_;
 	uint_least32_t *fbline_;
 	int pitch_;
-	
-	static uint_least32_t * nullfbline() { static uint_least32_t nullfbline_[160]; return nullfbline_; }
-	
+
 public:
-	PPUFrameBuf() : buf_(0), fbline_(nullfbline()), pitch_(0) {}
+	PPUFrameBuf() : buf_(0), fbline_(0), pitch_(0) {}
 	uint_least32_t * fb() const { return buf_; }
 	uint_least32_t * fbline() const { return fbline_; }
 	int pitch() const { return pitch_; }
-	void setBuf(uint_least32_t *const buf, const int pitch) { buf_ = buf; pitch_ = pitch; fbline_ = nullfbline(); }
-	void setFbline(const unsigned ly) { fbline_ = buf_ ? buf_ + static_cast<long>(ly) * static_cast<long>(pitch_) : nullfbline(); }
+	void setBuf(uint_least32_t *const buf, const int pitch) { buf_ = buf; pitch_ = pitch; fbline_ = 0; }
+	void setFbline(const unsigned ly) { fbline_ = buf_ ? buf_ + static_cast<long>(ly) * static_cast<long>(pitch_) : 0; }
 };
 
 struct PPUState {

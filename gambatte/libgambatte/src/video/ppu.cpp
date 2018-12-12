@@ -141,58 +141,6 @@ namespace M2 {
 			nextCall(456 - weMasterCheckAfterLyIncLineCycle(p.cgb) + m3StartLineCycle(p.cgb), M3Start::f0_, p);
 		}
 	}
-	
-	/*struct SpriteLess {
-		bool operator()(const Sprite lhs, const Sprite rhs) const {
-			return lhs.spx < rhs.spx;
-		}
-	};
-	
-	static void f0(PPUPriv &p) {
-		std::memset(&p.spLut, 0, sizeof(p.spLut));
-		p.reg0 = 0;
-		p.nextSprite = 0;
-		p.nextCallPtr = &f1_;
-		f1(p);
-	}
-	
-	static void f1(PPUPriv &p) {
-		int cycles = p.cycles;
-		unsigned oampos = p.reg0;
-		unsigned nextSprite = p.nextSprite;
-		const unsigned nly = (p.lyCounter.ly() + 1 == 154 ? 0 : p.lyCounter.ly() + 1) + ((p.lyCounter.time()-(p.now-p.cycles)) <= 4);
-		const bool ls = p.spriteMapper.largeSpritesSource();
-	
-		do {
-			const unsigned spy = p.spriteMapper.oamram()[oampos  ];
-			const unsigned spx = p.spriteMapper.oamram()[oampos+1];
-			const unsigned ydiff = spy - nly;
-			
-			if (ls ? ydiff < 16u : ydiff - 8u < 8u) {
-				p.spriteList[nextSprite].spx = spx;
-				p.spriteList[nextSprite].line = 15u - ydiff;
-				p.spriteList[nextSprite].oampos = oampos;
-				
-				if (++nextSprite == 10) {
-					cycles -= (0xA0 - 4 - oampos) >> 1;
-					oampos = 0xA0 - 4;
-				}
-			}
-			
-			oampos += 4;
-		} while ((cycles-=2) >= 0 && oampos != 0xA0);
-		
-		p.reg0 = oampos;
-		p.nextSprite = nextSprite;
-		p.cycles = cycles;
-		
-		if (oampos == 0xA0) {
-			insertionSort(p.spriteList, p.spriteList + nextSprite, SpriteLess());
-			p.spriteList[nextSprite].spx = 0xFF;
-			p.nextSprite = 0;
-			nextCall(0, M3Start::f0_, p);
-		}
-	}*/
 }
 
 namespace M3Start {
@@ -358,7 +306,9 @@ namespace M3Loop {
 				uint_least32_t *const dstend = dst + n;
 				xpos += n;
 				
-				if (!(p.lcdc & 1)) {
+				if (!dbufline) { // short-circuit pixel drawing if there's no surface to draw on. p.ntileword not updated.
+					tileMapXpos = ((tileMapXpos + (n >> 3) - 1) & 0x1F) + 1;
+				} else if (!(p.lcdc & 1)) {
 					do { *dst++ = p.bgPalette[0]; } while (dst != dstend);
 					tileMapXpos += n >> 3;
 
@@ -393,7 +343,7 @@ namespace M3Loop {
 				p.cycles = cycles;
 			}
 			
-			{
+			if (dbufline) { // short-circuit pixel drawing if there's no surface to draw on. p.spwordList not updated.
 				uint_least32_t *const dst = dbufline + (xpos - 8);
 				const unsigned tileword = -(p.lcdc & 1U) & p.ntileword;
 				
@@ -445,14 +395,6 @@ namespace M3Loop {
 								}
 
 								spword >>= n * 2;
-
-								/*do {
-								if (spword & 3)
-								dst[pos] = spPalette[spword & 3];
-
-								spword >>= 2;
-								++pos;
-								} while (--n);*/
 							} else {
 								unsigned tw = tileword >> pos * 2;
 								d += n;
@@ -497,8 +439,9 @@ namespace M3Loop {
 
 		if(!(p.layersMask & LAYER_MASK_BG))
 		{
-			for(int x=xpos,i=0;x<xend;x++,i++)
-				dbufline[i] = p.bgPalette[0]; //guessing?
+			if (dbufline) // short-circuit pixel drawing if there's no surface to draw on.
+				for(int x=xpos,i=0;x<xend;x++,i++)
+					dbufline[i] = p.bgPalette[0]; //guessing?
 			return;
 		}
 		
@@ -552,7 +495,10 @@ namespace M3Loop {
 				uint_least32_t *const dstend = dst + n;
 				xpos += n;
 				
-				do { // hot loop ~20% total cpu time
+				if (!dbufline) { // short-circuit pixel drawing if there's no surface to draw on. p.ntileword not updated.
+					tileMapXpos = ((tileMapXpos + (n >> 3) - 1) & 0x1F) + 1;
+					nattrib = tileMapLine[(tileMapXpos -1) + 0x2000];
+				} else do { // hot loop ~20% total cpu time
 					const unsigned long *const bgPalette = p.bgPalette + (nattrib & 7) * 4;
 					dst[0] = bgPalette[ ntileword & 0x0003       ];
 					dst[1] = bgPalette[(ntileword & 0x000C) >>  2];
@@ -587,7 +533,7 @@ namespace M3Loop {
 				p.cycles = cycles;
 			}
 			
-			{
+			if (dbufline) { // short-circuit pixel drawing if there's no surface to draw on. p.spwordList not updated.
 				uint_least32_t *const dst = dbufline + (xpos - 8);
 				const unsigned tileword = p.ntileword;
 				const unsigned attrib   = p.nattrib;
@@ -671,16 +617,6 @@ namespace M3Loop {
 								}
 
 								spword >>= n * 2;
-
-								/*do {
-								if ((spword & 3) && id < idtab[pos]) {
-								idtab[pos] = id;
-								dst[pos] = spPalette[spword & 3];
-								}
-
-								spword >>= 2;
-								++pos;
-								} while (--n);*/
 							} else {
 								unsigned tw = tileword >> pos * 2;
 
@@ -743,28 +679,29 @@ namespace M3Loop {
 			tileMapXpos = (p.scx + xpos + 1 - p.cgb) >> 3;
 			tileline    = (p.scy + p.lyCounter.ly()) & 7;
 		}
-		
-		if (xpos < 8) {
-			uint_least32_t prebuf[16];
-			
-			if (p.cgb) {
-				doFullTilesUnrolledCgb(p, xend < 8 ? xend : 8, prebuf + (8 - xpos), tileMapLine, tileline, tileMapXpos);
-			} else
-				doFullTilesUnrolledDmg(p, xend < 8 ? xend : 8, prebuf + (8 - xpos), tileMapLine, tileline, tileMapXpos);
-			
-			const int newxpos = p.xpos;
-			
-			if (newxpos > 8) {
-				std::memcpy(dbufline, prebuf + (8 - xpos), (newxpos - 8) * sizeof *dbufline);
-			} else if (newxpos < 8)
-				return;
-			
-			if (newxpos >= xend)
-				return;
-			
-			tileMapXpos += (newxpos - xpos) >> 3;
-		}
-		
+
+		if (dbufline) // short-circuit pixel drawing if there's no surface to draw on.
+			if (xpos < 8) {
+				uint_least32_t prebuf[16];
+				
+				if (p.cgb) {
+					doFullTilesUnrolledCgb(p, xend < 8 ? xend : 8, prebuf + (8 - xpos), tileMapLine, tileline, tileMapXpos);
+				} else
+					doFullTilesUnrolledDmg(p, xend < 8 ? xend : 8, prebuf + (8 - xpos), tileMapLine, tileline, tileMapXpos);
+				
+				const int newxpos = p.xpos;
+				
+				if (newxpos > 8) {
+					std::memcpy(dbufline, prebuf + (8 - xpos), (newxpos - 8) * sizeof *dbufline);
+				} else if (newxpos < 8)
+					return;
+				
+				if (newxpos >= xend)
+					return;
+				
+				tileMapXpos += (newxpos - xpos) >> 3;
+			}
+
 		if (p.cgb) {
 			doFullTilesUnrolledCgb(p, xend, dbufline, tileMapLine, tileline, tileMapXpos);
 		} else
@@ -783,6 +720,11 @@ namespace M3Loop {
 				++p.winYPos;
 			} else if (!p.cgb && (p.winDrawState == 0 || xpos == 166))
 				p.winDrawState |= WIN_DRAW_START;
+		}
+
+		if (!fbline) { // short-circuit pixel drawing if there's no surface to draw on. p.spwordList and p.tileword not updated.
+			p.xpos = xpos + 1;
+			return;
 		}
 		
 		const unsigned twdata = tileword & ((p.lcdc & 1) | p.cgb) * 3;

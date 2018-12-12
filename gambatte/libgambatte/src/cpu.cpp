@@ -2852,10 +2852,10 @@ void CPU::GetRegs(int *dest)
 inline unsigned fromInterruptAddress(int interruptAddress) { return ((interruptAddress >> 16) << 14) | (interruptAddress & 0x3fff); }
 void CPU::SetInterruptAddresses(int *addrs, unsigned numAddrs)
 {
-	for (int i = 0; i < numInterruptAddresses; i++) memory.clearInterrupt(fromInterruptAddress(interruptAddresses[i]));
+	for (unsigned int i = 0; i < numInterruptAddresses; i++) memory.clearInterrupt(fromInterruptAddress(interruptAddresses[i]));
 	interruptAddresses = addrs;
 	numInterruptAddresses = numAddrs;
-	for (int i = 0; i < numInterruptAddresses; i++) memory.setInterrupt(fromInterruptAddress(interruptAddresses[i]));
+	for (unsigned int i = 0; i < numInterruptAddresses; i++) memory.setInterrupt(fromInterruptAddress(interruptAddresses[i]));
 }
 
 SYNCFUNC(CPU)
