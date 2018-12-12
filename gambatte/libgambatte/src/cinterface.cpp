@@ -114,11 +114,14 @@ GBEXPORT void gambatte_getregs(GB *g, int *dest)
 	g->GetRegs(dest);
 }
 
-GBEXPORT void gambatte_setinterruptaddresses(GB *g, int *addrs, int numAddrs)
+GBEXPORT void gambatte_setinterruptaddresses(GB *g, int *addrs, unsigned numAddrs)
 {
 	g->SetInterruptAddresses(addrs, numAddrs);
 }
-
+GBEXPORT void gambatte_clearinterruptaddresses(GB *g)
+{
+	g->SetInterruptAddresses(0, 0);
+}
 GBEXPORT int gambatte_gethitinterruptaddress(GB *g)
 {
 	return g->GetHitInterruptAddress();

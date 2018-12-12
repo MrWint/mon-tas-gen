@@ -552,7 +552,7 @@ namespace M3Loop {
 				uint_least32_t *const dstend = dst + n;
 				xpos += n;
 				
-				do {
+				do { // hot loop ~20% total cpu time
 					const unsigned long *const bgPalette = p.bgPalette + (nattrib & 7) * 4;
 					dst[0] = bgPalette[ ntileword & 0x0003       ];
 					dst[1] = bgPalette[(ntileword & 0x000C) >>  2];

@@ -38,6 +38,7 @@ class MemPtrs {
 	unsigned char *memchunk_;
 	unsigned char *rambankdata_;
 	unsigned char *wramdataend_;
+	bool *interruptmemchunk_; // Somewhat wasteful but allows faster lookups
 	
 	OamDmaSrc oamDmaSrc_;
 
@@ -83,6 +84,10 @@ public:
 	void setVrambank(unsigned bank) { vrambankptr_ = vramdata() + bank * 0x2000ul - 0x8000; }
 	void setWrambank(unsigned bank);
 	void setOamDmaSrc(OamDmaSrc oamDmaSrc);
+
+	inline bool isInterrupt(unsigned romAddress) { return interruptmemchunk_[romAddress]; }
+	inline void setInterrupt(unsigned romAddress) { interruptmemchunk_[romAddress] = true; }
+	inline void clearInterrupt(unsigned romAddress) { interruptmemchunk_[romAddress] = false; }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

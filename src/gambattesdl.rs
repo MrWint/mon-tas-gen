@@ -148,13 +148,14 @@ impl Gambatte {
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing).
   pub fn step(&mut self) {
-    self.gb.set_hit_interrupt_address(&[]);
     self.step_internal();
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing), or until the execution reaches one of the given addresses.
   pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
-    self.gb.set_hit_interrupt_address(addresses);
-    self.step_internal()
+    self.gb.set_hit_interrupt_addresses(addresses);
+    let hit_address = self.step_internal();
+    self.gb.clear_hit_interrupt_addresses();
+    hit_address
   }
   fn step_internal(&mut self) -> i32 {
     if self.is_on_frame_boundaries { *self.gb.frame += 1 };
@@ -222,8 +223,12 @@ impl Gambatte {
   /// Stores the current internal Gambatte state to byte data.
   pub fn save_state(&mut self) -> Vec<u8> {
     let mut data: Vec<u8> = {
-      let mut data = Vec::with_capacity(self.save_state_size_guess);
-      data.resize(self.save_state_size_guess, 0);
+      let mut data = unsafe { // Avoid calling memset, Vec will be initialized with garbage.
+        let mut data = Vec::with_capacity(self.save_state_size_guess);
+        let resized_data = Vec::from_raw_parts(data.as_mut_ptr(), self.save_state_size_guess, self.save_state_size_guess);
+        ::std::mem::forget(data);
+        resized_data
+      };
       let mut writer = Cursor::new(data);
       self.gb.save_state(&mut writer);
       writer.write_u8(u8::from(self.is_on_frame_boundaries)).unwrap();

@@ -39,7 +39,7 @@ CPU::CPU()
   H(0x01),
   L(0x4D),
   skip(false),
-  numInterruptAddresses()
+  numInterruptAddresses(0)
 {
 }
 
@@ -508,27 +508,22 @@ void CPU::process(const unsigned long cycles) {
 		} else while (cycleCounter < memory.nextEventTime()) {
 			unsigned char opcode = 0x00;
 			
-			int FullPC = PC;
-
-			if (PC >= 0x4000 && PC <= 0x7FFF)
-				FullPC |= memory.curRomBank() << 16;
-
-			for (int i = 0; i < numInterruptAddresses; i++) {
-				if (FullPC == interruptAddresses[i]) {
-					hitInterruptAddress = interruptAddresses[i];
+			if (PC < 0x8000) {
+				unsigned int romAddress = PC;
+				unsigned int bank = 0;
+				if (PC > 0x4000) bank = memory.curRomBank(), romAddress += (bank - 1) << 14;
+				if (memory.isInterrupt(romAddress)) {
+					hitInterruptAddress = (bank << 16) | PC;
 					memory.setEndtime(cycleCounter, 0);
-					break;
+					continue;
 				}
 			}
 
-			if (!hitInterruptAddress)
-			{
-				PC_READ_FIRST(opcode);
+			PC_READ_FIRST(opcode);
 
-				if (skip) {
-					PC = (PC - 1) & 0xFFFF;
-					skip = false;
-				}
+			if (skip) {
+				PC = (PC - 1) & 0xFFFF;
+				skip = false;
 			}
 			
 			switch (opcode) {
@@ -2854,15 +2849,13 @@ void CPU::GetRegs(int *dest)
 	dest[9] = L;
 }
 
-void CPU::SetInterruptAddresses(int *addrs, int numAddrs)
+inline unsigned fromInterruptAddress(int interruptAddress) { return ((interruptAddress >> 16) << 14) | (interruptAddress & 0x3fff); }
+void CPU::SetInterruptAddresses(int *addrs, unsigned numAddrs)
 {
+	for (int i = 0; i < numInterruptAddresses; i++) memory.clearInterrupt(fromInterruptAddress(interruptAddresses[i]));
 	interruptAddresses = addrs;
 	numInterruptAddresses = numAddrs;
-}
-
-int CPU::GetHitInterruptAddress()
-{
-	return hitInterruptAddress;
+	for (int i = 0; i < numInterruptAddresses; i++) memory.setInterrupt(fromInterruptAddress(interruptAddresses[i]));
 }
 
 SYNCFUNC(CPU)

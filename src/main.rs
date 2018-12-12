@@ -24,19 +24,19 @@ fn main() {
   // test_gambattedll();
   // if true {return;}
 
-  // let mut gbe = SingleGb::<Crystal>::with_screen();
-  // // let mut gbe = GbPool::<Crystal>::no_screen();
-  // let s = gbe.get_initial_state();
-  // let sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, vec![s]).into_state_buffer();
-  // let sb = MoveSegment::new(START).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  // let sb = MoveSegment::new(D).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  // let sb = MoveSegment::new(L|A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  // let sb = MoveSegment::new(B).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  // let _sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  // // let sb = gbe.execute_text_segment(sb, 1, A); // choose Boy
-  // // let sb = gbe.execute_text_segment(sb, 3, B);
-  // // let _sb = gbe.execute_text_segment(sb, 4, A); // time: 10:..
-  // if true {return;}
+  let mut gbe = SingleGb::<Crystal>::no_screen();
+  // let mut gbe = GbPool::<Crystal>::no_screen();
+  let s = gbe.get_initial_state();
+  let sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, vec![s]).into_state_buffer();
+  let sb = MoveSegment::new(START).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  let sb = MoveSegment::new(D).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  let sb = MoveSegment::new(L|A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  let sb = MoveSegment::new(B).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  let _sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let sb = gbe.execute_text_segment(sb, 1, A); // choose Boy
+  // let sb = gbe.execute_text_segment(sb, 3, B);
+  // let _sb = gbe.execute_text_segment(sb, 4, A); // time: 10:..
+  if true {return;}
 
 
   playback_inputs(load_inputs("temp/blue_NSC.txt"));
@@ -72,21 +72,21 @@ fn test_gambattesdl() {
   }
 }
 
-#[allow(dead_code)]
-fn test_gambattedll() {
-  let sdl = montas::gambattedll::Sdl::init_sdl(2, 3);
-  let mut gambatte1 = montas::gambattedll::Gambatte::create_on_screen(sdl.clone(), 0, false);
-  gambatte1.load_gbc_bios("roms/gbc_bios.bin");
-  gambatte1.load_rom("roms/yellow.gbc");
-  let mut gambatte2 = montas::gambattedll::Gambatte::create_on_screen(sdl, 1, false);
-  gambatte2.load_gbc_bios("roms/gbc_bios.bin");
-  gambatte2.load_rom("roms/crystal.gbc");
-  for _ in 0..10000 {
-    gambatte1.step();
-    gambatte2.step();
-    sleep(Duration::from_millis(2));
-  }
-}
+// #[allow(dead_code)]
+// fn test_gambattedll() {
+//   let sdl = montas::gambattedll::Sdl::init_sdl(2, 3);
+//   let mut gambatte1 = montas::gambattedll::Gambatte::create_on_screen(sdl.clone(), 0, false);
+//   gambatte1.load_gbc_bios("roms/gbc_bios.bin");
+//   gambatte1.load_rom("roms/yellow.gbc");
+//   let mut gambatte2 = montas::gambattedll::Gambatte::create_on_screen(sdl, 1, false);
+//   gambatte2.load_gbc_bios("roms/gbc_bios.bin");
+//   gambatte2.load_rom("roms/crystal.gbc");
+//   for _ in 0..10000 {
+//     gambatte1.step();
+//     gambatte2.step();
+//     sleep(Duration::from_millis(2));
+//   }
+// }
 
 fn test_segment_end<R: Rom>(gb: &mut Gb<R>, sb: &StateBuffer, file_name: &str) {
   {

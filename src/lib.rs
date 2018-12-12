@@ -12,7 +12,7 @@ extern crate flate2;
 extern crate num_cpus;
 
 pub mod ftii;
-pub mod gambattedll;
+// pub mod gambattedll;
 pub mod gambattesdl;
 pub mod gambatte { pub use gambattesdl::*; }
 pub mod gb;

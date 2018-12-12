@@ -91,7 +91,7 @@ public:
 
 	void GetRegs(int *dest);
 
-	void SetInterruptAddresses(int *addrs, int numAddrs);
+	void SetInterruptAddresses(int *addrs, unsigned numAddrs);
 	int GetHitInterruptAddress();
 
 	std::uint16_t getDivState();

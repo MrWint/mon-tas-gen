@@ -217,6 +217,10 @@ public:
 		return (((div << 8) + cc - divLastUpdate) >> 2) & 0x3FFF;
 	}
 
+	inline bool isInterrupt(unsigned romAddress) { return cart.isInterrupt(romAddress); }
+	inline void setInterrupt(unsigned romAddress) { cart.setInterrupt(romAddress); }
+	inline void clearInterrupt(unsigned romAddress) { cart.clearInterrupt(romAddress); }
+
 	template<bool isReader>void SyncState(NewState *ns);
 };
 

@@ -91,6 +91,10 @@ public:
 		rtc.setRTCCallback(callback, context);
 	}
 
+	inline bool isInterrupt(unsigned romAddress) { return memptrs.isInterrupt(romAddress); }
+	inline void setInterrupt(unsigned romAddress) { memptrs.setInterrupt(romAddress); }
+	inline void clearInterrupt(unsigned romAddress) { memptrs.clearInterrupt(romAddress); }
+
 	template<bool isReader>void SyncState(NewState *ns);
 };
 

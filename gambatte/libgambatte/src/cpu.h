@@ -39,7 +39,7 @@ class CPU {
 	bool skip;
 	
 	int *interruptAddresses;
-	int numInterruptAddresses;
+	unsigned numInterruptAddresses;
 	int hitInterruptAddress;
 
 	void process(unsigned long cycles);
@@ -92,8 +92,8 @@ public:
 
 	void GetRegs(int *dest);
 
-	void SetInterruptAddresses(int *addrs, int numAddrs);
-	int GetHitInterruptAddress();
+	void SetInterruptAddresses(int *addrs, unsigned numAddrs);
+	inline int GetHitInterruptAddress() { return hitInterruptAddress; }
 
 	std::uint16_t getDivState() { return memory.getDivState(cycleCounter_); }
 

@@ -159,7 +159,7 @@ void GB::GetRegs(int *dest) {
 	p_->cpu.GetRegs(dest);
 }
 
-void GB::SetInterruptAddresses(int *addrs, int numAddrs)
+void GB::SetInterruptAddresses(int *addrs, unsigned numAddrs)
 {
 	p_->cpu.SetInterruptAddresses(addrs, numAddrs);
 }

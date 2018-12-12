@@ -65,7 +65,8 @@ extern {
   fn gambatte_runfor(gb: *mut c_void, samples: *mut u32) -> i32;
   fn gambatte_reset(gb: *mut c_void, now: u32);
 
-  fn gambatte_setinterruptaddresses(gb: *mut c_void, interruptAddresses: *const i32, numInterruptAddresses: i32);
+  fn gambatte_setinterruptaddresses(gb: *mut c_void, interruptAddresses: *const i32, numInterruptAddresses: u32);
+  fn gambatte_clearinterruptaddresses(gb: *mut c_void);
   fn gambatte_gethitinterruptaddress(gb: *mut c_void) -> i32;
 
   fn gambatte_newstatelen(gb: *mut c_void) -> i32;
@@ -154,10 +155,13 @@ impl Gambatte {
       gambatte_runfor(self.gb, samples as *mut u32) >= 0
     }
   }
-  /// Loads the game ROM from a file.
   #[inline]
-  pub fn set_hit_interrupt_address(&self, interrupts: &[i32]) {
-    unsafe { gambatte_setinterruptaddresses(self.gb, interrupts.as_ptr(), interrupts.len() as i32); }
+  pub fn set_hit_interrupt_addresses(&self, interrupts: &[i32]) {
+    unsafe { gambatte_setinterruptaddresses(self.gb, interrupts.as_ptr(), interrupts.len() as u32); }
+  }
+  #[inline]
+  pub fn clear_hit_interrupt_addresses(&self) {
+    unsafe { gambatte_clearinterruptaddresses(self.gb); }
   }
   #[inline]
   pub fn get_hit_interrupt_address(&self) -> i32 {
