@@ -23,12 +23,15 @@
 #include <sstream>
 #include <cstdint>
 #include "newstate.h"
+#include "cpu.h"
 
 namespace gambatte {
 class GB {
+	CPU cpu;
+	uint8_t loadflags;
+
 public:
 	GB();
-	~GB();
 	
 	enum LoadFlag {
 		FORCE_DMG        = 1, /**< Treat the ROM as not having CGB support regardless of what its header advertises. */
@@ -97,13 +100,6 @@ public:
 	void setVideoBuffer(uint32_t *const videoBuf, const size_t pitch);
 
 	template<bool isReader>void SyncState(NewState *ns);
-
-private:
-	struct Priv;
-	Priv *const p_;
-
-	GB(const GB &);
-	GB & operator=(const GB &);
 };
 }
 
