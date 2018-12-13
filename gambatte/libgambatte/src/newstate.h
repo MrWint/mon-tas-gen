@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <cstddef>
+#include <cstdint>
 
 namespace gambatte {
 
@@ -11,17 +12,17 @@ class NewState
 public:
 	virtual void Save(const void *ptr, size_t size, const char *name) = 0;
 	virtual void Load(void *ptr, size_t size, const char *name) = 0;
-	virtual void EnterSection(const char *name) { }
-	virtual void ExitSection(const char *name) { }
+	virtual void EnterSection(const char *) { }
+	virtual void ExitSection(const char *) { }
 };
 
 class NewStateDummy : public NewState
 {
 private:
-	long length;
+	size_t length;
 public:
 	NewStateDummy();
-	long GetLength() { return length; }
+	size_t GetLength() { return length; }
 	void Rewind() { length = 0; }
 	virtual void Save(const void *ptr, size_t size, const char *name);
 	virtual void Load(void *ptr, size_t size, const char *name);
@@ -30,12 +31,12 @@ public:
 class NewStateExternalBuffer : public NewState
 {
 private:
-	char *const buffer;
-	long length;
-	const long maxlength;
+	uint8_t *const buffer;
+	size_t length;
+	const size_t maxlength;
 public:
-	NewStateExternalBuffer(char *buffer, long maxlength);
-	long GetLength() { return length; }
+	NewStateExternalBuffer(uint8_t *buffer, size_t maxlength);
+	size_t GetLength() { return length; }
 	void Rewind() { length = 0; }
 	bool Overflow() { return length > maxlength; }
 	virtual void Save(const void *ptr, size_t size, const char *name);
@@ -65,7 +66,7 @@ struct FPtrs
 
 
 // first line is default value in converted enum; last line is default value in argument x
-#define EBS(x,d) do { int _ttmp = (d); if (isReader) ns->Load(&_ttmp, sizeof(_ttmp), #x); if (0)
+#define EBS(x,d) do { int32_t _ttmp = (d); if (isReader) ns->Load(&_ttmp, sizeof(_ttmp), #x); if (0)
 #define EVS(x,v,n) else if (!isReader && (x) == (v)) _ttmp = (n); else if (isReader && _ttmp == (n)) (x) = (v)
 #define EES(x,d) else if (isReader) (x) = (d); if (!isReader) ns->Save(&_ttmp, sizeof(_ttmp), #x); } while (0)
 

@@ -31,8 +31,8 @@ Channel1::SweepUnit::SweepUnit(MasterDisabler &disabler, DutyUnit &dutyUnit) :
 	negging(false)
 {}
 
-unsigned Channel1::SweepUnit::calcFreq() {
-	unsigned freq = shadow >> (nr0 & 0x07);
+uint32_t Channel1::SweepUnit::calcFreq() {
+	uint32_t freq = shadow >> (nr0 & 0x07);
 	
 	if (nr0 & 0x08) {
 		freq = shadow - freq;
@@ -47,10 +47,10 @@ unsigned Channel1::SweepUnit::calcFreq() {
 }
 
 void Channel1::SweepUnit::event() {
-	const unsigned long period = nr0 >> 4 & 0x07;
+	const uint32_t period = nr0 >> 4 & 0x07;
 	
 	if (period) {
-		const unsigned freq = calcFreq();
+		const uint32_t freq = calcFreq();
 		
 		if (!(freq & 2048) && (nr0 & 0x07)) {
 			shadow = freq;
@@ -63,19 +63,19 @@ void Channel1::SweepUnit::event() {
 		counter += 8ul << 14;
 }
 
-void Channel1::SweepUnit::nr0Change(const unsigned newNr0) {
+void Channel1::SweepUnit::nr0Change(const uint32_t newNr0) {
 	if (negging && !(newNr0 & 0x08))
 		disableMaster();
 	
 	nr0 = newNr0;
 }
 
-void Channel1::SweepUnit::nr4Init(const unsigned long cc) {
+void Channel1::SweepUnit::nr4Init(const uint32_t cc) {
 	negging = false;
 	shadow = dutyUnit.getFreq();
 	
-	const unsigned period = nr0 >> 4 & 0x07;
-	const unsigned shift = nr0 & 0x07;
+	const uint32_t period = nr0 >> 4 & 0x07;
+	const uint32_t shift = nr0 & 0x07;
 	
 	if (period | shift)
 		counter = ((cc >> 14) + (period ? period : 8)) << 14;
@@ -124,30 +124,30 @@ void Channel1::setEvent() {
 		nextEventUnit = &lengthCounter;
 }
 
-void Channel1::setNr0(const unsigned data) {
+void Channel1::setNr0(const uint32_t data) {
 	sweepUnit.nr0Change(data);
 	setEvent();
 }
 
-void Channel1::setNr1(const unsigned data) {
+void Channel1::setNr1(const uint32_t data) {
 	lengthCounter.nr1Change(data, nr4, cycleCounter);
 
 	setEvent();
 }
 
-void Channel1::setNr2(const unsigned data) {
+void Channel1::setNr2(const uint32_t data) {
 	if (envelopeUnit.nr2Change(data))
 		disableMaster();
 	
 	setEvent();
 }
 
-void Channel1::setNr3(const unsigned data) {
+void Channel1::setNr3(const uint32_t data) {
 	dutyUnit.nr3Change(data);
 	setEvent();
 }
 
-void Channel1::setNr4(const unsigned data) {
+void Channel1::setNr4(const uint32_t data) {
 	lengthCounter.nr4Change(nr4, data, cycleCounter);
 		
 	nr4 = data;
@@ -182,11 +182,11 @@ void Channel1::loadState(const SaveState &state) {
 	master = state.spu.ch1.master;
 }
 
-void Channel1::update(unsigned long cycles) {
-	const unsigned long endCycles = cycleCounter + cycles;
+void Channel1::update(uint32_t cycles) {
+	const uint32_t endCycles = cycleCounter + cycles;
 	
 	for (;;) {
-		const unsigned long nextMajorEvent = nextEventUnit->getCounter() < endCycles ? nextEventUnit->getCounter() : endCycles;
+		const uint32_t nextMajorEvent = nextEventUnit->getCounter() < endCycles ? nextEventUnit->getCounter() : endCycles;
 
 		if (cycleCounter < nextMajorEvent) {
 			cycleCounter = nextMajorEvent;
@@ -200,8 +200,8 @@ void Channel1::update(unsigned long cycles) {
 	}
 	
 	if (cycleCounter & SoundUnit::COUNTER_MAX) {
-		lengthCounter.resetCounters(cycleCounter);
-		sweepUnit.resetCounters(cycleCounter);
+		lengthCounter.resetCounters();
+		sweepUnit.resetCounters();
 		
 		cycleCounter -= SoundUnit::COUNTER_MAX;
 	}

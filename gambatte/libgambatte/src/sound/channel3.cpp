@@ -21,7 +21,7 @@
 #include <cstring>
 #include <algorithm>
 
-static inline unsigned toPeriod(const unsigned nr3, const unsigned nr4) {
+static inline uint32_t toPeriod(const uint32_t nr3, const uint32_t nr4) {
 	return 0x800 - ((nr4 << 8 & 0x700) | nr3);
 }
 
@@ -41,21 +41,21 @@ Channel3::Channel3() :
 	cgb(false)
 {}
 
-void Channel3::setNr0(const unsigned data) {
+void Channel3::setNr0(const uint32_t data) {
 	nr0 = data & 0x80;
 	
 	if (!(data & 0x80))
 		disableMaster();
 }
 
-void Channel3::setNr4(const unsigned data) {
+void Channel3::setNr4(const uint32_t data) {
 	lengthCounter.nr4Change(nr4, data, cycleCounter);
 		
 	nr4 = data & 0x7F;
 	
 	if (data & nr0/* & 0x80*/) {
 		if (!cgb && waveCounter == cycleCounter + 1) {
-			const unsigned pos = ((wavePos + 1) & 0x1F) >> 1;
+			const uint32_t pos = ((wavePos + 1) & 0x1F) >> 1;
 			
 			if (pos < 4)
 				waveRam[0] = waveRam[pos];
@@ -95,10 +95,10 @@ void Channel3::loadState(const SaveState &state) {
 	nr0 = state.mem.ioamhram.get()[0x11A] & 0x80;
 }
 
-void Channel3::updateWaveCounter(const unsigned long cc) {
+void Channel3::updateWaveCounter(const uint32_t cc) {
 	if (cc >= waveCounter) {
-		const unsigned period = toPeriod(nr3, nr4);
-		const unsigned long periods = (cc - waveCounter) / period;
+		const uint32_t period = toPeriod(nr3, nr4);
+		const uint32_t periods = (cc - waveCounter) / period;
 
 		lastReadTime = waveCounter + periods * period;
 		waveCounter = lastReadTime + period;
@@ -108,7 +108,7 @@ void Channel3::updateWaveCounter(const unsigned long cc) {
 	}
 }
 
-void Channel3::update(unsigned long cycles) {
+void Channel3::update(uint32_t cycles) {
 	cycleCounter += cycles;
 	
 	if (lengthCounter.getCounter() <= cycleCounter) {
@@ -118,7 +118,7 @@ void Channel3::update(unsigned long cycles) {
 	updateWaveCounter(cycleCounter);
 	
 	if (cycleCounter & SoundUnit::COUNTER_MAX) {
-		lengthCounter.resetCounters(cycleCounter);
+		lengthCounter.resetCounters();
 		
 		if (waveCounter != SoundUnit::COUNTER_DISABLED)
 			waveCounter -= SoundUnit::COUNTER_MAX;

@@ -29,36 +29,36 @@ class TimaInterruptRequester {
 public:
 	explicit TimaInterruptRequester(InterruptRequester &intreq) : intreq(intreq) {}
 	void flagIrq() const { intreq.flagIrq(4); }
-	unsigned long nextIrqEventTime() const { return intreq.eventTime(TIMA); }
-	void setNextIrqEventTime(const unsigned long time) const { intreq.setEventTime<TIMA>(time); }
+	uint32_t nextIrqEventTime() const { return intreq.eventTime(TIMA); }
+	void setNextIrqEventTime(const uint32_t time) const { intreq.setEventTime<TIMA>(time); }
 };
 
 class Tima {
-	unsigned long basetime_;
-	unsigned long lastUpdate_;
-	unsigned long tmatime_;
+	uint32_t basetime_;
+	uint32_t lastUpdate_;
+	uint32_t tmatime_;
 	
-	unsigned char tima_;
-	unsigned char tma_;
-	unsigned char tac_;
+	uint8_t tima_;
+	uint8_t tma_;
+	uint8_t tac_;
 	
-	void updateIrq(const unsigned long cc, const TimaInterruptRequester timaIrq) {
+	void updateIrq(const uint32_t cc, const TimaInterruptRequester timaIrq) {
 		while (cc >= timaIrq.nextIrqEventTime())
 			doIrqEvent(timaIrq);
 	}
 	
-	void updateTima(unsigned long cc);
+	void updateTima(uint32_t cc);
 	
 public:
 	Tima();
 	void loadState(const SaveState &, TimaInterruptRequester timaIrq);
-	void resetCc(unsigned long oldCc, unsigned long newCc, TimaInterruptRequester timaIrq);
+	void resetCc(uint32_t oldCc, uint32_t newCc, TimaInterruptRequester timaIrq);
 	
-	void setTima(unsigned tima, unsigned long cc, TimaInterruptRequester timaIrq);
-	void setTma(unsigned tma, unsigned long cc, TimaInterruptRequester timaIrq);
-	void setTac(unsigned tac, unsigned long cc, TimaInterruptRequester timaIrq, bool gbIsCgb);
-	void resTac(unsigned long cc, TimaInterruptRequester timaIrq);
-	unsigned tima(unsigned long cc);
+	void setTima(uint32_t tima, uint32_t cc, TimaInterruptRequester timaIrq);
+	void setTma(uint32_t tma, uint32_t cc, TimaInterruptRequester timaIrq);
+	void setTac(uint32_t tac, uint32_t cc, TimaInterruptRequester timaIrq, bool gbIsCgb);
+	void resTac(uint32_t cc, TimaInterruptRequester timaIrq);
+	uint8_t tima(uint32_t cc);
 	
 	void doIrqEvent(TimaInterruptRequester timaIrq);
 

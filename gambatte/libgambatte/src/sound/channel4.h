@@ -19,7 +19,6 @@
 #ifndef SOUND_CHANNEL4_H
 #define SOUND_CHANNEL4_H
 
-#include "gbint.h"
 #include "length_counter.h"
 #include "master_disabler.h"
 #include "envelope_unit.h"
@@ -34,20 +33,20 @@ class Channel4 {
 	LengthCounter lengthCounter;
 	EnvelopeUnit envelopeUnit;
 
-	unsigned long cycleCounter;
+	uint32_t cycleCounter;
 	
-	unsigned char nr4;
+	uint8_t nr4;
 	bool master;
 	
 public:
 	Channel4();
-	void setNr1(unsigned data);
-	void setNr2(unsigned data);
-	void setNr4(unsigned data);
+	void setNr1(uint32_t data);
+	void setNr2(uint32_t data);
+	void setNr4(uint32_t data);
 	
 	bool isActive() const { return master; }
 	
-	void update(unsigned long cycles);
+	void update(uint32_t cycles);
 	
 	void reset();
 	void loadState(const SaveState &state);

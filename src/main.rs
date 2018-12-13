@@ -24,22 +24,22 @@ fn main() {
   // test_gambattedll();
   // if true {return;}
 
-  let mut gbe = SingleGb::<Crystal>::no_screen();
+  // let mut gbe = SingleGb::<Crystal>::no_screen();
   // let mut gbe = GbPool::<Crystal>::no_screen();
-  let s = gbe.get_initial_state();
-  let sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, vec![s]).into_state_buffer();
-  let sb = MoveSegment::new(START).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let sb = MoveSegment::new(D).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let sb = MoveSegment::new(L|A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let sb = MoveSegment::new(B).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  let _sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
-  // let sb = gbe.execute_text_segment(sb, 1, A); // choose Boy
-  // let sb = gbe.execute_text_segment(sb, 3, B);
-  // let _sb = gbe.execute_text_segment(sb, 4, A); // time: 10:..
-  if true {return;}
+  // let s = gbe.get_initial_state();
+  // let sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, vec![s]).into_state_buffer();
+  // let sb = MoveSegment::new(START).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let sb = MoveSegment::new(D).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let sb = MoveSegment::new(L|A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let sb = MoveSegment::new(B).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // let _sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
+  // // let sb = gbe.execute_text_segment(sb, 1, A); // choose Boy
+  // // let sb = gbe.execute_text_segment(sb, 3, B);
+  // // let _sb = gbe.execute_text_segment(sb, 4, A); // time: 10:..
+  // if true {return;}
 
 
-  playback_inputs(load_inputs("temp/blue_NSC.txt"));
+  playback_inputs();
   // convert_efl();
   // if true {return;}
 
@@ -550,11 +550,12 @@ fn load_inputs(file_name: &str) -> Vec<Input> {
 }
 
 #[allow(dead_code)]
-fn playback_inputs(inputs: Vec<Input>) {
+fn playback_inputs() {
+  let inputs = load_inputs("temp/yellow_glitchless.txt");
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let mut gb = Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */);
   gb.load_gbc_bios("roms/gbc_bios.bin");
-  gb.load_rom("roms/blue.gb");
+  gb.load_rom("roms/yellow.gbc");
   for input in inputs {
     gb.set_input(input);
     gb.step();

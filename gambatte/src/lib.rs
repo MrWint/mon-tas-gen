@@ -57,9 +57,9 @@ extern {
   fn gambatte_loadgbcbios(gb: *mut c_void, biosdata: *const u8);
   fn gambatte_load(gb: *mut c_void, romfiledata: *const u8, romfilelength: u32);
 
-  fn gambatte_setvideobuffer(gb: *mut c_void, videobuf: *mut u32, pitch: i32);
+  fn gambatte_setvideobuffer(gb: *mut c_void, videobuf: *mut u32, pitch: usize);
 
-  fn gambatte_setinputgetter(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
+  fn gambatte_setinputgetter(gb: *mut c_void, cb: extern fn(*mut c_void) -> u8, target: *mut c_void);
   fn gambatte_setrtccallback(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
 
   fn gambatte_runfor(gb: *mut c_void, samples: *mut u32) -> i32;
@@ -69,7 +69,7 @@ extern {
   fn gambatte_clearinterruptaddresses(gb: *mut c_void);
   fn gambatte_gethitinterruptaddress(gb: *mut c_void) -> i32;
 
-  fn gambatte_newstatelen(gb: *mut c_void) -> i32;
+  fn gambatte_newstatelen(gb: *mut c_void) -> usize;
   fn gambatte_newstatesave(gb: *mut c_void, data: *mut u8, len: i32) -> i32;
   fn gambatte_newstateload(gb: *mut c_void, data: *const u8, len: i32) -> i32;
 
@@ -82,8 +82,8 @@ extern {
 pub struct InputGetter {
   input: Input,
 }
-extern fn input_getter_fn(context: *mut c_void) -> u32 {
-  unsafe { u32::from((*(context as *mut InputGetter)).input.bits()) }
+extern fn input_getter_fn(context: *mut c_void) -> u8 {
+  unsafe { (*(context as *mut InputGetter)).input.bits() }
 }
 pub type FrameCounter = u32;
 
@@ -140,7 +140,7 @@ impl Gambatte {
   }
 
   #[inline]
-  pub unsafe fn set_video_buffer(&self, videobuf: *mut u32, pitch: i32) {
+  pub unsafe fn set_video_buffer(&self, videobuf: *mut u32, pitch: usize) {
     gambatte_setvideobuffer(self.gb, videobuf, pitch);
   }
 
@@ -189,7 +189,7 @@ impl Gambatte {
   pub fn save_state(&self, writer: &mut Cursor<Vec<u8>>) {
     const EXTRA_DATA_LENGTH: usize = 5;
 
-    let save_state_size = unsafe { gambatte_newstatelen(self.gb) } as usize;
+    let save_state_size = unsafe { gambatte_newstatelen(self.gb) };
     let remaining_capacity = writer.get_ref().len() - writer.position() as usize;
     if save_state_size > remaining_capacity {
       let new_size = writer.position() as usize + save_state_size + EXTRA_DATA_LENGTH;

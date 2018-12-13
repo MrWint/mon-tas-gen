@@ -20,13 +20,13 @@ pub struct Sdl {
   num_screens: u32,
   screen_update_tx: Sender<u32>,
   surface_base_pointer: Unique<u32>,
-  surface_pitch: i32,
+  surface_pitch: usize,
 }
 
 impl Sdl {
   pub fn init_sdl(num_screens: u32, scale_factor: u32) -> Sdl {
     let (screen_update_tx, screen_update_rx) = channel::<u32>();
-    let (surface_base_ptr_tx, surface_base_ptr_rx) = channel::<(Unique<u32>, i32)>();
+    let (surface_base_ptr_tx, surface_base_ptr_rx) = channel::<(Unique<u32>, usize)>();
 
     thread::spawn(move || {
       let sdl_context = sdl2::init().unwrap();
@@ -46,7 +46,7 @@ impl Sdl {
         amask: 0x0000_0000,
       }).unwrap();
       {
-        let pitch: i32 = surface.pitch() as i32 / ::std::mem::size_of::<u32>() as i32;
+        let pitch: usize = surface.pitch() as usize / ::std::mem::size_of::<u32>();
         let pointer: *mut u32 = unsafe {(*surface.raw()).pixels } as *mut u32;
         surface_base_ptr_tx.send((Unique::new(pointer).unwrap(), pitch)).unwrap(); // send base pointer back to main thread.
       }
@@ -75,7 +75,7 @@ impl Sdl {
     }
   }
 
-  fn get_screen_buffer_pointer_and_pitch(&self, screen: u32) -> (*mut u32, i32) {
+  fn get_screen_buffer_pointer_and_pitch(&self, screen: u32) -> (*mut u32, usize) {
     (unsafe { self.surface_base_pointer.as_ptr().offset(screen as isize * WIDTH as isize) }, self.surface_pitch)
   }
 

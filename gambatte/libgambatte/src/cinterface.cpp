@@ -33,88 +33,87 @@ GBEXPORT void gambatte_destroy(GB *g)
 	delete g;
 }
 
-GBEXPORT int gambatte_load(GB *g, const char *romfiledata, unsigned romfilelength)
+GBEXPORT int32_t gambatte_load(GB *g, const uint8_t *romfiledata, uint32_t romfilelength)
 {
-	int ret = g->load(romfiledata, romfilelength, 0 /* now */, GB::GBA_CGB, 0 /* div */);
+	int32_t ret = g->load(romfiledata, romfilelength, 0 /* now */, GB::GBA_CGB, 0 /* div */);
 	g->setLayers(0x7);
 	return ret;
 }
 
-GBEXPORT int gambatte_loadgbcbios(GB* g, const char* biosfiledata)
+GBEXPORT void gambatte_loadgbcbios(GB* g, const uint8_t* biosfiledata)
 {
-	int ret = g->loadGBCBios(biosfiledata);
-	return ret;
+	g->loadGBCBios(biosfiledata);
 }
 
-GBEXPORT int gambatte_runfor(GB *g, unsigned *samples)
+GBEXPORT int32_t gambatte_runfor(GB *g, uint32_t *samples)
 {
-	unsigned sampv = *samples;
-	int ret = g->runFor(sampv);
+	uint32_t sampv = *samples;
+	int32_t ret = g->runFor(sampv);
 	*samples = sampv;
 	return ret;
 }
 
-GBEXPORT void gambatte_setvideobuffer(GB *g, std::uint32_t *const videoBuf, const int pitch) {
+GBEXPORT void gambatte_setvideobuffer(GB *g, uint32_t *const videoBuf, const std::size_t pitch) {
 	g->setVideoBuffer(videoBuf, pitch);
 }
 
-GBEXPORT void gambatte_reset(GB *g, std::uint32_t now)
+GBEXPORT void gambatte_reset(GB *g, uint32_t now)
 {
 	g->reset(now, 0 /* div */);
 }
 
-GBEXPORT void gambatte_setinputgetter(GB *g, unsigned (*getInput)(void *), void* context)
+GBEXPORT void gambatte_setinputgetter(GB *g, uint8_t (*getInput)(void *), void* context)
 {
 	g->setInputGetter(getInput, context);
 }
 
-GBEXPORT void gambatte_setrtccallback(GB *g, unsigned int (*callback)(void*), void* context)
+GBEXPORT void gambatte_setrtccallback(GB *g, uint32_t (*callback)(void*), void* context)
 {
 	g->setRTCCallback(callback, context);
 }
 
-GBEXPORT int gambatte_newstatelen(GB *g)
+GBEXPORT std::size_t gambatte_newstatelen(GB *g)
 {
 	NewStateDummy dummy;
 	g->SyncState<false>(&dummy);
 	return dummy.GetLength();
 }
 
-GBEXPORT int gambatte_newstatesave(GB *g, char *data, int len)
+GBEXPORT int32_t gambatte_newstatesave(GB *g, uint8_t *data, int32_t len)
 {
 	NewStateExternalBuffer saver(data, len);
 	g->SyncState<false>(&saver);
 	return saver.GetLength();
 }
 
-GBEXPORT int gambatte_newstateload(GB *g, const char *data, int len)
+GBEXPORT int32_t gambatte_newstateload(GB *g, const uint8_t *data, int32_t len)
 {
-	NewStateExternalBuffer loader((char *)data, len);
+	NewStateExternalBuffer loader((uint8_t *)data, len);
 	g->SyncState<true>(&loader);
 	return loader.GetLength();
 }
 
-GBEXPORT int gambatte_getmemoryarea(GB *g, int which, unsigned char **data, int *length)
+GBEXPORT int32_t gambatte_getmemoryarea(GB *g, int32_t which, uint8_t **data, int32_t *length)
 {
 	return g->getMemoryArea(which, data, length);
 }
 
-GBEXPORT unsigned char gambatte_cpuread(GB *g, unsigned short addr)
+GBEXPORT uint8_t gambatte_cpuread(GB *g, uint16_t addr)
 {
 	return g->ExternalRead(addr);
 }
 
-GBEXPORT void gambatte_cpuwrite(GB *g, unsigned short addr, unsigned char val)
+GBEXPORT void gambatte_cpuwrite(GB *g, uint16_t addr, uint8_t val)
 {
 	g->ExternalWrite(addr, val);
 }
 
-GBEXPORT void gambatte_getregs(GB *g, int *dest)
+GBEXPORT void gambatte_getregs(GB *g, uint32_t *dest)
 {
 	g->GetRegs(dest);
 }
 
-GBEXPORT void gambatte_setinterruptaddresses(GB *g, int *addrs, unsigned numAddrs)
+GBEXPORT void gambatte_setinterruptaddresses(GB *g, int32_t *addrs, uint32_t numAddrs)
 {
 	g->SetInterruptAddresses(addrs, numAddrs);
 }
@@ -122,11 +121,11 @@ GBEXPORT void gambatte_clearinterruptaddresses(GB *g)
 {
 	g->SetInterruptAddresses(0, 0);
 }
-GBEXPORT int gambatte_gethitinterruptaddress(GB *g)
+GBEXPORT int32_t gambatte_gethitinterruptaddress(GB *g)
 {
 	return g->GetHitInterruptAddress();
 }
 
-GBEXPORT std::uint16_t gambatte_getdivstate(GB *g) {
+GBEXPORT uint16_t gambatte_getdivstate(GB *g) {
   return g->getDivState();
 }

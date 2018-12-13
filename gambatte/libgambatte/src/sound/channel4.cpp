@@ -29,15 +29,15 @@ Channel4::Channel4() :
 	nr4(0),
 	master(false) {}
 
-void Channel4::setNr1(const unsigned data) {
+void Channel4::setNr1(const uint32_t data) {
 	lengthCounter.nr1Change(data, nr4, cycleCounter);
 }
 
-void Channel4::setNr2(const unsigned data) {
+void Channel4::setNr2(const uint32_t data) {
 	if (envelopeUnit.nr2Change(data)) master = false;
 }
 
-void Channel4::setNr4(const unsigned data) {
+void Channel4::setNr4(const uint32_t data) {
 	lengthCounter.nr4Change(nr4, data, cycleCounter);
 		
 	nr4 = data;
@@ -61,13 +61,13 @@ void Channel4::loadState(const SaveState &state) {
 	master = state.spu.ch4.master;
 }
 
-void Channel4::update(unsigned long cycles) {
+void Channel4::update(uint32_t cycles) {
 	cycleCounter += cycles;
 	if (lengthCounter.getCounter() < cycleCounter)
 		lengthCounter.event(); // lengthCounter can only trigger once, and disables adterwards.
 	
 	if (cycleCounter & SoundUnit::COUNTER_MAX) {
-		lengthCounter.resetCounters(cycleCounter);
+		lengthCounter.resetCounters();
 
 		cycleCounter -= SoundUnit::COUNTER_MAX;
 	}

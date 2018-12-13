@@ -19,19 +19,22 @@
 #ifndef SOUND_UNIT_H
 #define SOUND_UNIT_H
 
+#include <cstdint>
+
 namespace gambatte {
 
 class SoundUnit {
 protected:
-	unsigned long counter;
+	uint32_t counter;
 public:
-	enum { COUNTER_MAX = 0x80000000u, COUNTER_DISABLED = 0xFFFFFFFFu };
-	
+  static const uint32_t COUNTER_MAX = 0x80000000u;
+  static const uint32_t COUNTER_DISABLED = 0xFFFFFFFFu;
+
 	SoundUnit() : counter(COUNTER_DISABLED) {}
 	virtual ~SoundUnit() {}
 	virtual void event() = 0;
-	unsigned long getCounter() const { return counter; }
-	virtual void resetCounters(unsigned long /*oldCc*/) { if (counter != COUNTER_DISABLED) counter -= COUNTER_MAX; }
+	uint32_t getCounter() const { return counter; }
+	virtual void resetCounters() { if (counter != COUNTER_DISABLED) counter -= COUNTER_MAX; }
 };
 
 }

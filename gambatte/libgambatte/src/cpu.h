@@ -27,75 +27,74 @@ namespace gambatte {
 class CPU {
 	Memory memory;
 	
-	unsigned long cycleCounter_;
+	uint32_t cycleCounter_;
 
-	unsigned short PC;
-	unsigned short SP;
+	uint16_t PC;
+	uint16_t SP;
 	
-	unsigned HF1, HF2, ZF, CF;
+	uint32_t HF1, HF2, ZF, CF;
 
-	unsigned char A, B, C, D, E, /*F,*/ H, L;
+	uint8_t A, B, C, D, E, /*F,*/ H, L;
 
 	bool skip;
 	
-	int *interruptAddresses;
-	unsigned numInterruptAddresses;
-	int hitInterruptAddress;
+	int32_t *interruptAddresses;
+	uint32_t numInterruptAddresses;
+	int32_t hitInterruptAddress;
 
-	void process(unsigned long cycles);
+	void process(uint32_t cycles);
 
 public:
 	
 	CPU();
 // 	void halt();
 
-// 	unsigned interrupt(unsigned address, unsigned cycleCounter);
+// 	uint32_t interrupt(uint32_t address, uint32_t cycleCounter);
 	
-	long runFor(unsigned long cycles);
+	int32_t runFor(uint32_t cycles);
 	void setStatePtrs(SaveState &state);
 	void loadState(const SaveState &state);
-	void setLayers(unsigned mask) { memory.setLayers(mask); }
+	void setLayers(uint8_t mask) { memory.setLayers(mask); }
 	
-	void loadSavedata(const char *data) { memory.loadSavedata(data); }
-	int saveSavedataLength() {return memory.saveSavedataLength(); }
-	void saveSavedata(char *dest) { memory.saveSavedata(dest); }
+	void loadSavedata(const uint8_t *data) { memory.loadSavedata(data); }
+	size_t saveSavedataLength() {return memory.saveSavedataLength(); }
+	void saveSavedata(uint8_t *dest) { memory.saveSavedata(dest); }
 	
-	bool getMemoryArea(int which, unsigned char **data, int *length) { return memory.getMemoryArea(which, data, length); }
+	bool getMemoryArea(int32_t which, uint8_t **data, int32_t *length) { return memory.getMemoryArea(which, data, length); }
 
-	void setVideoBuffer(uint_least32_t *const videoBuf, const int pitch) {
+	void setVideoBuffer(uint32_t *const videoBuf, const int32_t pitch) {
 		memory.setVideoBuffer(videoBuf, pitch);
 	}
 	
-	void setInputGetter(unsigned (*getInput)(void *), void* context) {
+	void setInputGetter(uint8_t (*getInput)(void *), void* context) {
 		memory.setInputGetter(getInput, context);
 	}
 
-	void setRTCCallback(std::uint32_t (*callback)(void*), void* context) {
+	void setRTCCallback(uint32_t (*callback)(void*), void* context) {
 		memory.setRTCCallback(callback, context);
 	}
 	
-	int load(const char *romfiledata, unsigned romfilelength, bool forceDmg, bool multicartCompat) {
+	int32_t load(const uint8_t *romfiledata, uint32_t romfilelength, bool forceDmg, bool multicartCompat) {
 		return memory.loadROM(romfiledata, romfilelength, forceDmg, multicartCompat);
 	}
 	
 	bool loaded() const { return memory.loaded(); }
 
 	void setSoundBuffer() { memory.setSoundBuffer(); }
-	unsigned fillSoundBuffer() { return memory.fillSoundBuffer(cycleCounter_); }
+	uint32_t fillSoundBuffer() { return memory.fillSoundBuffer(cycleCounter_); }
 	
-	unsigned char* cgbBiosBuffer() { return memory.cgbBiosBuffer(); }
-	unsigned char* dmgBiosBuffer() { return memory.dmgBiosBuffer(); }
+	uint8_t* cgbBiosBuffer() { return memory.cgbBiosBuffer(); }
+	uint8_t* dmgBiosBuffer() { return memory.dmgBiosBuffer(); }
 
-	//unsigned char ExternalRead(unsigned short addr) { return memory.read(addr, cycleCounter_); }
-	unsigned char ExternalRead(unsigned short addr) { return memory.peek(addr); }
-	void ExternalWrite(unsigned short addr, unsigned char val) { memory.write_nocb(addr, val, cycleCounter_); }
+	uint8_t ExternalRead(uint16_t addr) { return memory.peek(addr); }
+	void ExternalWrite(uint16_t addr, uint8_t val) { memory.write_nocb(addr, val, cycleCounter_); }
 
-	void GetRegs(int *dest);
+	void GetRegs(uint32_t *dest);
 
-	void SetInterruptAddresses(int *addrs, unsigned numAddrs);
-	inline int GetHitInterruptAddress() { return hitInterruptAddress; }
+	void SetInterruptAddresses(int32_t *addrs, uint32_t numAddrs);
+	inline int32_t GetHitInterruptAddress() { return hitInterruptAddress; }
 
-	std::uint16_t getDivState() { return memory.getDivState(cycleCounter_); }
+	uint16_t getDivState() { return memory.getDivState(cycleCounter_); }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

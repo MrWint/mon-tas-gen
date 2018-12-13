@@ -23,13 +23,13 @@
 #include "newstate.h"
 
 namespace MinKeeperUtil {
-template<int n> struct CeiledLog2 { enum { R = 1 + CeiledLog2<(n + 1) / 2>::R }; };
+template<int32_t n> struct CeiledLog2 { enum { R = 1 + CeiledLog2<(n + 1) / 2>::R }; };
 template<> struct CeiledLog2<1> { enum { R = 0 }; };
 
-template<int v, int n> struct RoundedDiv2n { enum { R = RoundedDiv2n<(v + 1) / 2, n - 1>::R }; };
-template<int v> struct RoundedDiv2n<v,1> { enum { R = v }; };
+template<int32_t v, int32_t n> struct RoundedDiv2n { enum { R = RoundedDiv2n<(v + 1) / 2, n - 1>::R }; };
+template<int32_t v> struct RoundedDiv2n<v,1> { enum { R = v }; };
 
-template<template<int> class T, int n> struct Sum { enum { R = T<n-1>::R + Sum<T, n-1>::R }; };
+template<template<int> class T, int32_t n> struct Sum { enum { R = T<n-1>::R + Sum<T, n-1>::R }; };
 template<template<int> class T> struct Sum<T,0> { enum { R = 0 }; };
 }
 
@@ -37,13 +37,13 @@ template<template<int> class T> struct Sum<T,0> { enum { R = 0 }; };
 // Higher ids prioritized (as min value) if values are equal. Can easily be reversed by swapping < for <=.
 // Higher ids can be faster to change when the number of ids isn't a power of 2.
 // Thus the ones that change more frequently should have higher ids if priority allows it.
-template<int ids>
+template<int32_t ids>
 class MinKeeper {
 	enum { LEVELS = MinKeeperUtil::CeiledLog2<ids>::R };
-	template<int l> struct Num { enum { R = MinKeeperUtil::RoundedDiv2n<ids, LEVELS + 1 - l>::R }; };
-	template<int l> struct Sum { enum { R = MinKeeperUtil::Sum<Num, l>::R }; };
+	template<int32_t l> struct Num { enum { R = MinKeeperUtil::RoundedDiv2n<ids, LEVELS + 1 - l>::R }; };
+	template<int32_t l> struct Sum { enum { R = MinKeeperUtil::Sum<Num, l>::R }; };
 	
-	template<int id, int level>
+	template<int32_t id, int32_t level>
 	struct UpdateValue {
 		enum { P = Sum<level-1>::R + id };
 		enum { C0 = Sum<level>::R + id * 2 };
@@ -55,7 +55,7 @@ class MinKeeper {
 		}
 	};
 	
-	template<int id>
+	template<int32_t id>
 	struct UpdateValue<id,0> {
 		static void updateValue(MinKeeper<ids> &m) {
 			m.minValue_ = m.values[m.a[0]];
@@ -63,14 +63,14 @@ class MinKeeper {
 	};
 	
 	class UpdateValueLut {
-		template<int id, int dummy> struct FillLut {
+		template<int32_t id, int32_t dummy> struct FillLut {
 			static void fillLut(UpdateValueLut & l) {
 				l.lut_[id] = updateValue<id>;
 				FillLut<id-1,dummy>::fillLut(l);
 			}
 		};
 		
-		template<int dummy> struct FillLut<-1,dummy> {
+		template<int32_t dummy> struct FillLut<-1,dummy> {
 			static void fillLut(UpdateValueLut &) {}
 		};
 		
@@ -78,34 +78,34 @@ class MinKeeper {
 		
 	public:
 		UpdateValueLut() { FillLut<Num<LEVELS-1>::R-1,0>::fillLut(*this); }
-		void call(int id, MinKeeper<ids> &mk) const { lut_[id](mk); }
+		void call(int32_t id, MinKeeper<ids> &mk) const { lut_[id](mk); }
 	};
 	
 	static UpdateValueLut updateValueLut;
-	unsigned long values[ids];
-	unsigned long minValue_;
-	int a[Sum<LEVELS>::R];
+	uint32_t values[ids];
+	uint32_t minValue_;
+	int32_t a[Sum<LEVELS>::R];
 	
-	template<int id> static void updateValue(MinKeeper<ids> &m);
+	template<int32_t id> static void updateValue(MinKeeper<ids> &m);
 	
 public:
-	explicit MinKeeper(unsigned long initValue = 0xFFFFFFFF);
+	explicit MinKeeper(uint32_t initValue = 0xFFFFFFFF);
 	
-	int min() const { return a[0]; }
-	unsigned long minValue() const { return minValue_; }
+	int32_t min() const { return a[0]; }
+	uint32_t minValue() const { return minValue_; }
 	
-	template<int id>
-	void setValue(const unsigned long cnt) {
+	template<int32_t id>
+	void setValue(const uint32_t cnt) {
 		values[id] = cnt;
 		updateValue<id / 2>(*this);
 	}
 	
-	void setValue(const int id, const unsigned long cnt) {
+	void setValue(const int32_t id, const uint32_t cnt) {
 		values[id] = cnt;
 		updateValueLut.call(id >> 1, *this);
 	}
 	
-	unsigned long value(const int id) const { return values[id]; }
+	uint32_t value(const int32_t id) const { return values[id]; }
 
 	// not sure if i understood everything in minkeeper correctly, so something might be missing here?
 	template<bool isReader>
@@ -117,24 +117,24 @@ public:
 	}
 };
 
-template<int ids> typename MinKeeper<ids>::UpdateValueLut MinKeeper<ids>::updateValueLut;
+template<int32_t ids> typename MinKeeper<ids>::UpdateValueLut MinKeeper<ids>::updateValueLut;
 
-template<int ids>
-MinKeeper<ids>::MinKeeper(const unsigned long initValue) {
+template<int32_t ids>
+MinKeeper<ids>::MinKeeper(const uint32_t initValue) {
 	std::fill(values, values + ids, initValue);
 	
-	for (int i = 0; i < Num<LEVELS-1>::R; ++i) {
+	for (int32_t i = 0; i < Num<LEVELS-1>::R; ++i) {
 		a[Sum<LEVELS-1>::R + i] = (i * 2 + 1 == ids || values[i * 2] < values[i * 2 + 1]) ? i * 2 : i * 2 + 1;
 	}
 	
-	int n   = Num<LEVELS-1>::R;
-	int off = Sum<LEVELS-1>::R;
+	int32_t n   = Num<LEVELS-1>::R;
+	int32_t off = Sum<LEVELS-1>::R;
 	
 	while (off) {
-		const int pn = (n + 1) >> 1;
-		const int poff = off - pn;
+		const int32_t pn = (n + 1) >> 1;
+		const int32_t poff = off - pn;
 		
-		for (int i = 0; i < pn; ++i) {
+		for (int32_t i = 0; i < pn; ++i) {
 			a[poff + i] = (i * 2 + 1 == n ||
 					values[a[off + i * 2]] < values[a[off + i * 2 + 1]]) ?
 					a[off + i * 2] : a[off + i * 2 + 1];
@@ -147,8 +147,8 @@ MinKeeper<ids>::MinKeeper(const unsigned long initValue) {
 	minValue_ = values[a[0]];
 }
 
-template<int ids>
-template<int id>
+template<int32_t ids>
+template<int32_t id>
 void MinKeeper<ids>::updateValue(MinKeeper<ids> &m) {
 	m.a[Sum<LEVELS-1>::R + id] = (id * 2 + 1 == ids || m.values[id * 2] < m.values[id * 2 + 1]) ? id * 2 : id * 2 + 1;
 	UpdateValue<id / 2, LEVELS-1>::updateValue(m);

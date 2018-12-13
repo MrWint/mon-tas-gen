@@ -20,7 +20,7 @@
 
 namespace gambatte {
 
-bool EnvelopeUnit::nr2Change(const unsigned newNr2) {
+bool EnvelopeUnit::nr2Change(const uint32_t newNr2) {
 	nr2 = newNr2;
 	return !(newNr2 & 0xF8);
 }

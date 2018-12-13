@@ -34,14 +34,14 @@ LycIrq::LycIrq() :
 {
 }
 
-static unsigned long schedule(const unsigned statReg, const unsigned lycReg, const LyCounter &lyCounter, const unsigned long cc) {
+static uint32_t schedule(const uint32_t statReg, const uint32_t lycReg, const LyCounter &lyCounter, const uint32_t cc) {
 	return (statReg & 0x40) && lycReg < 154
 		? lyCounter.nextFrameCycle(lycReg ? lycReg * 456 : 153 * 456 + 8, cc)
-		: static_cast<unsigned long>(DISABLED_TIME);
+		: static_cast<uint32_t>(DISABLED_TIME);
 }
 
-void LycIrq::regChange(const unsigned statReg, const unsigned lycReg, const LyCounter &lyCounter, const unsigned long cc) {
-	const unsigned long timeSrc = schedule(statReg, lycReg, lyCounter, cc);
+void LycIrq::regChange(const uint32_t statReg, const uint32_t lycReg, const LyCounter &lyCounter, const uint32_t cc) {
+	const uint32_t timeSrc = schedule(statReg, lycReg, lyCounter, cc);
 	statRegSrc_ = statReg;
 	lycRegSrc_ = lycReg;
 	time_ = std::min(time_, timeSrc);
@@ -63,9 +63,9 @@ void LycIrq::regChange(const unsigned statReg, const unsigned lycReg, const LyCo
 	}
 }
 
-void LycIrq::doEvent(unsigned char *const ifreg, const LyCounter &lyCounter) {
+void LycIrq::doEvent(uint8_t *const ifreg, const LyCounter &lyCounter) {
 	if ((statReg_ | statRegSrc_) & 0x40) {
-		const unsigned cmpLy = lyCounter.time() - time_ < lyCounter.lineTime() ? 0 : lyCounter.ly();
+		const uint32_t cmpLy = lyCounter.time() - time_ < lyCounter.lineTime() ? 0 : lyCounter.ly();
 		
 		if (lycReg_ == cmpLy &&
 				(lycReg_ - 1U < 144U - 1U ? !(statReg_ & 0x20) : !(statReg_ & 0x10))) {
@@ -85,7 +85,7 @@ void LycIrq::loadState(const SaveState &state) {
 	statReg_ = statRegSrc_;
 }
 
-void LycIrq::reschedule(const LyCounter & lyCounter, const unsigned long cc) {
+void LycIrq::reschedule(const LyCounter & lyCounter, const uint32_t cc) {
 	time_ = std::min(schedule(statReg_   , lycReg_   , lyCounter, cc),
 	                 schedule(statRegSrc_, lycRegSrc_, lyCounter, cc));
 }

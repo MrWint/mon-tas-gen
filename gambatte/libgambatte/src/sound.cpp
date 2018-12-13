@@ -74,15 +74,15 @@ void PSG::loadState(const SaveState &state) {
 	enabled = state.mem.ioamhram.get()[0x126] >> 7 & 1;
 }
 
-void PSG::accumulate_channels(const unsigned long cycles) {
+void PSG::accumulate_channels(const uint32_t cycles) {
 	ch1.update(cycles);
 	ch2.update(cycles);
 	ch3.update(cycles);
 	ch4.update(cycles);
 }
 
-void PSG::generate_samples(const unsigned long cycleCounter, const unsigned doubleSpeed) {
-	const unsigned long cycles = (cycleCounter - lastUpdate) >> (1 + doubleSpeed);
+void PSG::generate_samples(const uint32_t cycleCounter, const uint32_t doubleSpeed) {
+	const uint32_t cycles = (cycleCounter - lastUpdate) >> (1 + doubleSpeed);
 	lastUpdate += cycles << (1 + doubleSpeed);
 
 	if (cycles)
@@ -91,17 +91,17 @@ void PSG::generate_samples(const unsigned long cycleCounter, const unsigned doub
 	bufferPos += cycles;
 }
 
-void PSG::resetCounter(const unsigned long newCc, const unsigned long oldCc, const unsigned doubleSpeed) {
+void PSG::resetCounter(const uint32_t newCc, const uint32_t oldCc, const uint32_t doubleSpeed) {
 	generate_samples(oldCc, doubleSpeed);
 	lastUpdate = newCc - (oldCc - lastUpdate);
 }
 
-unsigned PSG::fillBuffer() {
+uint32_t PSG::fillBuffer() {
 	return bufferPos;
 }
 
-unsigned PSG::getStatus() const {
-	return ch1.isActive() | ch2.isActive() << 1 | ch3.isActive() << 2 | ch4.isActive() << 3;
+uint8_t PSG::getStatus() const {
+	return (uint8_t)ch1.isActive() | (uint8_t)ch2.isActive() << 1 | (uint8_t)ch3.isActive() << 2 | (uint8_t)ch4.isActive() << 3;
 }
 
 // the buffer and position are not saved, as they're set and flushed on each runfor() call

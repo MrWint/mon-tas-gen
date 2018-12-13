@@ -43,11 +43,11 @@ CPU::CPU()
 {
 }
 
-long CPU::runFor(const unsigned long cycles) {
+int32_t CPU::runFor(const uint32_t cycles) {
 	memory.setBasetime(cycleCounter_);
 	process(cycles/* << memory.isDoubleSpeed()*/);
 	
-	const long csb = memory.cyclesSinceBlit(cycleCounter_);
+	const int32_t csb = memory.cyclesSinceBlit(cycleCounter_);
 	
 	if (cycleCounter_ & 0x80000000)
 		cycleCounter_ = memory.resetCounters(cycleCounter_);
@@ -59,9 +59,9 @@ long CPU::runFor(const unsigned long cycles) {
 // (HF2 & 0x400) marks the subtract flag.
 // (HF2 & 0x800) is set for inc/dec.
 // (HF2 & 0x100) is set if there's a carry to add.
-static void calcHF(const unsigned HF1, unsigned& HF2) {
-	unsigned arg1 = HF1 & 0xF;
-	unsigned arg2 = (HF2 & 0xF) + (HF2 >> 8 & 1);
+static void calcHF(const uint32_t HF1, unsigned& HF2) {
+	uint32_t arg1 = HF1 & 0xF;
+	uint32_t arg2 = (HF2 & 0xF) + (HF2 >> 8 & 1);
 	
 	if (HF2 & 0x800) {
 		arg1 = arg2;
@@ -79,7 +79,7 @@ static void calcHF(const unsigned HF1, unsigned& HF2) {
 #define F() (((HF2 & 0x600) | (CF & 0x100)) >> 4 | ((ZF & 0xFF) ? 0 : 0x80))
 
 #define FROM_F(f_in) do { \
-	unsigned from_f_var = f_in; \
+	uint32_t from_f_var = f_in; \
 \
 	ZF = ~from_f_var & 0x80; \
 	HF2 = from_f_var << 4 & 0x600; \
@@ -151,7 +151,7 @@ void CPU::loadState(const SaveState &state) {
 //rl r (8 cycles):
 //Rotate 8-bit register left through CF, store old bit7 in CF, old CF value becomes bit0. Reset SF and HCF, Check ZF:
 #define rl_r(r) do { \
-	const unsigned rl_r_var_oldcf = CF >> 8 & 1; \
+	const uint32_t rl_r_var_oldcf = CF >> 8 & 1; \
 	CF = (r) << 1; \
 	ZF = CF | rl_r_var_oldcf; \
 	(r) = ZF & 0xFF; \
@@ -170,7 +170,7 @@ void CPU::loadState(const SaveState &state) {
 //rr r (8 cycles):
 //Rotate 8-bit register right through CF, store old bit0 in CF, old CF value becomes bit7. Reset SF and HCF, Check ZF:
 #define rr_r(r) do { \
-	const unsigned rr_r_var_oldcf = CF & 0x100; \
+	const uint32_t rr_r_var_oldcf = CF & 0x100; \
 	CF = (r) << 8; \
 	(r) = ZF = ((r) | rr_r_var_oldcf) >> 1; \
 	HF2 = 0; \
@@ -234,8 +234,8 @@ void CPU::loadState(const SaveState &state) {
 //set n,(hl) (16 cycles):
 //Set bitn of value at address stored in HL:
 #define setn_mem_hl(n) do { \
-	const unsigned setn_mem_hl_var_addr = HL(); \
-	unsigned setn_mem_hl_var_tmp; \
+	const uint32_t setn_mem_hl_var_addr = HL(); \
+	uint32_t setn_mem_hl_var_tmp; \
 \
 	READ(setn_mem_hl_var_tmp, setn_mem_hl_var_addr); \
 	setn_mem_hl_var_tmp |= 1 << (n); \
@@ -257,8 +257,8 @@ void CPU::loadState(const SaveState &state) {
 //res n,(hl) (16 cycles):
 //Unset bitn of value at address stored in HL:
 #define resn_mem_hl(n) do { \
-	const unsigned resn_mem_hl_var_addr = HL(); \
-	unsigned resn_mem_hl_var_tmp; \
+	const uint32_t resn_mem_hl_var_addr = HL(); \
+	uint32_t resn_mem_hl_var_tmp; \
 \
 	READ(resn_mem_hl_var_tmp, resn_mem_hl_var_addr); \
 	resn_mem_hl_var_tmp &= ~(1 << (n)); \
@@ -412,7 +412,7 @@ void CPU::loadState(const SaveState &state) {
 //inc rr (8 cycles):
 //Increment 16-bit register:
 #define inc_rr(rh, rl) do { \
-	const unsigned inc_rr_var_tmp = (rl) + 1; \
+	const uint32_t inc_rr_var_tmp = (rl) + 1; \
 	(rl) = inc_rr_var_tmp & 0xFF; \
 	(rh) = ((rh) + (inc_rr_var_tmp >> 8)) & 0xFF; \
 	cycleCounter += 4; \
@@ -421,18 +421,18 @@ void CPU::loadState(const SaveState &state) {
 //dec rr (8 cycles):
 //Decrement 16-bit register:
 #define dec_rr(rh, rl) do { \
-	const unsigned dec_rr_var_tmp = (rl) - 1; \
+	const uint32_t dec_rr_var_tmp = (rl) - 1; \
 	(rl) = dec_rr_var_tmp & 0xFF; \
 	(rh) = ((rh) - (dec_rr_var_tmp >> 8 & 1)) & 0xFF; \
 	cycleCounter += 4; \
 } while (0)
 
 #define sp_plus_n(sumout) do { \
-	unsigned sp_plus_n_var_n; \
+	uint32_t sp_plus_n_var_n; \
 	PC_READ(sp_plus_n_var_n); \
 	sp_plus_n_var_n = (sp_plus_n_var_n ^ 0x80) - 0x80; \
 	\
-	const unsigned sp_plus_n_var_sum = SP + sp_plus_n_var_n; \
+	const uint32_t sp_plus_n_var_sum = SP + sp_plus_n_var_n; \
 	CF = SP ^ sp_plus_n_var_n ^ sp_plus_n_var_sum; \
 	HF2 = CF << 5 & 0x200; \
 	ZF = 1; \
@@ -444,7 +444,7 @@ void CPU::loadState(const SaveState &state) {
 //jp nn (16 cycles):
 //Jump to address stored in the next two bytes in memory:
 #define jp_nn() do { \
-	unsigned jp_nn_var_l, jp_nn_var_h; \
+	uint32_t jp_nn_var_l, jp_nn_var_h; \
 \
 	PC_READ(jp_nn_var_l); \
 	PC_READ(jp_nn_var_h); \
@@ -455,7 +455,7 @@ void CPU::loadState(const SaveState &state) {
 //jr disp (12 cycles):
 //Jump to value of next (signed) byte in memory+current address:
 #define jr_disp() do { \
-	unsigned jr_disp_var_tmp; \
+	uint32_t jr_disp_var_tmp; \
 \
 	PC_READ(jr_disp_var_tmp); \
 	jr_disp_var_tmp = (jr_disp_var_tmp ^ 0x80) - 0x80; \
@@ -467,7 +467,7 @@ void CPU::loadState(const SaveState &state) {
 // call nn (24 cycles):
 // Jump to 16-bit immediate operand and push return address onto stack:
 #define call_nn() do { \
-	unsigned const npc = (PC + 2) & 0xFFFF; \
+	uint32_t const npc = (PC + 2) & 0xFFFF; \
 	jp_nn(); \
 	PUSH(npc >> 8, npc & 0xFF); \
 } while (0)
@@ -482,35 +482,34 @@ void CPU::loadState(const SaveState &state) {
 //ret (16 cycles):
 //Pop two bytes from the stack and jump to that address:
 #define ret() do { \
-	unsigned ret_var_l, ret_var_h; \
+	uint32_t ret_var_l, ret_var_h; \
 \
 	pop_rr(ret_var_h, ret_var_l); \
 \
 	PC_MOD(ret_var_h << 8 | ret_var_l); \
 } while (0)
 
-void CPU::process(const unsigned long cycles) {
+void CPU::process(const uint32_t cycles) {
 	memory.setEndtime(cycleCounter_, cycles);
 	hitInterruptAddress = 0;
 	memory.updateInput();
 
-	//unsigned char A = A_;
-	unsigned long cycleCounter = cycleCounter_;
+	uint32_t cycleCounter = cycleCounter_;
 	
 	while (memory.isActive()) {
-		//unsigned short PC = PC_;
+		//uint16_t PC = PC_;
 		
 		if (memory.halted()) {
 			if (cycleCounter < memory.nextEventTime()) {
-				const unsigned long cycles = memory.nextEventTime() - cycleCounter;
+				const uint32_t cycles = memory.nextEventTime() - cycleCounter;
 				cycleCounter += cycles + (-cycles & 3);
 			}
 		} else while (cycleCounter < memory.nextEventTime()) {
-			unsigned char opcode = 0x00;
+			uint8_t opcode = 0x00;
 			
 			if (PC < 0x8000) {
-				unsigned int romAddress = PC;
-				unsigned int bank = 0;
+				uint32_t romAddress = PC;
+				uint32_t bank = 0;
 				if (PC > 0x4000) bank = memory.curRomBank(), romAddress += (bank - 1) << 14;
 				if (memory.isInterrupt(romAddress)) {
 					hitInterruptAddress = (bank << 16) | PC;
@@ -563,12 +562,12 @@ void CPU::process(const unsigned long cycles) {
 				//Put value of SP into address given by next 2 bytes in memory:
 			case 0x08:
 				{
-					unsigned l, h;
+					uint32_t l, h;
 					
 					PC_READ(l);
 					PC_READ(h);
 					
-					const unsigned addr = h << 8 | l;
+					const uint32_t addr = h << 8 | l;
 					
 					WRITE(addr, SP & 0xFF);
 					WRITE((addr + 1) & 0xFFFF, SP >> 8);
@@ -610,7 +609,7 @@ void CPU::process(const unsigned long cycles) {
 					cycleCounter = memory.stop(cycleCounter);
 
 					if (cycleCounter < memory.nextEventTime()) {
-						const unsigned long cycles = memory.nextEventTime() - cycleCounter;
+						const uint32_t cycles = memory.nextEventTime() - cycleCounter;
 						cycleCounter += cycles + (-cycles & 3);
 					}
 				}
@@ -638,7 +637,7 @@ void CPU::process(const unsigned long cycles) {
 				//Rotate 8-bit register A left through CF, store old bit7 in CF, old CF value becomes bit0. Reset SF, HCF, ZF:
 			case 0x17:
 				{
-					const unsigned oldcf = CF >> 8 & 1;
+					const uint32_t oldcf = CF >> 8 & 1;
 					CF = A << 1;
 					A = (CF | oldcf) & 0xFF;
 				}
@@ -673,7 +672,7 @@ void CPU::process(const unsigned long cycles) {
 				//Rotate 8-bit register A right through CF, store old bit0 in CF, old CF value becomes bit7. Reset SF, HCF, ZF:
 			case 0x1F:
 				{
-					const unsigned oldcf = CF & 0x100;
+					const uint32_t oldcf = CF & 0x100;
 					CF = A << 8;
 					A = (A | oldcf) >> 1;
 				}
@@ -700,7 +699,7 @@ void CPU::process(const unsigned long cycles) {
 				//Put A into memory address in hl. Increment HL:
 			case 0x22:
 				{
-					unsigned addr = HL();
+					uint32_t addr = HL();
 					
 					WRITE(addr, A);
 					
@@ -728,7 +727,7 @@ void CPU::process(const unsigned long cycles) {
 				//Adjust register A to correctly represent a BCD. Check ZF, HF and CF:
 			case 0x27:
 				/*{
-					unsigned correction = ((A > 0x99) || (CF & 0x100)) ? 0x60 : 0x00;
+					uint32_t correction = ((A > 0x99) || (CF & 0x100)) ? 0x60 : 0x00;
 					
 					calcHF(HF1, HF2);
 					
@@ -745,7 +744,7 @@ void CPU::process(const unsigned long cycles) {
 				calcHF(HF1, HF2);
 				
 				{
-					unsigned correction = (CF & 0x100) ? 0x60 : 0x00;
+					uint32_t correction = (CF & 0x100) ? 0x60 : 0x00;
 					
 					if (HF2 & 0x200)
 						correction |= 0x06;
@@ -787,7 +786,7 @@ void CPU::process(const unsigned long cycles) {
 				//Put value at address in hl into A. Increment HL:
 			case 0x2A:
 				{
-					unsigned addr = HL();
+					uint32_t addr = HL();
 					
 					READ(A, addr);
 					
@@ -831,7 +830,7 @@ void CPU::process(const unsigned long cycles) {
 				//set sp to 16-bit value of next 2 bytes in memory
 			case 0x31:
 				{
-					unsigned l, h;
+					uint32_t l, h;
 					
 					PC_READ(l);
 					PC_READ(h);
@@ -844,7 +843,7 @@ void CPU::process(const unsigned long cycles) {
 				//Put A into memory address in hl. Decrement HL:
 			case 0x32:
 				{
-					unsigned addr = HL();
+					uint32_t addr = HL();
 					
 					WRITE(addr, A);
 					
@@ -863,7 +862,7 @@ void CPU::process(const unsigned long cycles) {
 				//Increment value at address in hl, check flags except CF:
 			case 0x34: 
 				{
-					const unsigned addr = HL();
+					const uint32_t addr = HL();
 					
 					READ(HF2, addr);
 					ZF = HF2 + 1;
@@ -876,7 +875,7 @@ void CPU::process(const unsigned long cycles) {
 			//Decrement value at address in hl, check flags except CF:
 			case 0x35:
 				{
-					const unsigned addr = HL();
+					const uint32_t addr = HL();
 					
 					READ(HF2, addr);
 					ZF = HF2 - 1;
@@ -889,7 +888,7 @@ void CPU::process(const unsigned long cycles) {
 			//set memory at address in hl to value of next byte in memory:
 			case 0x36:
 				{
-					unsigned tmp;
+					uint32_t tmp;
 					
 					PC_READ(tmp);
 					WRITE(HL(), tmp);
@@ -930,7 +929,7 @@ void CPU::process(const unsigned long cycles) {
 				//Put value at address in hl into A. Decrement HL:
 			case 0x3A:
 				{
-					unsigned addr = HL();
+					uint32_t addr = HL();
 					
 					A = memory.read(addr, cycleCounter);
 					cycleCounter += 4;
@@ -1138,7 +1137,7 @@ void CPU::process(const unsigned long cycles) {
 					memory.halt(cycleCounter);
 
 					if (cycleCounter < memory.nextEventTime()) {
-						const unsigned long cycles = memory.nextEventTime() - cycleCounter;
+						const uint32_t cycles = memory.nextEventTime() - cycleCounter;
 						cycleCounter += cycles + (-cycles & 3);
 					}
 				}
@@ -1191,7 +1190,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0x86:
 				{
-					unsigned data;
+					uint32_t data;
 
 					READ(data, HL());
 					
@@ -1221,7 +1220,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0x8E:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					READ(data, HL());
 					
@@ -1251,7 +1250,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0x96:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					READ(data, HL());
 					
@@ -1283,7 +1282,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0x9E:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					READ(data, HL());
 					
@@ -1313,7 +1312,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xA6:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					READ(data, HL());
 					
@@ -1346,7 +1345,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xAE:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					READ(data, HL());
 					
@@ -1377,7 +1376,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xB6:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					READ(data, HL());
 					
@@ -1409,7 +1408,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xBE:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					READ(data, HL());
 					
@@ -1467,7 +1466,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xC6:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					PC_READ(data);
 					
@@ -1534,7 +1533,7 @@ void CPU::process(const unsigned long cycles) {
 					//Rotate 8-bit value stored at address in HL left, store old bit7 in CF. Reset SF and HCF. Check ZF:
 				case 0x06:
 					{
-						const unsigned addr = HL();
+						const uint32_t addr = HL();
 						
 						READ(CF, addr);
 						CF <<= 1;
@@ -1571,7 +1570,7 @@ void CPU::process(const unsigned long cycles) {
 					//Rotate 8-bit value stored at address in HL right, store old bit0 in CF. Reset SF and HCF. Check ZF:
 				case 0x0E:
 					{
-						const unsigned addr = HL();
+						const uint32_t addr = HL();
 						
 						READ(ZF, addr);
 						
@@ -1607,8 +1606,8 @@ void CPU::process(const unsigned long cycles) {
 					//Rotate 8-bit value stored at address in HL left thorugh CF, store old bit7 in CF, old CF value becoms bit0. Reset SF and HCF. Check ZF:
 				case 0x16:
 					{
-						const unsigned addr = HL();
-						const unsigned oldcf = CF >> 8 & 1;
+						const uint32_t addr = HL();
+						const uint32_t oldcf = CF >> 8 & 1;
 						
 						READ(CF, addr);
 						CF <<= 1;
@@ -1645,11 +1644,11 @@ void CPU::process(const unsigned long cycles) {
 					//Rotate 8-bit value stored at address in HL right thorugh CF, store old bit0 in CF, old CF value becoms bit7. Reset SF and HCF. Check ZF:
 				case 0x1E:
 					{
-						const unsigned addr = HL();
+						const uint32_t addr = HL();
 						
 						READ(ZF, addr);
 						
-						const unsigned oldcf = CF & 0x100;
+						const uint32_t oldcf = CF & 0x100;
 						CF = ZF << 8;
 						ZF = (ZF | oldcf) >> 1;
 						
@@ -1683,7 +1682,7 @@ void CPU::process(const unsigned long cycles) {
 					//Shift 8-bit value stored at address in HL left, store old bit7 in CF. Reset SF and HCF. Check ZF:
 				case 0x26:
 					{
-						const unsigned addr = HL();
+						const uint32_t addr = HL();
 						
 						READ(CF, addr);
 						CF <<= 1;
@@ -1720,7 +1719,7 @@ void CPU::process(const unsigned long cycles) {
 					//Shift 8-bit value stored at address in HL right, store old bit0 in CF, bit7=old bit7. Reset SF and HCF. Check ZF:
 				case 0x2E:
 					{
-						const unsigned addr = HL();
+						const uint32_t addr = HL();
 						
 						READ(CF, addr);
 						
@@ -1757,7 +1756,7 @@ void CPU::process(const unsigned long cycles) {
 					//Swap upper and lower nibbles of 8-bit value stored at address in HL, reset flags, check zero flag:
 				case 0x36:
 					{
-						const unsigned addr = HL();
+						const uint32_t addr = HL();
 						
 						READ(ZF, addr);
 						
@@ -1791,7 +1790,7 @@ void CPU::process(const unsigned long cycles) {
 					//Shift 8-bit value stored at address in HL right, store old bit0 in CF. Reset SF and HCF. Check ZF:
 				case 0x3E:
 					{
-						const unsigned addr = HL();
+						const uint32_t addr = HL();
 						
 						READ(CF, addr);
 						
@@ -1826,7 +1825,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x46:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -1856,7 +1855,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x4E:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -1886,7 +1885,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x56:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -1916,7 +1915,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x5E:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -1946,7 +1945,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x66:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -1976,7 +1975,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x6E:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -2006,7 +2005,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x76:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -2036,7 +2035,7 @@ void CPU::process(const unsigned long cycles) {
 					break;
 				case 0x7E:
 					{
-						unsigned data;
+						uint32_t data;
 						
 						READ(data, HL());
 						
@@ -2451,7 +2450,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xCE:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					PC_READ(data);
 					
@@ -2509,7 +2508,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xD6:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					PC_READ(data);
 					
@@ -2535,7 +2534,7 @@ void CPU::process(const unsigned long cycles) {
 				//Pop two bytes from the stack and jump to that address, then enable interrupts:
 			case 0xD9:
 				{
-					unsigned l, h;
+					uint32_t l, h;
 					
 					pop_rr(h, l);
 					
@@ -2579,7 +2578,7 @@ void CPU::process(const unsigned long cycles) {
 
 			case 0xDE:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					PC_READ(data);
 					
@@ -2594,7 +2593,7 @@ void CPU::process(const unsigned long cycles) {
 				//Put value in A into address (0xFF00 + next byte in memory):
 			case 0xE0:
 				{
-					unsigned tmp;
+					uint32_t tmp;
 					
 					PC_READ(tmp);
 					
@@ -2624,7 +2623,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xE6:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					PC_READ(data);
 					
@@ -2662,7 +2661,7 @@ void CPU::process(const unsigned long cycles) {
 				//Incrementing PC before call, because of possible interrupt.
 			case 0xEA:
 				{
-					unsigned l, h;
+					uint32_t l, h;
 					
 					PC_READ(l);
 					PC_READ(h);
@@ -2685,7 +2684,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xEE:
 				{
-					unsigned data;
+					uint32_t data;
 					
 					PC_READ(data);
 					
@@ -2700,7 +2699,7 @@ void CPU::process(const unsigned long cycles) {
 				//Put value at address (0xFF00 + next byte in memory) into A:
 			case 0xF0:
 				{
-					unsigned tmp;
+					uint32_t tmp;
 					
 					PC_READ(tmp);
 					
@@ -2710,7 +2709,7 @@ void CPU::process(const unsigned long cycles) {
 
 			case 0xF1: /*pop_rr(A, F); Cycles(12); break;*/
 				{
-					unsigned F;
+					uint32_t F;
 					
 					pop_rr(A, F);
 					
@@ -2737,7 +2736,7 @@ void CPU::process(const unsigned long cycles) {
 				calcHF(HF1, HF2);
 				
 				{
-					unsigned F = F();
+					uint32_t F = F();
 					
 					push_rr(A, F);
 				}
@@ -2745,7 +2744,7 @@ void CPU::process(const unsigned long cycles) {
 
 			case 0xF6:
 				{
-					unsigned data;
+					uint32_t data;
 
 					PC_READ(data);
 					
@@ -2770,7 +2769,7 @@ void CPU::process(const unsigned long cycles) {
 					cycleCounter += 8;
 				}*/
 				{
-					unsigned sum;
+					uint32_t sum;
 					sp_plus_n(sum);
 					L = sum & 0xFF;
 					H = sum >> 8;
@@ -2788,7 +2787,7 @@ void CPU::process(const unsigned long cycles) {
 				//set A to value in memory at address given by the 2 next bytes.
 			case 0xFA:
 				{
-					unsigned l, h;
+					uint32_t l, h;
 					
 					PC_READ(l);
 					PC_READ(h);
@@ -2813,7 +2812,7 @@ void CPU::process(const unsigned long cycles) {
 				break;
 			case 0xFE:
 				{
-					unsigned data;
+					uint32_t data;
 
 					PC_READ(data);
 					
@@ -2835,7 +2834,7 @@ void CPU::process(const unsigned long cycles) {
 	cycleCounter_ = cycleCounter;
 }
 
-void CPU::GetRegs(int *dest)
+void CPU::GetRegs(uint32_t *dest)
 {
 	dest[0] = PC;
 	dest[1] = SP;
@@ -2849,13 +2848,13 @@ void CPU::GetRegs(int *dest)
 	dest[9] = L;
 }
 
-inline unsigned fromInterruptAddress(int interruptAddress) { return ((interruptAddress >> 16) << 14) | (interruptAddress & 0x3fff); }
-void CPU::SetInterruptAddresses(int *addrs, unsigned numAddrs)
+inline uint32_t fromInterruptAddress(int32_t interruptAddress) { return ((interruptAddress >> 16) << 14) | (interruptAddress & 0x3fff); }
+void CPU::SetInterruptAddresses(int32_t *addrs, uint32_t numAddrs)
 {
-	for (unsigned int i = 0; i < numInterruptAddresses; i++) memory.clearInterrupt(fromInterruptAddress(interruptAddresses[i]));
+	for (uint32_t i = 0; i < numInterruptAddresses; i++) memory.clearInterrupt(fromInterruptAddress(interruptAddresses[i]));
 	interruptAddresses = addrs;
 	numInterruptAddresses = numAddrs;
-	for (unsigned int i = 0; i < numInterruptAddresses; i++) memory.setInterrupt(fromInterruptAddress(interruptAddresses[i]));
+	for (uint32_t i = 0; i < numInterruptAddresses; i++) memory.setInterrupt(fromInterruptAddress(interruptAddresses[i]));
 }
 
 SYNCFUNC(CPU)

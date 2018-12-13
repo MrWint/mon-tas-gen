@@ -26,13 +26,13 @@ namespace gambatte {
 
 class EnvelopeUnit {
 private:
-	unsigned char nr2;
+	uint8_t nr2;
 
 public:
 	EnvelopeUnit() : nr2(0) {}
-	bool nr2Change(unsigned newNr2);
+	bool nr2Change(uint32_t newNr2);
 	bool nr4Init() { return !(nr2 & 0xF8); }
-	void loadState(unsigned nr2)  { this->nr2 = nr2; }
+	void loadState(uint8_t _nr2)  { nr2 = _nr2; }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

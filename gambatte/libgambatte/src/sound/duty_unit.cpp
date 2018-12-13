@@ -18,27 +18,27 @@
  ***************************************************************************/
 #include "duty_unit.h"
 
-static inline unsigned toPeriod(const unsigned freq) {
+static inline uint32_t toPeriod(const uint32_t freq) {
 	return (2048 - freq) << 1;
 }
 
 namespace gambatte {
 
-void DutyUnit::setFreq(const unsigned newFreq) {
+void DutyUnit::setFreq(const uint32_t newFreq) {
 	period = toPeriod(newFreq);
 }
 
-void DutyUnit::nr3Change(const unsigned newNr3) {
+void DutyUnit::nr3Change(const uint32_t newNr3) {
 	setFreq((getFreq() & 0x700) | newNr3);
 }
 
-void DutyUnit::nr4Change(const unsigned newNr4) {
+void DutyUnit::nr4Change(const uint32_t newNr4) {
 	setFreq((newNr4 << 8 & 0x700) | (getFreq() & 0xFF));
 }
 
 DutyUnit::DutyUnit() : period(4096) {}
 
-void DutyUnit::loadState(const SaveState::SPU::Duty &dstate, const unsigned nr4) {
+void DutyUnit::loadState(const SaveState::SPU::Duty &dstate, const uint32_t nr4) {
 	period = toPeriod((nr4 << 8 & 0x700) | dstate.nr3);
 }
 

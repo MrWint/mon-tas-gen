@@ -32,7 +32,7 @@ class StdFile : public File {
 	std::size_t fsize;
 
 public:
-	explicit StdFile(const char *filename)
+	explicit StdFile(const uint8_t *filename)
 	: stream(filename, std::ios::in | std::ios::binary), fsize(0)
 	{
 		if (stream) {
@@ -44,7 +44,7 @@ public:
 	
 	virtual void rewind() { stream.seekg(0, std::ios::beg); }
 	virtual std::size_t size() const { return fsize; };
-	virtual void read(char *buffer, std::size_t amount) { stream.read(buffer, amount); }
+	virtual void read(uint8_t *buffer, std::size_t amount) { stream.read(buffer, amount); }
 	virtual bool fail() const { return stream.fail(); }
 };
 

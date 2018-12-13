@@ -29,15 +29,15 @@ class MasterDisabler;
 
 class LengthCounter : public SoundUnit {
 	MasterDisabler &disableMaster;
-	unsigned short lengthCounter;
-	const unsigned char lengthMask;
+	uint16_t lengthCounter;
+	const uint8_t lengthMask;
 
 public:
-	LengthCounter(MasterDisabler &disabler, unsigned lengthMask);
+	LengthCounter(MasterDisabler &disabler, uint32_t lengthMask);
 	void event();
-	void nr1Change(unsigned newNr1, unsigned nr4, unsigned long cc);
-	void nr4Change(unsigned oldNr4, unsigned newNr4, unsigned long cc);
-	void loadState(const SaveState::SPU::LCounter &lstate, unsigned long cc);
+	void nr1Change(uint32_t newNr1, uint32_t nr4, uint32_t cc);
+	void nr4Change(uint32_t oldNr4, uint32_t newNr4, uint32_t cc);
+	void loadState(const SaveState::SPU::LCounter &lstate, uint32_t cc);
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

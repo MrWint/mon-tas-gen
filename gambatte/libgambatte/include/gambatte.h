@@ -19,7 +19,6 @@
 #ifndef GAMBATTE_H
 #define GAMBATTE_H
 
-#include "gbint.h"
 #include <string>
 #include <sstream>
 #include <cstdint>
@@ -43,10 +42,10 @@ public:
 	  * @param flags    ORed combination of LoadFlags.
 	  * @return 0 on success, negative value on failure.
 	  */
-	int load(const char *romfiledata, unsigned romfilelength, std::uint32_t now, unsigned flags, unsigned div);
+	int32_t load(const uint8_t *romfiledata, uint32_t romfilelength, uint32_t now, uint8_t flags, uint32_t div);
 	
-	int loadGBCBios(const char* biosfiledata);
-	int loadDMGBios(const char* biosfiledata);
+	void loadGBCBios(const uint8_t* biosfiledata);
+	void loadDMGBios(const uint8_t* biosfiledata);
 
 	/** Emulates until at least 'samples' stereo sound samples are produced in the supplied buffer,
 	  * or until a video frame has been drawn.
@@ -64,38 +63,38 @@ public:
 	  * @param samples in: number of stereo samples to produce, out: actual number of samples produced
 	  * @return sample number at which the video frame was produced. -1 means no frame was produced.
 	  */
-	long runFor(unsigned &samples);
+	int32_t runFor(uint32_t &samples);
 
-	void setLayers(unsigned mask);
+	void setLayers(uint8_t mask);
 
 	/** Reset to initial state.
 	  * Equivalent to reloading a ROM image, or turning a Game Boy Color off and on again.
 	  */
-	void reset(std::uint32_t now, unsigned div);
+	void reset(uint32_t now, uint32_t div);
 
 	/** Sets the callback used for getting input state. */
-	void setInputGetter(unsigned (*getInput)(void *), void* context);
+	void setInputGetter(uint8_t (*getInput)(void *), void* context);
 	
-	void setRTCCallback(std::uint32_t (*callback)(void*), void* context);
+	void setRTCCallback(uint32_t (*callback)(void*), void* context);
 
 	/** Writes persistent cartridge data to disk. NOT Done implicitly on ROM close. */
-	void loadSavedata(const char *data);
-	int saveSavedataLength();
-	void saveSavedata(char *dest);
+	void loadSavedata(const uint8_t *data);
+	size_t saveSavedataLength();
+	void saveSavedata(uint8_t *dest);
 	
 	// 0 = vram, 1 = rom, 2 = wram, 3 = cartram, 4 = oam, 5 = hram
-	bool getMemoryArea(int which, unsigned char **data, int *length);
+	bool getMemoryArea(int32_t which, uint8_t **data, int32_t *length);
 
-	unsigned char ExternalRead(unsigned short addr);
-	void ExternalWrite(unsigned short addr, unsigned char val);
+	uint8_t ExternalRead(uint16_t addr);
+	void ExternalWrite(uint16_t addr, uint8_t val);
 
-	void GetRegs(int *dest);
+	void GetRegs(uint32_t *dest);
 
-	void SetInterruptAddresses(int *addrs, unsigned numAddrs);
-	int GetHitInterruptAddress();
+	void SetInterruptAddresses(int32_t *addrs, uint32_t numAddrs);
+	int32_t GetHitInterruptAddress();
 
-	std::uint16_t getDivState();
-	void setVideoBuffer(uint_least32_t *const videoBuf, const int pitch);
+	uint16_t getDivState();
+	void setVideoBuffer(uint32_t *const videoBuf, const std::size_t pitch);
 
 	template<bool isReader>void SyncState(NewState *ns);
 

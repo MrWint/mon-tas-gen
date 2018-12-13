@@ -27,30 +27,30 @@ struct SaveState;
 class LyCounter;
 
 class LycIrq {
-	unsigned long time_;
- 	unsigned char lycRegSrc_;
- 	unsigned char statRegSrc_;
-	unsigned char lycReg_;
-	unsigned char statReg_;
+	uint32_t time_;
+ 	uint8_t lycRegSrc_;
+ 	uint8_t statRegSrc_;
+	uint8_t lycReg_;
+	uint8_t statReg_;
 	bool cgb_;
 	
-	void regChange(unsigned statReg, unsigned lycReg, const LyCounter &lyCounter, unsigned long cc);
+	void regChange(uint32_t statReg, uint32_t lycReg, const LyCounter &lyCounter, uint32_t cc);
 	
 public:
 	LycIrq();
-	void doEvent(unsigned char *ifreg, const LyCounter &lyCounter);
-	unsigned lycReg() const { return lycRegSrc_; }
+	void doEvent(uint8_t *ifreg, const LyCounter &lyCounter);
+	uint32_t lycReg() const { return lycRegSrc_; }
 	void loadState(const SaveState &state);
-	unsigned long time() const { return time_; }
+	uint32_t time() const { return time_; }
 	void setCgb(const bool cgb) { cgb_ = cgb; }
 	void lcdReset();
-	void reschedule(const LyCounter & lyCounter, unsigned long cc);
+	void reschedule(const LyCounter & lyCounter, uint32_t cc);
 	
-	void statRegChange(unsigned statReg, const LyCounter &lyCounter, unsigned long cc) {
+	void statRegChange(uint32_t statReg, const LyCounter &lyCounter, uint32_t cc) {
 		regChange(statReg, lycRegSrc_, lyCounter, cc);
 	}
 	
-	void lycRegChange(unsigned lycReg, const LyCounter &lyCounter, unsigned long cc) {
+	void lycRegChange(uint32_t lycReg, const LyCounter &lyCounter, uint32_t cc) {
 		regChange(statRegSrc_, lycReg, lyCounter, cc);
 	}
 

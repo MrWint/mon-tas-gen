@@ -19,8 +19,6 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-static unsigned char const agbOverride[0xD] = { 0xFF, 0x00, 0xCD, 0x03, 0x35, 0xAA, 0x31, 0x90, 0x94, 0x00, 0x00, 0x00, 0x00 };
-
 #include "mem/cartridge.h"
 #include "video.h"
 #include "sound.h"
@@ -29,29 +27,31 @@ static unsigned char const agbOverride[0xD] = { 0xFF, 0x00, 0xCD, 0x03, 0x35, 0x
 #include "newstate.h"
 #include "gambatte.h"
 
+static uint8_t const agbOverride[0xD] = { 0xFF, 0x00, 0xCD, 0x03, 0x35, 0xAA, 0x31, 0x90, 0x94, 0x00, 0x00, 0x00, 0x00 };
+
 namespace gambatte {
 class InputGetter;
 class FilterInfo;
 
 class Memory {
 	Cartridge cart;
-	unsigned char ioamhram[0x200];
-	unsigned char cgbBios[0x900];
-	unsigned char dmgBios[0x100];
+	uint8_t ioamhram[0x200];
+	uint8_t cgbBios[0x900];
+	uint8_t dmgBios[0x100];
 	bool biosMode;
 	bool cgbSwitching;
 	bool agbMode;
 	bool gbIsCgb_;
 	bool stopped;
-	unsigned short &SP;
-	unsigned short &PC;
-	unsigned long basetime;
-	unsigned long halttime;
+	uint16_t &SP;
+	uint16_t &PC;
+	uint32_t basetime;
+	uint32_t halttime;
 
-	unsigned (*getInput)(void *);
+	uint8_t (*getInput)(void *);
 	void *getInputContext;
-	unsigned long divLastUpdate;
-	unsigned long lastOamDmaUpdate;
+	uint32_t divLastUpdate;
+	uint32_t lastOamDmaUpdate;
 	
 	InterruptRequester intreq;
 	Tima tima;
@@ -59,80 +59,80 @@ class Memory {
 	PSG sound;
 	Interrupter interrupter;
 	
-	unsigned short dmaSource;
-	unsigned short dmaDestination;
-	unsigned char oamDmaPos;
-	unsigned char serialCnt;
+	uint16_t dmaSource;
+	uint16_t dmaDestination;
+	uint8_t oamDmaPos;
+	uint8_t serialCnt;
 	bool blanklcd;
 
 	bool LINKCABLE;
 	bool linkClockTrigger;
 
-	void decEventCycles(MemEventId eventId, unsigned long dec);
+	void decEventCycles(MemEventId eventId, uint32_t dec);
 
 	void oamDmaInitSetup();
-	void updateOamDma(unsigned long cycleCounter);
-	void startOamDma(unsigned long cycleCounter);
-	void endOamDma(unsigned long cycleCounter);
-	const unsigned char * oamDmaSrcPtr() const;
+	void updateOamDma(uint32_t cycleCounter);
+	void startOamDma(uint32_t cycleCounter);
+	void endOamDma(uint32_t cycleCounter);
+	const uint8_t * oamDmaSrcPtr() const;
 	
-	unsigned nontrivial_ff_read(unsigned P, unsigned long cycleCounter);
-	unsigned nontrivial_read(unsigned P, unsigned long cycleCounter);
-	void nontrivial_ff_write(unsigned P, unsigned data, unsigned long cycleCounter);
-	void nontrivial_write(unsigned P, unsigned data, unsigned long cycleCounter);
+	uint32_t nontrivial_ff_read(uint32_t P, uint32_t cycleCounter);
+	uint32_t nontrivial_read(uint32_t P, uint32_t cycleCounter);
+	void nontrivial_ff_write(uint32_t P, uint32_t data, uint32_t cycleCounter);
+	void nontrivial_write(uint32_t P, uint32_t data, uint32_t cycleCounter);
 	
-	unsigned nontrivial_peek(unsigned P);
-	unsigned nontrivial_ff_peek(unsigned P);
+	uint32_t nontrivial_peek(uint32_t P);
+	uint32_t nontrivial_ff_peek(uint32_t P);
 
-	void updateSerial(unsigned long cc);
-	void updateTimaIrq(unsigned long cc);
-	void updateIrqs(unsigned long cc);
+	void updateSerial(uint32_t cc);
+	void updateTimaIrq(uint32_t cc);
+	void updateIrqs(uint32_t cc);
 	
 	bool isDoubleSpeed() const { return display.isDoubleSpeed(); }
 
 public:
-	explicit Memory(const Interrupter &interrupter, unsigned short &sp, unsigned short &pc);
+	explicit Memory(const Interrupter &interrupter, uint16_t &sp, uint16_t &pc);
 	
 	bool loaded() const { return cart.loaded(); }
-	unsigned curRomBank() const { return cart.curRomBank(); }
+	uint32_t curRomBank() const { return cart.curRomBank(); }
 
 	void setStatePtrs(SaveState &state);
-	void loadState(const SaveState &state/*, unsigned long oldCc*/);
-	void loadSavedata(const char *data) { cart.loadSavedata(data); }
-	int saveSavedataLength() {return cart.saveSavedataLength(); }
-	void saveSavedata(char *dest) { cart.saveSavedata(dest); }
+	void loadState(const SaveState &state/*, uint32_t oldCc*/);
+	void loadSavedata(const uint8_t *data) { cart.loadSavedata(data); }
+	size_t saveSavedataLength() {return cart.saveSavedataLength(); }
+	void saveSavedata(uint8_t *dest) { cart.saveSavedata(dest); }
 	void updateInput();
 
-	unsigned char* cgbBiosBuffer() { return (unsigned char*)cgbBios; }
-	unsigned char* dmgBiosBuffer() { return (unsigned char*)dmgBios; }
+	uint8_t* cgbBiosBuffer() { return cgbBios; }
+	uint8_t* dmgBiosBuffer() { return dmgBios; }
 	bool gbIsCgb() { return gbIsCgb_; }
 
-	bool getMemoryArea(int which, unsigned char **data, int *length); // { return cart.getMemoryArea(which, data, length); }
+	bool getMemoryArea(int32_t which, uint8_t **data, int32_t *length); // { return cart.getMemoryArea(which, data, length); }
 
-	unsigned long stop(unsigned long cycleCounter);
+	uint32_t stop(uint32_t cycleCounter);
 	bool isCgb() const { return display.isCgb(); }
 	bool ime() const { return intreq.ime(); }
 	bool halted() const { return intreq.halted(); }
-	unsigned long nextEventTime() const { return intreq.minEventTime(); }
+	uint32_t nextEventTime() const { return intreq.minEventTime(); }
 
-	void setLayers(unsigned mask) { display.setLayers(mask); }
+	void setLayers(uint8_t mask) { display.setLayers(mask); }
 	
 	bool isActive() const { return intreq.eventTime(END) != DISABLED_TIME; }
 	
-	long cyclesSinceBlit(const unsigned long cc) const {
-		return cc < intreq.eventTime(BLIT) ? -1 : static_cast<long>((cc - intreq.eventTime(BLIT)) >> isDoubleSpeed());
+	int32_t cyclesSinceBlit(const uint32_t cc) const {
+		return cc < intreq.eventTime(BLIT) ? -1 : static_cast<int32_t>((cc - intreq.eventTime(BLIT)) >> isDoubleSpeed());
 	}
 
-	void halt(unsigned long cycleCounter) { halttime = cycleCounter; intreq.halt(); }
-	void ei(unsigned long cycleCounter) { if (!ime()) { intreq.ei(cycleCounter); } }
+	void halt(uint32_t cycleCounter) { halttime = cycleCounter; intreq.halt(); }
+	void ei(uint32_t cycleCounter) { if (!ime()) { intreq.ei(cycleCounter); } }
 
 	void di() { intreq.di(); }
 
-	unsigned ff_read(const unsigned P, const unsigned long cycleCounter) {
+	uint32_t ff_read(const uint32_t P, const uint32_t cycleCounter) {
 		return P < 0xFF80 ? nontrivial_ff_read(P, cycleCounter) : ioamhram[P - 0xFE00];
 	}
 
-	unsigned readBios(const unsigned P) {
+	uint32_t readBios(const uint32_t P) {
 		if (gbIsCgb_) {
 			if (agbMode && P >= 0xF3 && P < 0x100) {
 				return (agbOverride[P - 0xF3] + cgbBios[P]) & 0xFF;
@@ -142,69 +142,69 @@ public:
 		return dmgBios[P];
 	}
 
-	unsigned read(const unsigned P, const unsigned long cycleCounter) {
+	uint32_t read(const uint32_t P, const uint32_t cycleCounter) {
 		if (biosMode && ((!gbIsCgb_ && P < 0x100) || (gbIsCgb_ && P < 0x900 && (P < 0x100 || P >= 0x200)))) {
 			return readBios(P);
 		}
 		return cart.rmem(P >> 12) ? cart.rmem(P >> 12)[P] : nontrivial_read(P, cycleCounter);
 	}
 
-	unsigned read_excb(const unsigned P, const unsigned long cycleCounter, bool first) {
+	uint32_t read_excb(const uint32_t P, const uint32_t cycleCounter, bool first) {
 		if (biosMode && ((!gbIsCgb_ && P < 0x100) || (gbIsCgb_ && P < 0x900 && (P < 0x100 || P >= 0x200)))) {
 			return readBios(P);
 		}
 		return cart.rmem(P >> 12) ? cart.rmem(P >> 12)[P] : nontrivial_read(P, cycleCounter);
 	}
 
-	unsigned peek(const unsigned P) {
+	uint32_t peek(const uint32_t P) {
 		if (biosMode && ((!gbIsCgb_ && P < 0x100) || (gbIsCgb_ && P < 0x900 && (P < 0x100 || P >= 0x200)))) {
 			return readBios(P);
 		}
 		return cart.rmem(P >> 12) ? cart.rmem(P >> 12)[P] : nontrivial_peek(P);
 	}
 
-	void write_nocb(const unsigned P, const unsigned data, const unsigned long cycleCounter) {
+	void write_nocb(const uint32_t P, const uint32_t data, const uint32_t cycleCounter) {
 		if (cart.wmem(P >> 12)) {
 			cart.wmem(P >> 12)[P] = data;
 		} else
 			nontrivial_write(P, data, cycleCounter);
 	}
 	
-	void write(const unsigned P, const unsigned data, const unsigned long cycleCounter) {
+	void write(const uint32_t P, const uint32_t data, const uint32_t cycleCounter) {
 		if (cart.wmem(P >> 12)) {
 			cart.wmem(P >> 12)[P] = data;
 		} else
 			nontrivial_write(P, data, cycleCounter);
 	}
 	
-	void ff_write(const unsigned P, const unsigned data, const unsigned long cycleCounter) {
+	void ff_write(const uint32_t P, const uint32_t data, const uint32_t cycleCounter) {
 		if (P - 0xFF80u < 0x7Fu) {
 			ioamhram[P - 0xFE00] = data;
 		} else
 			nontrivial_ff_write(P, data, cycleCounter);
 	}
 
-	unsigned long event(unsigned long cycleCounter);
-	unsigned long resetCounters(unsigned long cycleCounter);
+	uint32_t event(uint32_t cycleCounter);
+	uint32_t resetCounters(uint32_t cycleCounter);
 
-	int loadROM(const char *romfiledata, unsigned romfilelength, bool forceDmg, bool multicartCompat);
+	int32_t loadROM(const uint8_t *romfiledata, uint32_t romfilelength, bool forceDmg, bool multicartCompat);
 
-	void setInputGetter(unsigned (*getInput)(void *), void* context) {
+	void setInputGetter(uint8_t (*getInput)(void *), void* context) {
 		this->getInput = getInput;
 		this->getInputContext = context;
 	}
 
-	void setRTCCallback(std::uint32_t (*callback)(void*), void* context) {
+	void setRTCCallback(uint32_t (*callback)(void*), void* context) {
 		cart.setRTCCallback(callback, context);
 	}
 
-	void setBasetime(unsigned long cc) { basetime = cc; }
-	void setEndtime(unsigned long cc, unsigned long inc);
+	void setBasetime(uint32_t cc) { basetime = cc; }
+	void setEndtime(uint32_t cc, uint32_t inc);
 	
 	void setSoundBuffer() { sound.setBuffer(); }
-	unsigned fillSoundBuffer(unsigned long cc);
+	uint32_t fillSoundBuffer(uint32_t cc);
 	
-	void setVideoBuffer(uint_least32_t *const videoBuf, const int pitch) {
+	void setVideoBuffer(uint32_t *const videoBuf, const int32_t pitch) {
 		display.setVideoBuffer(videoBuf, pitch);
 	}
 	
@@ -212,14 +212,14 @@ public:
 		display.blackScreen();
 	}
 
-	std::uint16_t getDivState(unsigned long cc) {
-		const std::uint32_t div = ioamhram[0x104];
+	uint16_t getDivState(uint32_t cc) {
+		const uint32_t div = ioamhram[0x104];
 		return (((div << 8) + cc - divLastUpdate) >> 2) & 0x3FFF;
 	}
 
-	inline bool isInterrupt(unsigned romAddress) { return cart.isInterrupt(romAddress); }
-	inline void setInterrupt(unsigned romAddress) { cart.setInterrupt(romAddress); }
-	inline void clearInterrupt(unsigned romAddress) { cart.clearInterrupt(romAddress); }
+	inline bool isInterrupt(uint32_t romAddress) { return cart.isInterrupt(romAddress); }
+	inline void setInterrupt(uint32_t romAddress) { cart.setInterrupt(romAddress); }
+	inline void clearInterrupt(uint32_t romAddress) { cart.clearInterrupt(romAddress); }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

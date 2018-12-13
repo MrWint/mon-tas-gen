@@ -28,35 +28,35 @@ class NextM0Time;
 
 class SpriteMapper {
 	class OamReader {
-		unsigned char buf[80];
+		uint8_t buf[80];
 		bool szbuf[40];
 
 	public:
 		const LyCounter &lyCounter;
 
 	private:
-		const unsigned char *oamram;
-		unsigned long lu;
-		unsigned char lastChange;
+		const uint8_t *oamram;
+		uint32_t lu;
+		uint8_t lastChange;
 		bool largeSpritesSrc;
 		bool cgb_;
 
 	public:
-		OamReader(const LyCounter &lyCounter, const unsigned char *oamram);
-		void reset(const unsigned char *oamram, bool cgb);
-		void change(unsigned long cc);
-		void change(const unsigned char *oamram, unsigned long cc) { change(cc); this->oamram = oamram; }
+		OamReader(const LyCounter &lyCounter, const uint8_t *oamram);
+		void reset(const uint8_t *oamram, bool cgb);
+		void change(uint32_t cc);
+		void change(const uint8_t *_oamram, uint32_t cc) { change(cc); oamram = _oamram; }
 		bool changed() const { return lastChange != 0xFF; }
-		bool largeSprites(unsigned spNr) const { return szbuf[spNr]; }
-		const unsigned char *oam() const { return oamram; }
-		void resetCycleCounter(const unsigned long oldCc, const unsigned long newCc) { lu -= oldCc - newCc; }
+		bool largeSprites(uint32_t spNr) const { return szbuf[spNr]; }
+		const uint8_t *oam() const { return oamram; }
+		void resetCycleCounter(const uint32_t oldCc, const uint32_t newCc) { lu -= oldCc - newCc; }
 		void setLargeSpritesSrc(const bool src) { largeSpritesSrc = src; }
-		void update(unsigned long cc);
-		const unsigned char *spritePosBuf() const { return buf; }
+		void update(uint32_t cc);
+		const uint8_t *spritePosBuf() const { return buf; }
 		void setStatePtrs(SaveState &state);
-		void enableDisplay(unsigned long cc);
-		void loadState(const SaveState &ss, const unsigned char *oamram);
-		bool inactivePeriodAfterDisplayEnable(const unsigned long cc) const { return cc < lu; }
+		void enableDisplay(uint32_t cc);
+		void loadState(const SaveState &ss, const uint8_t *oamram);
+		bool inactivePeriodAfterDisplayEnable(const uint32_t cc) const { return cc < lu; }
 
 		template<bool isReader>void SyncState(NewState *ns);
 	};
@@ -65,54 +65,54 @@ class SpriteMapper {
 
 public:
 	class SpxLess {
-		const unsigned char *const posbuf_plus1;
+		const uint8_t *const posbuf_plus1;
 
 	public:
-		explicit SpxLess(const unsigned char *const posbuf) : posbuf_plus1(posbuf + 1) {}
+		explicit SpxLess(const uint8_t *const posbuf) : posbuf_plus1(posbuf + 1) {}
 
-		bool operator()(const unsigned char l, const unsigned char r) const {
+		bool operator()(const uint8_t l, const uint8_t r) const {
 			return posbuf_plus1[l] < posbuf_plus1[r];
 		}
 	};
 
 private:
-	mutable unsigned char spritemap[144*10];
-	mutable unsigned char num[144];
+	mutable uint8_t spritemap[144*10];
+	mutable uint8_t num[144];
 	
 	NextM0Time &nextM0Time_;
 	OamReader oamReader;
 
 	void clearMap();
 	void mapSprites();
-	void sortLine(unsigned ly) const;
+	void sortLine(uint32_t ly) const;
 
 public:
 	SpriteMapper(NextM0Time &nextM0Time,
 	             const LyCounter &lyCounter,
-	             const unsigned char *oamram_in);
-	void reset(const unsigned char *oamram, bool cgb);
-	unsigned long doEvent(unsigned long time);
-	bool largeSprites(unsigned spNr) const { return oamReader.largeSprites(spNr); }
-	unsigned numSprites(const unsigned ly) const { return num[ly] & ~NEED_SORTING_MASK; }
-	void oamChange(unsigned long cc) { oamReader.change(cc); }
-	void oamChange(const unsigned char *oamram, unsigned long cc) { oamReader.change(oamram, cc); }
-	const unsigned char *oamram() const { return oamReader.oam(); }
-	const unsigned char *posbuf() const { return oamReader.spritePosBuf(); }
-	void  preSpeedChange(const unsigned long cc) { oamReader.update(cc); }
-	void postSpeedChange(const unsigned long cc) { oamReader.change(cc); }
+	             const uint8_t *oamram_in);
+	void reset(const uint8_t *oamram, bool cgb);
+	uint32_t doEvent(uint32_t time);
+	bool largeSprites(uint32_t spNr) const { return oamReader.largeSprites(spNr); }
+	uint8_t numSprites(const uint32_t ly) const { return num[ly] & ~NEED_SORTING_MASK; }
+	void oamChange(uint32_t cc) { oamReader.change(cc); }
+	void oamChange(const uint8_t *oamram, uint32_t cc) { oamReader.change(oamram, cc); }
+	const uint8_t *oamram() const { return oamReader.oam(); }
+	const uint8_t *posbuf() const { return oamReader.spritePosBuf(); }
+	void  preSpeedChange(const uint32_t cc) { oamReader.update(cc); }
+	void postSpeedChange(const uint32_t cc) { oamReader.change(cc); }
 
-	void resetCycleCounter(const unsigned long oldCc, const unsigned long newCc) {
+	void resetCycleCounter(const uint32_t oldCc, const uint32_t newCc) {
 		oamReader.update(oldCc);
 		oamReader.resetCycleCounter(oldCc, newCc);
 	}
 
-	static unsigned long schedule(const LyCounter &lyCounter, const unsigned long cycleCounter) {
+	static uint32_t schedule(const LyCounter &lyCounter, const uint32_t cycleCounter) {
 		return lyCounter.nextLineCycle(80, cycleCounter);
 	}
 
 	void setLargeSpritesSource(bool src) { oamReader.setLargeSpritesSrc(src); }
 
-	const unsigned char* sprites(const unsigned ly) const {
+	const uint8_t* sprites(const uint32_t ly) const {
 		if (num[ly] & NEED_SORTING_MASK)
 			sortLine(ly);
 
@@ -120,9 +120,9 @@ public:
 	}
 
 	void setStatePtrs(SaveState &state) { oamReader.setStatePtrs(state); }
-	void enableDisplay(unsigned long cc) { oamReader.enableDisplay(cc); }
-	void loadState(const SaveState &state, const unsigned char *const oamram) { oamReader.loadState(state, oamram); mapSprites(); }
-	bool inactivePeriodAfterDisplayEnable(unsigned long cc) const { return oamReader.inactivePeriodAfterDisplayEnable(cc); }
+	void enableDisplay(uint32_t cc) { oamReader.enableDisplay(cc); }
+	void loadState(const SaveState &state, const uint8_t *const oamram) { oamReader.loadState(state, oamram); mapSprites(); }
+	bool inactivePeriodAfterDisplayEnable(uint32_t cc) const { return oamReader.inactivePeriodAfterDisplayEnable(cc); }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

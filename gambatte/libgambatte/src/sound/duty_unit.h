@@ -25,19 +25,19 @@
 namespace gambatte {
 
 class DutyUnit {
-	unsigned long nextPosUpdate;
-	unsigned short period;
-	unsigned char pos;
+	uint32_t nextPosUpdate;
+	uint16_t period;
+	uint8_t pos;
 
 public:
 	DutyUnit();
-	void nr3Change(unsigned newNr3);
-	void nr4Change(unsigned newNr4);
-	void loadState(const SaveState::SPU::Duty &dstate, unsigned nr4);
+	void nr3Change(uint32_t newNr3);
+	void nr4Change(uint32_t newNr4);
+	void loadState(const SaveState::SPU::Duty &dstate, uint32_t nr4);
 
 	//intended for use by SweepUnit only.
-	unsigned getFreq() const { return 2048 - (period >> 1); }
-	void setFreq(unsigned newFreq);
+	uint32_t getFreq() const { return 2048 - (period >> 1); }
+	void setFreq(uint32_t newFreq);
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

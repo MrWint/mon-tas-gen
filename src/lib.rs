@@ -2,7 +2,7 @@
 #![feature(unsized_locals)]
 
 extern crate bincode;
-#[macro_use] extern crate bitflags;
+//#[macro_use] extern crate bitflags;
 extern crate byteorder;
 extern crate gambatters;
 extern crate sdl2;

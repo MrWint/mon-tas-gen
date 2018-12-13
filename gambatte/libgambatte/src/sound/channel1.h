@@ -19,7 +19,6 @@
 #ifndef SOUND_CHANNEL1_H
 #define SOUND_CHANNEL1_H
 
-#include "gbint.h"
 #include "master_disabler.h"
 #include "length_counter.h"
 #include "duty_unit.h"
@@ -34,17 +33,17 @@ class Channel1 {
 	class SweepUnit : public SoundUnit {
 		MasterDisabler &disableMaster;
 		DutyUnit &dutyUnit;
-		unsigned short shadow;
-		unsigned char nr0;
+		uint16_t shadow;
+		uint8_t nr0;
 		bool negging;
 		
-		unsigned calcFreq();
+		uint32_t calcFreq();
 		
 	public:
 		SweepUnit(MasterDisabler &disabler, DutyUnit &dutyUnit);
 		void event();
-		void nr0Change(unsigned newNr0);
-		void nr4Init(unsigned long cycleCounter);
+		void nr0Change(uint32_t newNr0);
+		void nr4Init(uint32_t cycleCounter);
 		void reset();
 		void loadState(const SaveState &state);
 
@@ -59,24 +58,24 @@ class Channel1 {
 	
 	SoundUnit *nextEventUnit;
 	
-	unsigned long cycleCounter;
+	uint32_t cycleCounter;
 	
-	unsigned char nr4;
+	uint8_t nr4;
 	bool master;
 	
 	void setEvent();
 	
 public:
 	Channel1();
-	void setNr0(unsigned data);
-	void setNr1(unsigned data);
-	void setNr2(unsigned data);
-	void setNr3(unsigned data);
-	void setNr4(unsigned data);
+	void setNr0(uint32_t data);
+	void setNr1(uint32_t data);
+	void setNr2(uint32_t data);
+	void setNr3(uint32_t data);
+	void setNr4(uint32_t data);
 	
 	bool isActive() const { return master; }
 	
-	void update(unsigned long cycles);
+	void update(uint32_t cycles);
 	
 	void reset();
 	void loadState(const SaveState &state);

@@ -26,9 +26,9 @@ namespace gambatte {
 struct SaveState;
 
 class LyCounter {
-	unsigned long time_;
-	unsigned short lineTime_;
-	unsigned char ly_;
+	uint32_t time_;
+	uint16_t lineTime_;
+	uint8_t ly_;
 	bool ds;
 	
 public:
@@ -36,21 +36,21 @@ public:
 	void doEvent();
 	bool isDoubleSpeed() const { return ds; }
 	
-	unsigned long frameCycles(const unsigned long cc) const {
+	uint32_t frameCycles(const uint32_t cc) const {
 		return ly_ * 456ul + lineCycles(cc);
 	}
 	
-	unsigned lineCycles(const unsigned long cc) const {
+	uint32_t lineCycles(const uint32_t cc) const {
 		return 456u - ((time_ - cc) >> isDoubleSpeed());
 	}
 	
-	unsigned lineTime() const { return lineTime_; }
-	unsigned ly() const { return ly_; }
-	unsigned long nextLineCycle(unsigned lineCycle, unsigned long cycleCounter) const;
-	unsigned long nextFrameCycle(unsigned long frameCycle, unsigned long cycleCounter) const;
-	void reset(unsigned long videoCycles, unsigned long lastUpdate);
+	uint32_t lineTime() const { return lineTime_; }
+	uint32_t ly() const { return ly_; }
+	uint32_t nextLineCycle(uint32_t lineCycle, uint32_t cycleCounter) const;
+	uint32_t nextFrameCycle(uint32_t frameCycle, uint32_t cycleCounter) const;
+	void reset(uint32_t videoCycles, uint32_t lastUpdate);
 	void setDoubleSpeed(bool ds_in);
-	unsigned long time() const { return time_; }
+	uint32_t time() const { return time_; }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };
