@@ -7,7 +7,7 @@
 using namespace gambatte;
 
 // new is actually called in a few different places, so replace all of them for determinism guarantees
-void *operator new(std::size_t n)
+void *operator new(size_t n)
 {
 	void *p = std::malloc(n);
 	std::memset(p, 0, n);
@@ -18,7 +18,7 @@ void operator delete(void *p)
 {
 	std::free(p);
 }
-void operator delete(void *p, std::size_t)
+void operator delete(void *p, size_t)
 {
 	std::free(p);
 }
@@ -53,7 +53,7 @@ GBEXPORT int32_t gambatte_runfor(GB *g, uint32_t *samples)
 	return ret;
 }
 
-GBEXPORT void gambatte_setvideobuffer(GB *g, uint32_t *const videoBuf, const std::size_t pitch) {
+GBEXPORT void gambatte_setvideobuffer(GB *g, uint32_t *const videoBuf, const size_t pitch) {
 	g->setVideoBuffer(videoBuf, pitch);
 }
 
@@ -72,7 +72,7 @@ GBEXPORT void gambatte_setrtccallback(GB *g, uint32_t (*callback)(void*), void* 
 	g->setRTCCallback(callback, context);
 }
 
-GBEXPORT std::size_t gambatte_newstatelen(GB *g)
+GBEXPORT size_t gambatte_newstatelen(GB *g)
 {
 	NewStateDummy dummy;
 	g->SyncState<false>(&dummy);

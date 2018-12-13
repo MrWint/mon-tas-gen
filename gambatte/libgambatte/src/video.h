@@ -167,7 +167,7 @@ public:
 	void reset(const uint8_t *oamram, const uint8_t *vram, bool cgb);
 	void setStatePtrs(SaveState &state);
 	void loadState(const SaveState &state, const uint8_t *oamram);
-	void setVideoBuffer(uint32_t *videoBuf, std::size_t pitch);
+	void setVideoBuffer(uint32_t *videoBuf, size_t pitch);
 	void setLayers(uint8_t mask) { ppu.setLayers(mask); }
 	void setCgb(bool cgb);
 	void copyCgbPalettesToDmg();

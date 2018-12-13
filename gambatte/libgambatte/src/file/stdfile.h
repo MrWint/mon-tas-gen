@@ -29,7 +29,7 @@ namespace gambatte {
 
 class StdFile : public File {
 	std::ifstream stream;
-	std::size_t fsize;
+	size_t fsize;
 
 public:
 	explicit StdFile(const uint8_t *filename)
@@ -43,8 +43,8 @@ public:
 	}
 	
 	virtual void rewind() { stream.seekg(0, std::ios::beg); }
-	virtual std::size_t size() const { return fsize; };
-	virtual void read(uint8_t *buffer, std::size_t amount) { stream.read(buffer, amount); }
+	virtual size_t size() const { return fsize; };
+	virtual void read(uint8_t *buffer, size_t amount) { stream.read(buffer, amount); }
 	virtual bool fail() const { return stream.fail(); }
 };
 

@@ -94,7 +94,7 @@ public:
 	int32_t GetHitInterruptAddress();
 
 	uint16_t getDivState();
-	void setVideoBuffer(uint32_t *const videoBuf, const std::size_t pitch);
+	void setVideoBuffer(uint32_t *const videoBuf, const size_t pitch);
 
 	template<bool isReader>void SyncState(NewState *ns);
 

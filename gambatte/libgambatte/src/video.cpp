@@ -50,7 +50,7 @@ LCD::LCD(const uint8_t *const oamram, const uint8_t *const vram, const VideoInte
 	std::memset( bgpData, 0, sizeof  bgpData);
 	std::memset(objpData, 0, sizeof objpData);
 
-	for (std::size_t i = 0; i < sizeof(dmgColorsRgb32) / sizeof(dmgColorsRgb32[0]); ++i)
+	for (size_t i = 0; i < sizeof(dmgColorsRgb32) / sizeof(dmgColorsRgb32[0]); ++i)
 		setDmgPaletteColor(i, (3 - (i & 3)) * 85 * 0x010101);
 
 	reset(oamram, vram, false);
@@ -741,7 +741,7 @@ void LCD::update(const uint32_t cycleCounter) {
 	ppu.update(cycleCounter);
 }
 
-void LCD::setVideoBuffer(uint32_t *const videoBuf, const std::size_t pitch) {
+void LCD::setVideoBuffer(uint32_t *const videoBuf, const size_t pitch) {
 	ppu.setFrameBuf(videoBuf, pitch);
 }
 

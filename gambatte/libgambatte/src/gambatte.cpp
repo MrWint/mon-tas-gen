@@ -56,7 +56,7 @@ int32_t GB::runFor(uint32_t &samples) {
 	return cyclesSinceBlit < 0 ? cyclesSinceBlit : static_cast<int32_t>(samples) - (cyclesSinceBlit >> 1);
 }
 
-void GB::setVideoBuffer(uint32_t *const videoBuf, const std::size_t pitch) {
+void GB::setVideoBuffer(uint32_t *const videoBuf, const size_t pitch) {
 	p_->cpu.setVideoBuffer(videoBuf, pitch);
 }
 
