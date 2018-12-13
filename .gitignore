@@ -1,12 +1,2 @@
-# exclude certain directories
-roms/*
-saves/*
-temp/*
-target/*
-
 # exclude temporary and binary files
-*.os
-*.a
-*.log
-*.dll
-libgambatte/.sconsign.dblite
+target/*
