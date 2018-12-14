@@ -6,14 +6,14 @@ use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 bitflags! {
   #[derive(Serialize, Deserialize)]
   pub struct Input: u8 {
-    const DOWN   = 0b10000000;
-    const UP     = 0b01000000;
-    const LEFT   = 0b00100000;
-    const RIGHT  = 0b00010000;
-    const START  = 0b00001000;
-    const SELECT = 0b00000100;
-    const B      = 0b00000010;
-    const A      = 0b00000001;
+    const DOWN   = 0b1000_0000;
+    const UP     = 0b0100_0000;
+    const LEFT   = 0b0010_0000;
+    const RIGHT  = 0b0001_0000;
+    const START  = 0b0000_1000;
+    const SELECT = 0b0000_0100;
+    const B      = 0b0000_0010;
+    const A      = 0b0000_0001;
   }
 }
 #[allow(dead_code)]
@@ -28,9 +28,9 @@ pub mod inputs {
   pub const D: Input         = Input::DOWN;
   pub const L: Input         = Input::LEFT;
   pub const R: Input         = Input::RIGHT;
-  pub const HI_INPUTS: Input = Input { bits: 0b11110000 };
-  pub const LO_INPUTS: Input = Input { bits: 0b00001111 };
-  pub const NIL: Input       = Input { bits: 0b00000000 };
+  pub const HI_INPUTS: Input = Input { bits: 0b1111_0000 };
+  pub const LO_INPUTS: Input = Input { bits: 0b0000_1111 };
+  pub const NIL: Input       = Input { bits: 0b0000_0000 };
 }
 
 #[derive(Default)]
@@ -51,6 +51,7 @@ pub struct Registers {
 #[link(name = "gambatte")]
 extern {
   fn initSdlOutput(numScreens: u32, scaleFactor: u32);
+  fn handleSdlEvents();
   fn createGb(screen: i32, equal_length_frames: bool) -> *mut c_void;
   fn destroyGb(gb: *mut c_void);
   fn loadGbcBios(gb: *mut c_void, biosdata: *const u8);
@@ -73,6 +74,15 @@ extern {
   fn writeMemory(gb: *mut c_void, address: u16, value: u8);
   fn readRegisters(gb: *mut c_void, registers: *mut Registers);
   fn readDivState(gb: *mut c_void) -> u16;
+}
+
+#[derive(Clone)]
+pub struct Sdl {}
+impl Sdl {
+  pub fn init_sdl(num_screens: u32, scale_factor: u32) -> Sdl {
+    unsafe { initSdlOutput(num_screens, scale_factor); }
+    Sdl {}
+  }
 }
 
 /// Thin Rust FFI wrapper around libgambatte Gameboy emulator.
@@ -103,6 +113,13 @@ impl Gambatte {
     }
   }
 
+  /// Work through SDL events to keep window responsive.
+  pub fn handle_sdl_events() {
+    unsafe {
+      handleSdlEvents();
+    }
+  }
+
   /// Create a new Gambatte instance not attached to any output screen.
   #[allow(dead_code)]
   pub fn create(equal_length_frames: bool) -> Gambatte {
@@ -115,7 +132,7 @@ impl Gambatte {
   }
   /// Create a new Gambatte instance attached to an output screen. Requires a screen to be created using ```init_screens``` beforehand.
   #[allow(dead_code)]
-  pub fn create_on_screen(screen: i32, equal_length_frames: bool) -> Gambatte {
+  pub fn create_on_screen(_sdl: Sdl, screen: i32, equal_length_frames: bool) -> Gambatte {
     unsafe {
       Gambatte {
         gb: createGb(screen, equal_length_frames),
@@ -142,18 +159,18 @@ impl Gambatte {
   /// Changes the input buttons pressed, indefinitely until it is changed again.
   pub fn set_input(&self, input: Input) {
     unsafe {
-      setInput(self.gb, input.bits() as u32);
+      setInput(self.gb, u32::from(input.bits()));
     }
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing).
   #[allow(dead_code)]
-  pub fn step(&self) {
+  pub fn step(&mut self) {
     unsafe {
       step(self.gb);
     }
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing), or until the execution reaches one of the given addresses.
-  pub fn step_until(&self, addresses: &[i32]) -> i32 {
+  pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
     unsafe {
       stepUntil(self.gb, addresses.as_ptr(), addresses.len() as i32)
     }
@@ -166,7 +183,7 @@ impl Gambatte {
     }
   }
   /// Runs the emulation until the execution reaches one of the given addresses.
-  pub fn run_until(&self, addresses: &[i32]) -> i32 {
+  pub fn run_until(&mut self, addresses: &[i32]) -> i32 {
     loop {
       unsafe {
         let hit = stepUntil(self.gb, addresses.as_ptr(), addresses.len() as i32);
@@ -235,14 +252,14 @@ impl Gambatte {
   /// Returns the 2-byte word (Little Endian) starting at the given ROM address.
   #[allow(dead_code)]
   pub fn read_rom_word_le(&self, address: i32) -> u16 {
-    return ((self.read_rom(address + 1) as u16) << 8) + self.read_rom(address) as u16;
+    (u16::from(self.read_rom(address + 1)) << 8) + u16::from(self.read_rom(address))
   }
   /// Converts ROM addresses from input form (bank*0x10000 + address) to byte position in the ROM data.
   fn convert_address(address: i32) -> usize {
     let bank = address as usize >> 16;
     let add = address as usize & 0xffff;
     assert!(add < 0x8000 && (add >= 0x4000 || bank == 0));
-    return add + bank.saturating_sub(1)*0x4000;
+    add + bank.saturating_sub(1)*0x4000
   }
 
   /// Reads a byte from the given address from the memory bus, without causing emulation side-effects.
@@ -255,12 +272,12 @@ impl Gambatte {
   /// Reads a 2-byte word (Big Endian) from the given address from the memory bus, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_memory_word_be(&self, address: u16) -> u16 {
-    return ((self.read_memory(address) as u16) << 8) + self.read_memory(address + 1) as u16;
+    (u16::from(self.read_memory(address)) << 8) + u16::from(self.read_memory(address + 1))
   }
   /// Reads a 2-byte word (Little Endian) from the given address from the memory bus, without causing emulation side-effects.
   #[allow(dead_code)]
   pub fn read_memory_word_le(&self, address: u16) -> u16 {
-    return ((self.read_memory(address + 1) as u16) << 8) + self.read_memory(address) as u16;
+    (u16::from(self.read_memory(address + 1)) << 8) + u16::from(self.read_memory(address))
   }
   /// Writes a byte to the memory bus, as if written by the game, including side-effects and memory-mapped areas.
   #[allow(dead_code)]

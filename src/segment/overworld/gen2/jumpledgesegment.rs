@@ -13,7 +13,7 @@ impl JumpLedgeSegment {
   #[allow(dead_code)]
   pub fn new(input: Input) -> Self {
     Self {
-      input: input,
+      input,
       debug_output: false,
     }
   }

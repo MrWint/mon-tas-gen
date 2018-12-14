@@ -2,9 +2,10 @@ use gambatte::*;
 use rom::*;
 use std::marker::PhantomData;
 
+pub type State = ::std::sync::Arc<RawState>;
 /// Represents a saved state of a game execution.
 #[derive(Serialize, Deserialize)]
-pub struct State {
+pub struct RawState {
   /// Saved internal Gambatte state.
   gb_state: Vec<u8>,
   /// List of all inputs performed so far.
@@ -17,11 +18,16 @@ pub struct State {
   pub rng_state: u32,
   pub cycle_count: u64,
 }
-impl State {
+impl RawState {
   /// Returns the D-Sum of this state.
   pub fn get_d_sum(&self) -> u8 {
     assert!(self.is_at_input, "Can't determine D-Sum of state which was not at a decision point.");
     (self.rng_state + (self.rng_state >> 8)) as u8
+  }
+  /// Returns the Div state of this state [0-3fff].
+  pub fn get_div_state(&self) -> u16 {
+    assert!(self.is_at_input, "Can't determine D-Sum of state which was not at a decision point.");
+    (self.rng_state >> 16) as u16
   }
 }
 
@@ -57,7 +63,7 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
     let initial_gambatte_state = gambatte.save_state();
     let mut pgb = Gb {
       gb: gambatte,
-      initial_gambatte_state: initial_gambatte_state,
+      initial_gambatte_state,
       skipped_relevant_inputs: false,
       _rom: PhantomData,
 
@@ -72,23 +78,23 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
 }
 impl <R: RngAddresses> Gb<R> {
   /// Saves the current execution state to a State object.
-  pub fn save(&self) -> State {
+  pub fn save(&mut self) -> State {
     assert!(!self.skipped_relevant_inputs);
-    State {
+    ::std::sync::Arc::new(RawState {
       // save inherent state
       gb_state: self.gb.save_state(),
       inputs: self.inputs.clone(),
-      last_input_frame: self.last_input_frame.clone(),
+      last_input_frame: self.last_input_frame,
       is_at_input: self.is_at_input,
       ignored_inputs: self.ignored_inputs,
       // save derived state
       cycle_count: self.gb.get_cycle_count(),
       rng_state: if self.is_at_input { self.get_rng_state() } else { 0 },
-    }
+    })
   }
   /// Determines the RNG state at the current point of the execution, represented as a number in [0x0, 0x3fffffff].
   fn get_rng_state(&self) -> u32 {
-    ((self.gb.read_div_state() as u32) << 16) + self.gb.read_memory_word_be(R::RNG_MEM_ADDRESS) as u32
+    (u32::from(self.gb.read_div_state()) << 16) + u32::from(self.gb.read_memory_word_be(R::RNG_MEM_ADDRESS))
   }
 }
 impl <R> Gb<R> {

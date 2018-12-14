@@ -22,8 +22,8 @@ impl<R: JoypadAddresses + RngAddresses, F: Metric<R>, V> MoveSegment<R, F> where
 impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> MoveSegment<R, M> {
   pub fn with_metric(input: Input, metric: M) -> Self {
     Self {
-      input: input,
-      metric: metric,
+      input,
+      metric,
       max_skips: 0,
       debug_output: false,
       buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
@@ -35,8 +35,8 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> MoveSegment<R, M> {
 impl<R> MoveSegment<R, NullMetric> {
   pub fn new(input: Input) -> Self {
     Self {
-      input: input,
-      metric: NullMetric::new(),
+      input,
+      metric: NullMetric {},
       max_skips: 0,
       debug_output: false,
       buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
@@ -53,14 +53,14 @@ impl<R, M> WithOutputBufferSize for MoveSegment<R, M> {
 
 impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> Segment<R> for MoveSegment<R, M> {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
-    self.execute_split(gb, iter).to_sized_state_buffer(self.buffer_size)
+    self.execute_split(gb, iter).merge_state_buffers_sized(self.buffer_size)
   }
 }
 impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveSegment<R, M> {
-  type KeyType = M::ValueType;
+  type Key = M::ValueType;
 
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::KeyType, StateBuffer> {
-    let mut result: HashMap<Self::KeyType, StateBuffer> = HashMap::new();
+  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    let mut result: HashMap<Self::Key, StateBuffer> = HashMap::new();
     for mut s in iter {
       gb.restore(&s);
       let mut skips = 0;
@@ -78,7 +78,7 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveSe
             gb.input(self.input);
           }
           if !gb.is_at_input { gb.step(); }
-          result.entry(value).or_insert(StateBuffer::with_max_size(self.buffer_size)).add_state(gb.save());
+          result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_state(gb.save());
         }
         if skips >= self.max_skips { break; }
         gb.restore(&s);
@@ -89,5 +89,44 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveSe
       }
     }
     result
+  }
+}
+
+
+
+
+
+
+impl<R: Rom + 'static, M: Metric<R> + 'static> ParallelSegment<R> for MoveSegment<R, M> {
+  type Key = M::ValueType;
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    gbe.execute(iter, move |gb, mut s, tx| {
+      gb.restore(&s);
+      let mut skips = 0;
+      loop {
+        if self.debug_output && skips == 0 {
+          gb.input(self.input);
+          let hit = gb.step_until(R::JOYPAD_USE_ADDRESSES);
+          println!("MoveSegment use at pc {:04x} {}", hit, gb.get_stack_trace_string());
+          gb.restore(&s);
+        }
+        gb.input(self.input);
+        if let Some(value) = self.metric.evaluate(gb) {
+          if gb.skipped_relevant_inputs { // restore state if metric overran next input
+            gb.restore(&s);
+            gb.input(self.input);
+          }
+          if !gb.is_at_input { gb.step(); }
+          tx.send((value, gb.save())).unwrap();
+        }
+        if skips >= self.max_skips { break; }
+        gb.restore(&s);
+        gb.input(Input::empty());
+        gb.step();
+        s = gb.save();
+        skips += 1;
+      }
+    }).into_state_buffer_map(self.buffer_size)
   }
 }

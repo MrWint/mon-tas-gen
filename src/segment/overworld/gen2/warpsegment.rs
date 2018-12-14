@@ -10,14 +10,17 @@ pub struct WarpSegment {
   input: Input,
   debug_output: bool,
 }
+impl Default for WarpSegment {
+    fn default() -> Self {
+      Self {
+        input: Input::empty(),
+        debug_output: false,
+      }
+    }
+}
 impl WarpSegment {
   #[allow(dead_code)]
-  pub fn new() -> Self {
-    Self {
-      input: Input::empty(),
-      debug_output: false,
-    }
-  }
+  pub fn new() -> Self { Default::default() }
   #[allow(dead_code)]
   pub fn with_input(mut self, input: Input) -> Self { self.input = input; self }
 }
@@ -25,7 +28,7 @@ impl WithDebugOutput for WarpSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Segment<T> for WarpSegment {
+impl<T: Rom + Gen2MapEventsAddresses> Segment<T> for WarpSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     let sb = MoveSegment::with_metric(self.input, WarpMetric {}).with_debug_output(self.debug_output).execute(gb, iter);
     let sb = MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp))).with_debug_output(self.debug_output).execute(gb, sb);

@@ -13,7 +13,7 @@ impl TurnSegment {
   #[allow(dead_code)]
   pub fn new(input: Input) -> Self {
     Self {
-      input: input,
+      input,
       debug_output: false,
     }
   }
@@ -22,7 +22,7 @@ impl WithDebugOutput for TurnSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Segment<T> for TurnSegment {
+impl<T: Rom + Gen2MapEventsAddresses> Segment<T> for TurnSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     let sb = MoveSegment::with_metric(self.input, TurnMetric {}).with_debug_output(self.debug_output).execute(gb, iter);
     MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::JoyChangeFacing))).with_debug_output(self.debug_output).execute(gb, sb)

@@ -15,7 +15,7 @@ impl WalkStepSegment {
   #[allow(dead_code)]
   pub fn new(input: Input) -> Self {
     Self {
-      input: input,
+      input,
       into_result: OverworldInteractionResult::NoEvents,
       max_skips: 0,
       debug_output: false,
@@ -65,7 +65,7 @@ impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> ::segment::Segm
 
 pub fn walk_step_check<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses>(gb: &mut Gb<T>, into_result: &OverworldInteractionResult) -> bool {
   let result = super::get_overworld_interaction_result(gb);
-  if let OverworldInteractionResult::Walked(_) = result {
+  if let OverworldInteractionResult::Walked(_, _) = result {
     gb.step();
     gb.input(Input::empty());
     let result = super::get_overworld_interaction_result(gb);

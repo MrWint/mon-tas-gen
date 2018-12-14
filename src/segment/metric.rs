@@ -1,16 +1,15 @@
 use gb::*;
+use gbexecutor::StateKey;
 use rom::*;
-use std::fmt::Debug;
-use std::hash::Hash;
 use std::marker::PhantomData;
 
-pub trait Metric<R> {
-  type ValueType: Eq + Hash + Debug;
+pub trait Metric<R>: Sync {
+  type ValueType: StateKey;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType>;
 
   fn filter<F>(self, f: F) -> Filter<R, Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
-    Filter { metric: self, f: f, _rom: PhantomData, }
+    Filter { metric: self, f, _rom: PhantomData, }
   }
 }
 
@@ -19,7 +18,7 @@ pub struct Filter<R, M, F> {
   f: F,
   _rom: PhantomData<R>,
 }
-impl<R, M: Metric<R>, F> Metric<R> for Filter<R, M, F> where F: Fn(&M::ValueType) -> bool {
+impl<R: Sync, M: Metric<R>, F: Sync> Metric<R> for Filter<R, M, F> where F: Fn(&M::ValueType) -> bool {
   type ValueType = M::ValueType;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
@@ -33,17 +32,17 @@ pub struct FnMetric<F> {
 }
 impl<F> FnMetric<F> {
   pub fn new<R, V>(f: F) -> FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
-    FnMetric { f: f, }
+    FnMetric { f, }
   }
 }
-impl<R, F, V: Eq + Hash + Debug> Metric<R> for FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
+impl<R, F: Sync, V: StateKey> Metric<R> for FnMetric<F> where F: Fn(&mut Gb<R>) -> Option<V> {
   type ValueType = V;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     (self.f)(gb)
   }
 }
-impl<R, F, V: Eq + Hash + Debug> Metric<R> for F where F: Fn(&mut Gb<R>) -> Option<V> {
+impl<R, F: Sync, V: StateKey> Metric<R> for F where F: Fn(&mut Gb<R>) -> Option<V> {
   type ValueType = V;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
@@ -53,11 +52,6 @@ impl<R, F, V: Eq + Hash + Debug> Metric<R> for F where F: Fn(&mut Gb<R>) -> Opti
 
 
 pub struct NullMetric {}
-impl NullMetric {
-  pub fn new() -> Self {
-    Self {}
-  }
-}
 impl<R> Metric<R> for NullMetric {
   type ValueType = ();
 
@@ -73,6 +67,32 @@ pub struct DVs {
   pub def: u8,
   pub spd: u8,
   pub spc: u8,
+  pub div_state: u16,
+  pub cycle_count: u64,
+}
+#[allow(dead_code)]
+pub struct Gen1DVMetric {}
+impl<R: JoypadAddresses + Gen1DVAddresses> Metric<R> for Gen1DVMetric {
+  type ValueType = DVs;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(R::AFTER_DV_GENERATION_ADDRESSES) == 0 { return None; }
+    let registers = gb.gb.read_registers();
+
+    let atk = ((registers.a >> 4) & 0xF) as u8;
+    let def = ((registers.a) & 0xF) as u8;
+    let spd = ((registers.b >> 4) & 0xF) as u8;
+    let spc = ((registers.b) & 0xF) as u8;
+
+    Some(DVs {
+      atk,
+      def,
+      spd,
+      spc,
+      div_state: gb.gb.read_div_state(),
+      cycle_count: gb.gb.get_cycle_count(),
+    })
+  }
 }
 #[allow(dead_code)]
 pub struct Gen2DVMetric {}
@@ -89,11 +109,23 @@ impl<R: JoypadAddresses + Gen2DVAddresses> Metric<R> for Gen2DVMetric {
     let spc = ((registers.c) & 0xF) as u8;
 
     Some(DVs {
-      atk: atk,
-      def: def,
-      spd: spd,
-      spc: spc,
+      atk,
+      def,
+      spd,
+      spc,
+      div_state: gb.gb.read_div_state(),
+      cycle_count: gb.gb.get_cycle_count(),
     })
+  }
+}
+#[allow(dead_code)]
+pub struct TrainerIDMetric {}
+impl<R: JoypadAddresses + TrainerIDAddresses> Metric<R> for TrainerIDMetric {
+  type ValueType = u16;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::TRAINER_ID_AFTER_GENERATION_ADDRESS]) == 0 { return None; }
+    Some(gb.gb.read_memory_word_be(R::TRAINER_ID_MEM_ADDRESS))
   }
 }
 
@@ -111,7 +143,7 @@ impl<R: JoypadAddresses + Gen2DetermineMoveOrderAddresses> Metric<R> for Gen2Mov
     let hit = gb.run_until_or_next_input_use(&[R::MOVE_ORDER_PLAYER_FIRST_ADDRESS, R::MOVE_ORDER_ENEMY_FIRST_ADDRESS]);
     if hit == R::MOVE_ORDER_PLAYER_FIRST_ADDRESS { return Some(MoveOrder::PlayerFirst); }
     if hit == R::MOVE_ORDER_ENEMY_FIRST_ADDRESS { return Some(MoveOrder::EnemyFirst); }
-    return None;
+    None
   }
 }
 

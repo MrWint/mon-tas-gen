@@ -14,13 +14,16 @@ impl WithDebugOutput for IdentifyInputSegment {
 impl WithOutputBufferSize for IdentifyInputSegment {
   fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
 }
-impl IdentifyInputSegment {
-  pub fn new() -> Self {
+impl Default for IdentifyInputSegment {
+  fn default() -> Self {
     IdentifyInputSegment {
       debug_output: false,
       buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
+}
+impl IdentifyInputSegment {
+  pub fn new() -> Self { Default::default() }
 
   fn print_identification<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses>(gb: &mut Gb<R>, s: &State) {
     for &(pre, input, post, name) in R::II_ADDRESSES {

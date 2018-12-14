@@ -1,7 +1,7 @@
 use gambatte::*;
 use rom::*;
 
-pub fn from_ftii<R: JoypadAddresses>(gb: Gambatte, hi_inputs: Vec<i32>, lo_inputs: Vec<i32>) -> Vec<Input> {
+pub fn from_ftii<R: JoypadAddresses>(mut gb: Gambatte, hi_inputs: Vec<i32>, lo_inputs: Vec<i32>) -> Vec<Input> {
   let mut inputs:  Vec<Input> = vec![];
 
   let mut frame_start = gb.save_state();
@@ -66,7 +66,7 @@ pub fn from_ftii<R: JoypadAddresses>(gb: Gambatte, hi_inputs: Vec<i32>, lo_input
   inputs
 }
 
-pub fn to_ftii<R: JoypadAddresses>(gb: Gambatte, inputs: Vec<Input>) -> (Vec<i32>, Vec<i32>) {
+pub fn to_ftii<R: JoypadAddresses>(mut gb: Gambatte, inputs: Vec<Input>) -> (Vec<i32>, Vec<i32>) {
 
   let mut cur_frame = 0;
   let mut hi_inputs: Vec<i32> = vec![];
@@ -94,7 +94,7 @@ pub fn to_ftii<R: JoypadAddresses>(gb: Gambatte, inputs: Vec<Input>) -> (Vec<i32
         hi_inputs.pop();
         hi_inputs.push(-1);
       }
-      hi_inputs.push((frame_input.bits() & 0xf0) as i32);
+      hi_inputs.push(i32::from(frame_input.bits() & 0xf0));
       last_hi_inputs_used = false;
       hit = gb.step_until(&[&[R::JOYPAD_READ_LO_ADDRESS], R::JOYPAD_USE_ADDRESSES].concat());
     } else if hit == R::JOYPAD_READ_LO_ADDRESS {
@@ -103,7 +103,7 @@ pub fn to_ftii<R: JoypadAddresses>(gb: Gambatte, inputs: Vec<Input>) -> (Vec<i32
         lo_inputs.pop();
         lo_inputs.push(-1);
       }
-      lo_inputs.push((frame_input.bits() & 0x0f) as i32);
+      lo_inputs.push(i32::from(frame_input.bits() & 0x0f));
       last_lo_inputs_used = false;
       hit = gb.step_until(&[&[R::JOYPAD_READ_HI_ADDRESS], R::JOYPAD_USE_ADDRESSES].concat());
     } else if R::JOYPAD_USE_ADDRESSES.contains(&hit) {
