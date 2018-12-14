@@ -39,9 +39,9 @@ fn main() {
   // if true {return;}
 
 
-  // playback_inputs();
+  playback_inputs();
   // convert_efl();
-  // if true {return;}
+  if true {return;}
 
   // BlueTestSegment::run();
   YellowTestSegment::run();

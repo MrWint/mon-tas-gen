@@ -98,8 +98,6 @@ pub struct Gambatte {
 }
 
 impl Gambatte {
-  pub fn handle_sdl_events() { /* Compatibility function, does nothing. */ }
-
   /// Create a new Gambatte instance not attached to any output screen.
   #[allow(dead_code)]
   pub fn create(equal_length_frames: bool) -> Gambatte {

@@ -149,14 +149,13 @@ impl FromIterator<State> for StateBuffer {
   }
 }
 
-fn _into_iterator_get_value_fn(pair: (u32, State)) -> State { pair.1 }
 impl IntoIterator for StateBuffer {
   type Item = State;
   #[allow(clippy::type_complexity)]
   type IntoIter = ::std::iter::Map<::std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {
-    self.states.into_iter().map(_into_iterator_get_value_fn)
+    self.states.into_iter().map(pair_get_second)
   }
 }
 impl<'a> IntoIterator for &'a StateBuffer {
