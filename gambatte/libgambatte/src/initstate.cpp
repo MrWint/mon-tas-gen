@@ -700,7 +700,7 @@ static void setInitialCgbWram(uint8_t *const wram) {
 	
 	std::memset(wram + 0x2000, 0, 0x1000);
 	
-	for (std::size_t i = 0; i < sizeof(cgbWramDumpDiff) / sizeof(cgbWramDumpDiff[0]); ++i)
+	for (size_t i = 0; i < sizeof(cgbWramDumpDiff) / sizeof(cgbWramDumpDiff[0]); ++i)
 		wram[cgbWramDumpDiff[i].addr] = cgbWramDumpDiff[i].val;
 }
 
@@ -972,7 +972,7 @@ static void setInitialDmgWram(uint8_t *const wram) {
 	
 	std::memcpy(wram + 0x1000, wram, 0x1000);
 	
-	for (std::size_t i = 0; i < sizeof(dmgWramDumpDiff) / sizeof(dmgWramDumpDiff[0]); ++i)
+	for (size_t i = 0; i < sizeof(dmgWramDumpDiff) / sizeof(dmgWramDumpDiff[0]); ++i)
 		wram[dmgWramDumpDiff[i].addr] = dmgWramDumpDiff[i].val;
 }
 
@@ -1007,7 +1007,7 @@ static void setInitialVram(uint8_t *const vram, const bool cgb) {
 	
 	std::memset(vram, 0, 0x4000);
 	
-	for (std::size_t i = 0; i < sizeof(even_numbered_8010_to_81a0_dump) / sizeof(even_numbered_8010_to_81a0_dump[0]); ++i) {
+	for (size_t i = 0; i < sizeof(even_numbered_8010_to_81a0_dump) / sizeof(even_numbered_8010_to_81a0_dump[0]); ++i) {
 		vram[0x0010 + i * 2] = even_numbered_8010_to_81a0_dump[i];
 	}
 	

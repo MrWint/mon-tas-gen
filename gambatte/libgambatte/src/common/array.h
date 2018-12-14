@@ -25,13 +25,13 @@
 template<typename T>
 class Array : Uncopyable {
 	T *a;
-	std::size_t sz;
+	size_t sz;
 	
 public:
-	explicit Array(const std::size_t size = 0) : a(size ? new T[size] : 0), sz(size) {}
+	explicit Array(const size_t size = 0) : a(size ? new T[size] : 0), sz(size) {}
 	~Array() { delete []a; }
-	void reset(const std::size_t size = 0) { delete []a; a = size ? new T[size] : 0; sz = size; }
-	std::size_t size() const { return sz; }
+	void reset(const size_t size = 0) { delete []a; a = size ? new T[size] : 0; sz = size; }
+	size_t size() const { return sz; }
 	T * get() const { return a; }
 	operator T*() const { return a; }
 };

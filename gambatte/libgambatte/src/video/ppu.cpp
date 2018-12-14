@@ -1445,9 +1445,9 @@ PPUPriv::PPUPriv(NextM0Time &nextM0Time, const uint8_t *const oamram, const uint
 
 namespace {
 
-template<class T, class K, std::size_t start, std::size_t len>
+template<class T, class K, size_t start, size_t len>
 struct BSearch {
-	static std::size_t upperBound(const T a[], const K e) {
+	static size_t upperBound(const T a[], const K e) {
 		if (e < a[start + len / 2])
 			return BSearch<T, K, start, len / 2>::upperBound(a, e);
 		
@@ -1455,15 +1455,15 @@ struct BSearch {
 	}
 };
 
-template<class T, class K, std::size_t start>
+template<class T, class K, size_t start>
 struct BSearch<T, K, start, 0> {
-	static std::size_t upperBound(const T[], const K) {
+	static size_t upperBound(const T[], const K) {
 		return start;
 	}
 };
 
-template<std::size_t len, class T, class K>
-std::size_t upperBound(const T a[], const K e) {
+template<size_t len, class T, class K>
+size_t upperBound(const T a[], const K e) {
 	return BSearch<T, K, 0, len>::upperBound(a, e);
 }
 
@@ -1588,7 +1588,7 @@ void PPU::loadState(const SaveState &ss, const uint8_t *const oamram) {
 			{    &M3Start::f0_, (int32_t)m3StartLineCycle(p_.cgb) + 456 }
 		};
 		
-		const std::size_t pos =
+		const size_t pos =
 			upperBound<sizeof(lineCycleStates) / sizeof(lineCycleStates[0]) - 1>(lineCycleStates, lineCycles);
 		
 		p_.cycles = lineCycles - lineCycleStates[pos].cycle;

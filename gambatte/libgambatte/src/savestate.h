@@ -19,6 +19,7 @@
 #ifndef SAVESTATE_H
 #define SAVESTATE_H
 
+#include <cstddef>
 #include <cstdint>
 
 namespace gambatte {

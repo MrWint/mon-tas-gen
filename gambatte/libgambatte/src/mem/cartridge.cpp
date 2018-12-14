@@ -72,11 +72,11 @@ public:
 };
 
 static inline uint32_t rambanks(const MemPtrs &memptrs) {
-	return static_cast<std::size_t>(memptrs.rambankdataend() - memptrs.rambankdata()) / 0x2000;
+	return static_cast<size_t>(memptrs.rambankdataend() - memptrs.rambankdata()) / 0x2000;
 }
 
 static inline uint32_t rombanks(const MemPtrs &memptrs) {
-	return static_cast<std::size_t>(memptrs.romdataend()     - memptrs.romdata()    ) / 0x4000;
+	return static_cast<size_t>(memptrs.romdataend()     - memptrs.romdata()    ) / 0x4000;
 }
 
 class Mbc1 : public DefaultMbc {
@@ -538,7 +538,7 @@ int32_t Cartridge::loadROM(const uint8_t *romfiledata, uint32_t romfilelength, c
 		cgb = !forceDmg;
 	}
 
-	const std::size_t filesize = romfilelength; //rom->size();
+	const size_t filesize = romfilelength; //rom->size();
 	rombanks = std::max(pow2ceil(filesize / 0x4000), 2u);
 	
 	mbc.reset();

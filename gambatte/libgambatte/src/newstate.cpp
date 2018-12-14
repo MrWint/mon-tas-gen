@@ -16,7 +16,7 @@ void NewStateDummy::Load(void *, size_t, const char *)
 {
 }
 
-NewStateExternalBuffer::NewStateExternalBuffer(uint8_t *buffer, std::size_t maxlength)
+NewStateExternalBuffer::NewStateExternalBuffer(uint8_t *buffer, size_t maxlength)
 	:buffer(buffer), length(0), maxlength(maxlength)
 {
 }
