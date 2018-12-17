@@ -74,7 +74,7 @@ public:
 		memory.setRTCCallback(callback, context);
 	}
 	
-	int32_t load(const uint8_t *romfiledata, uint32_t romfilelength, bool forceDmg, bool multicartCompat) {
+	int32_t load(const uint8_t *romfiledata, size_t romfilelength, bool forceDmg, bool multicartCompat) {
 		return memory.loadROM(romfiledata, romfilelength, forceDmg, multicartCompat);
 	}
 	
@@ -91,7 +91,7 @@ public:
 
 	void GetRegs(uint32_t *dest);
 
-	void SetInterruptAddresses(int32_t *addrs, uint32_t numAddrs);
+	void SetInterruptAddresses(int32_t *addrs, size_t numAddrs);
 	inline int32_t GetHitInterruptAddress() { return hitInterruptAddress; }
 
 	uint16_t getDivState() { return memory.getDivState(cycleCounter_); }

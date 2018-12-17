@@ -478,7 +478,7 @@ static uint32_t pow2ceil(uint32_t n) {
 	return n;
 }
 
-int32_t Cartridge::loadROM(const uint8_t *romfiledata, uint32_t romfilelength, const bool forceDmg, const bool multicartCompat) {
+int32_t Cartridge::loadROM(const uint8_t *romfiledata, size_t romfilelength, const bool forceDmg, const bool multicartCompat) {
 	uint32_t rambanks = 1;
 	uint32_t rombanks = 2;
 	bool cgb = false;

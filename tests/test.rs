@@ -1,18 +1,20 @@
 #![feature(test)]
 
+extern crate gambatte;
 extern crate montas;
 extern crate test;
 
-use montas::gambatte::*;
-use montas::gambatte::inputs::*;
+use gambatte::*;
+use gambatte::inputs::*;
 use montas::gb::*;
 use montas::rom::*;
 use montas::segment::*;
+use montas::sdl::*;
 
 #[test]
 fn meta_test() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-  let mut gb = Gb::<Crystal>::create(Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */));
+  let mut gb = Gb::<Crystal>::create(Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */)));
   let states = vec![gb.save()];
 
   let sb = DelaySegment::new(MoveSegment::with_metric(A, NullMetric {})).with_debug_output(true).execute(&mut gb, states);

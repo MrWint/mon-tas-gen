@@ -85,7 +85,7 @@ public:
 
 	bool getMemoryArea(int32_t which, uint8_t **data, int32_t *length) const;
 
-	int32_t loadROM(const uint8_t *romfiledata, uint32_t romfilelength, bool forceDmg, bool multicartCompat);
+	int32_t loadROM(const uint8_t *romfiledata, size_t romfilelength, bool forceDmg, bool multicartCompat);
 
 	void setRTCCallback(uint32_t (*callback)(void*), void* context) {
 		rtc.setRTCCallback(callback, context);

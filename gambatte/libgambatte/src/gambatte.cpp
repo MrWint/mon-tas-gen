@@ -79,7 +79,7 @@ void GB::setRTCCallback(uint32_t (*callback)(void*), void* context) {
 	cpu.setRTCCallback(callback, context);
 }
 
-int32_t GB::load(const uint8_t *romfiledata, uint32_t romfilelength, const uint32_t now, const uint8_t flags, const uint32_t div) {
+int32_t GB::load(const uint8_t *romfiledata, size_t romfilelength, const uint32_t now, const uint8_t flags, const uint32_t div) {
 	const int32_t failed = cpu.load(romfiledata, romfilelength, flags & FORCE_DMG, flags & MULTICART_COMPAT);
 	
 	if (!failed) {
@@ -139,7 +139,7 @@ void GB::GetRegs(uint32_t *dest) {
 	cpu.GetRegs(dest);
 }
 
-void GB::SetInterruptAddresses(int32_t *addrs, uint32_t numAddrs)
+void GB::SetInterruptAddresses(int32_t *addrs, size_t numAddrs)
 {
 	cpu.SetInterruptAddresses(addrs, numAddrs);
 }

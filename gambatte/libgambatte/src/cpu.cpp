@@ -2849,12 +2849,12 @@ void CPU::GetRegs(uint32_t *dest)
 }
 
 inline uint32_t fromInterruptAddress(int32_t interruptAddress) { return ((interruptAddress >> 16) << 14) | (interruptAddress & 0x3fff); }
-void CPU::SetInterruptAddresses(int32_t *addrs, uint32_t numAddrs)
+void CPU::SetInterruptAddresses(int32_t *addrs, size_t numAddrs)
 {
-	for (uint32_t i = 0; i < numInterruptAddresses; i++) memory.clearInterrupt(fromInterruptAddress(interruptAddresses[i]));
+	for (size_t i = 0; i < numInterruptAddresses; i++) memory.clearInterrupt(fromInterruptAddress(interruptAddresses[i]));
 	interruptAddresses = addrs;
 	numInterruptAddresses = numAddrs;
-	for (uint32_t i = 0; i < numInterruptAddresses; i++) memory.setInterrupt(fromInterruptAddress(interruptAddresses[i]));
+	for (size_t i = 0; i < numInterruptAddresses; i++) memory.setInterrupt(fromInterruptAddress(interruptAddresses[i]));
 }
 
 SYNCFUNC(CPU)

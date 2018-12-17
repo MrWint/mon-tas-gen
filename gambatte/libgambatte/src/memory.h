@@ -186,7 +186,7 @@ public:
 	uint32_t event(uint32_t cycleCounter);
 	uint32_t resetCounters(uint32_t cycleCounter);
 
-	int32_t loadROM(const uint8_t *romfiledata, uint32_t romfilelength, bool forceDmg, bool multicartCompat);
+	int32_t loadROM(const uint8_t *romfiledata, size_t romfilelength, bool forceDmg, bool multicartCompat);
 
 	void setInputGetter(uint8_t (*getInput)(void *), void* context) {
 		this->getInput = getInput;

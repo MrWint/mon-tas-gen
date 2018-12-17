@@ -7,7 +7,7 @@ pub type State = ::std::sync::Arc<RawState>;
 #[derive(Serialize, Deserialize)]
 pub struct RawState {
   /// Saved internal Gambatte state.
-  gb_state: Vec<u8>,
+  gb_state: SaveState,
   /// List of all inputs performed so far.
   inputs: Vec<Input>,
   last_input_frame: [u32; 2], // first, last
@@ -39,7 +39,7 @@ pub struct Gb<R> {
   /// Gambatte instance used for the emulation.
   pub gb: Gambatte,
   /// Saved initial internal Gambatte state, before any execution.
-  initial_gambatte_state: Vec<u8>,
+  initial_gambatte_state: SaveState,
   /// Whether relevant inputs were skipped over, making this inherently unsavable in any way.
   pub skipped_relevant_inputs: bool,
   _rom: PhantomData<R>,
@@ -154,10 +154,10 @@ impl <R: JoypadAddresses> Gb<R> {
   /// Executes until any of the given addresses are about to be executed, or until the execution is about to read its next usable input.
   /// Returns the address which was hit (and stops the execution at this address), or a saved internal Gambatte state at the next usable input
   /// and the frames at which the two halves of the input were read (the running execution is stopped at reading the second half of the input).
-  fn run_to_next_vblank_until(&mut self, addresses: &[i32]) -> (i32, Vec<u8>, [u32; 2]) {
+  fn run_to_next_vblank_until(&mut self, addresses: &[i32]) -> RunToNextVBlankResult {
     loop {
       let hit = self.gb.run_until(&[&[R::JOYPAD_READ_FIRST_ADDRESS], addresses].concat());
-      if hit != R::JOYPAD_READ_FIRST_ADDRESS { return (hit, vec![], [0, 0]); }
+      if hit != R::JOYPAD_READ_FIRST_ADDRESS { return RunToNextVBlankResult::HitAddress(hit); }
       let input_first_address_frame = self.gb.frame();
       if input_first_address_frame == self.last_input_frame[0] {
           println!("found multiple first inputs in frame {}, skipping possible input", self.last_input_frame[0]);
@@ -172,13 +172,13 @@ impl <R: JoypadAddresses> Gb<R> {
           self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
           continue;
       }
-      return (0, state_at_input, [input_first_address_frame, input_last_address_frame]);
+      return RunToNextVBlankResult::AtNextVBlank(state_at_input, [input_first_address_frame, input_last_address_frame]);
     }
   }
   /// Assumes the current execution is stopped at a usable input by ```run_to_next_vblank_until```,
   /// checks whether the input is actually used and skips over inputs that don't affect the execution path.
   /// Executes until any of the given addresses are about to be executed, returning the hit address, or until the next decision point is reached, returning 0.
-  fn skip_irrelevant_vblanks_until(&mut self, addresses: &[i32], mut state_at_input: Vec<u8>, mut input_frame: [u32; 2], allow_hit_after_relevant_input_read: bool) -> i32 {
+  fn skip_irrelevant_vblanks_until(&mut self, addresses: &[i32], mut state_at_input: SaveState, mut input_frame: [u32; 2], allow_hit_after_relevant_input_read: bool) -> i32 {
     loop {
       self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
 
@@ -241,25 +241,28 @@ impl <R: JoypadAddresses> Gb<R> {
   /// Runs until any of the given addresses is hit, or the next decision point is reached.
   pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
     assert!(!self.is_at_input);
-    let (hit, s, input_frame) = self.run_to_next_vblank_until(addresses);
-    if hit != 0 { return hit; }
-    self.skip_irrelevant_vblanks_until(addresses, s, input_frame, /* allow_hit_after_relevant_input_read = */ false)
+    match self.run_to_next_vblank_until(addresses) {
+      RunToNextVBlankResult::HitAddress(hit) => hit,
+      RunToNextVBlankResult::AtNextVBlank(s, input_frame) => self.skip_irrelevant_vblanks_until(addresses, s, input_frame, /* allow_hit_after_relevant_input_read = */ false),
+    }
   }
   /// Runs until any of the given addresses is hit, or any new input is read (whether or not it is a relevant input) and forwards to relevant input.
   pub fn step_until_or_any_vblank(&mut self, addresses: &[i32]) -> i32 {
     assert!(!self.is_at_input);
-    let (hit, s, input_frame) = self.run_to_next_vblank_until(addresses);
-    if hit != 0 { return hit; }
-    self.skip_irrelevant_vblanks_until(&[], s, input_frame, /* allow_hit_after_relevant_input_read = */ false)
+    match self.run_to_next_vblank_until(addresses) {
+      RunToNextVBlankResult::HitAddress(hit) => hit,
+      RunToNextVBlankResult::AtNextVBlank(s, input_frame) => self.skip_irrelevant_vblanks_until(&[], s, input_frame, /* allow_hit_after_relevant_input_read = */ false),
+    }
   }
   /// Runs until any of the given addresses is hit, or the next relevant input is being used.
   /// This operation can render the execution unsavable if the input use happens between the reading and the use of the next input.
   /// This operation is useful to evalutate metrics as the result of pressing an input, which happen before the next input is used.
   pub fn run_until_or_next_input_use(&mut self, addresses: &[i32]) -> i32 {
     assert!(!self.is_at_input);
-    let (hit, s, input_frame) = self.run_to_next_vblank_until(addresses);
-    if hit != 0 { return hit; }
-    self.skip_irrelevant_vblanks_until(addresses, s, input_frame, /* allow_hit_after_relevant_input_read = */ true)
+    match self.run_to_next_vblank_until(addresses) {
+      RunToNextVBlankResult::HitAddress(hit) => hit,
+      RunToNextVBlankResult::AtNextVBlank(s, input_frame) => self.skip_irrelevant_vblanks_until(addresses, s, input_frame, /* allow_hit_after_relevant_input_read = */ true),
+    }
   }
 }
 impl <R: JoypadAddresses + RngAddresses> Gb<R> {
@@ -289,4 +292,9 @@ impl <R: JoypadAddresses + RngAddresses> Gb<R> {
     println!("creating inputs done: #inputs: {}", result.len());
     result
   }
+}
+
+enum RunToNextVBlankResult {
+  HitAddress(i32),
+  AtNextVBlank(SaveState, [u32; 2]),
 }

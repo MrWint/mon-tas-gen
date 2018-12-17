@@ -1,10 +1,11 @@
 #![feature(test)]
 
+extern crate gambatte;
 extern crate montas;
 extern crate test;
 
-use montas::gambatte::*;
-use montas::gambatte::inputs::*;
+use gambatte::*;
+use gambatte::inputs::*;
 use montas::gb::*;
 use montas::rom::*;
 use montas::segment::*;
@@ -29,7 +30,7 @@ use test::{Bencher, black_box};
 
 #[bench]
 fn new_game_step(b: &mut Bencher) {
-  let mut gb = Gb::<Crystal>::create(Gambatte::create(false /* equal length frames */));
+  let mut gb = Gb::<Crystal>::create(Gambatte::create(false /* equal length frames */, NoScreen {}));
 
   b.iter(|| {
     gb.restore_initial_state();
@@ -40,7 +41,7 @@ fn new_game_step(b: &mut Bencher) {
 
 #[bench]
 fn new_game_movesegment(b: &mut Bencher) {
-  let mut gb = Gb::<Crystal>::create(Gambatte::create(false /* equal length frames */));
+  let mut gb = Gb::<Crystal>::create(Gambatte::create(false /* equal length frames */, NoScreen {}));
 
   b.iter(|| {
     gb.restore_initial_state();
@@ -52,7 +53,7 @@ fn new_game_movesegment(b: &mut Bencher) {
 
 #[bench]
 fn new_game_direct_gambatte(b: &mut Bencher) {
-  let mut gambatte = Gambatte::create(false /* equal length frames */);
+  let mut gambatte = Gambatte::create(false /* equal length frames */, NoScreen {});
   gambatte.load_gbc_bios("roms/gbc_bios.bin");
   gambatte.load_rom("roms/crystal.gbc");
   let initial_gambatte_state = gambatte.save_state();

@@ -45,7 +45,7 @@ public:
 	  * @param flags    ORed combination of LoadFlags.
 	  * @return 0 on success, negative value on failure.
 	  */
-	int32_t load(const uint8_t *romfiledata, uint32_t romfilelength, uint32_t now, uint8_t flags, uint32_t div);
+	int32_t load(const uint8_t *romfiledata, size_t romfilelength, uint32_t now, uint8_t flags, uint32_t div);
 	
 	void loadGBCBios(const uint8_t* biosfiledata);
 	void loadDMGBios(const uint8_t* biosfiledata);
@@ -93,7 +93,7 @@ public:
 
 	void GetRegs(uint32_t *dest);
 
-	void SetInterruptAddresses(int32_t *addrs, uint32_t numAddrs);
+	void SetInterruptAddresses(int32_t *addrs, size_t numAddrs);
 	int32_t GetHitInterruptAddress();
 
 	uint16_t getDivState();

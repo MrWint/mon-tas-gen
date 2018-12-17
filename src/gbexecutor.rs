@@ -1,6 +1,7 @@
 use gambatte::*;
 use gb::*;
 use rom::*;
+use sdl::*;
 use statebuffer::*;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -38,12 +39,12 @@ impl<R: BasicRomInfo + JoypadAddresses + RngAddresses> SingleGb<R> {
   pub fn with_screen() -> Self {
     let sdl = Sdl::init_sdl(1 /* num screens */, 1 /* scale */);
     SingleGb {
-      gb: Gb::<R>::create(Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */)),
+      gb: Gb::<R>::create(Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */))),
     }
   }
   pub fn no_screen() -> Self {
     SingleGb {
-      gb: Gb::<R>::create(Gambatte::create(false /* equal length frames */)),
+      gb: Gb::<R>::create(Gambatte::create(false /* equal length frames */, NoScreen {})),
     }
   }
 }
@@ -74,9 +75,9 @@ impl<R: Rom> GbPool<R> {
       let sdl = sdl.clone();
       thread::spawn(move || {
         let mut gb = Gb::<R>::create(if has_screen {
-          Gambatte::create_on_screen(sdl.unwrap(), i as _ /* screen */, false /* equal length frames */)
+          Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl.unwrap(), i as u32 /* screen */))
         } else {
-          Gambatte::create(false /* equal length frames */)
+          Gambatte::create(false /* equal length frames */, NoScreen {})
         });
 
         loop {

@@ -1036,7 +1036,7 @@ void Memory::nontrivial_write(const uint32_t P, const uint32_t data, const uint3
 		ioamhram[P - 0xFE00] = data;
 }
 
-int32_t Memory::loadROM(const uint8_t *romfiledata, uint32_t romfilelength, const bool forceDmg, const bool multicartCompat) {
+int32_t Memory::loadROM(const uint8_t *romfiledata, size_t romfilelength, const bool forceDmg, const bool multicartCompat) {
 	if (const int32_t fail = cart.loadROM(romfiledata, romfilelength, forceDmg, multicartCompat))
 		return fail;
 

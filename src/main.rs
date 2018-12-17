@@ -1,16 +1,17 @@
+extern crate gambatte;
 extern crate montas;
-
 extern crate rand;
 
+use gambatte::*;
+use gambatte::inputs::*;
 use montas::ftii;
-use montas::gambatte::*;
-use montas::gambatte::inputs::*;
 use montas::gb::*;
 #[allow(unused_imports)] use montas::gbexecutor::*;
 use montas::rom::*;
 use montas::segment::*;
 #[allow(unused_imports)] use montas::segment::overworld::gen2;
 #[allow(unused_imports)] use montas::util::*;
+use montas::sdl::*;
 use montas::statebuffer::StateBuffer;
 use std::fs::File;
 use std::io::BufReader;
@@ -24,8 +25,8 @@ fn main() {
   // test_gambattedll();
   // if true {return;}
 
-  // let mut gbe = SingleGb::<Crystal>::no_screen();
-  // let mut gbe = GbPool::<Crystal>::no_screen();
+  // let mut gbe = SingleGb::<Crystal>::with_screen();
+  // // let mut gbe = GbPool::<Crystal>::no_screen();
   // let s = gbe.get_initial_state();
   // let sb = MoveSegment::new(A).with_max_skips(10).execute_parallel(&mut gbe, vec![s]).into_state_buffer();
   // let sb = MoveSegment::new(START).with_max_skips(10).execute_parallel(&mut gbe, sb).into_state_buffer();
@@ -50,10 +51,10 @@ fn main() {
 #[allow(dead_code)]
 fn test_gambatte() {
   let sdl = Sdl::init_sdl(2, 3);
-  let mut gambatte1 = Gambatte::create_on_screen(sdl.clone(), 0, false);
+  let mut gambatte1 = Gambatte::create(false, SdlScreen::new(sdl.clone(), 0));
   gambatte1.load_gbc_bios("roms/gbc_bios.bin");
   gambatte1.load_rom("roms/yellow.gbc");
-  let mut gambatte2 = Gambatte::create_on_screen(sdl, 1, false);
+  let mut gambatte2 = Gambatte::create(false, SdlScreen::new(sdl, 1));
   gambatte2.load_gbc_bios("roms/gbc_bios.bin");
   gambatte2.load_rom("roms/crystal.gbc");
   for _ in 0..5000 {
@@ -95,7 +96,7 @@ impl BlueTestSegment {
   #[allow(dead_code)]
   fn run() {
     let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-    let mut gb = Gb::<Blue>::create(Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */));
+    let mut gb = Gb::<Blue>::create(Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */)));
     let states = vec![gb.save()];
     let sb = BlueTestSegment{}.execute(&mut gb, states);
     test_segment_end(&mut gb, &sb, "temp/blue_test.txt");
@@ -191,7 +192,7 @@ impl YellowTestSegment {
   #[allow(dead_code)]
   fn run() {
     let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-    let mut gb = Gb::<Yellow>::create(Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */));
+    let mut gb = Gb::<Yellow>::create(Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */)));
     let states = vec![gb.save()];
     let sb = YellowTestSegment{}.execute(&mut gb, states);
     test_segment_end(&mut gb, &sb, "temp/yellow_test.txt");
@@ -498,14 +499,14 @@ impl Segment<Crystal> for CrystalTestSegment {
 fn convert_efl() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let (hi_inputs, lo_inputs) = {
-    let mut gb = Gambatte::create_on_screen(sdl.clone(), 0 /* screen */, false /* equal length frames */);
+    let mut gb = Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl.clone(), 0 /* screen */));
     gb.load_gbc_bios("roms/gbc_bios.bin");
     gb.load_rom("roms/crystal.gbc");
     ftii::to_ftii::<Crystal>(gb, load_inputs("temp/crystal_test.txt"))
   };
 
   let inputs = {
-    let mut gb = Gambatte::create_on_screen(sdl, 0 /* screen */, true /* equal length frames */);
+    let mut gb = Gambatte::create(true /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */));
     gb.load_gbc_bios("roms/gbc_bios.bin");
     gb.load_rom("roms/crystal.gbc");
     ftii::from_ftii::<Crystal>(gb, hi_inputs, lo_inputs)
@@ -537,13 +538,13 @@ fn load_inputs(file_name: &str) -> Vec<Input> {
 fn playback_inputs() {
   let inputs = load_inputs("temp/yellow_glitchless.txt");
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-  let mut gb = Gambatte::create_on_screen(sdl, 0 /* screen */, false /* equal length frames */);
+  let mut gb = Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */));
   gb.load_gbc_bios("roms/gbc_bios.bin");
   gb.load_rom("roms/yellow.gbc");
   for input in inputs {
     gb.set_input(input);
     gb.step();
-    sleep(Duration::from_millis(1));
+    // sleep(Duration::from_millis(1));
   }
 }
 
