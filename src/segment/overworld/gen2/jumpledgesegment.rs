@@ -7,6 +7,7 @@ use super::OverworldInteractionResult;
 
 pub struct JumpLedgeSegment {
   input: Input,
+  buffer_size: usize,
   debug_output: bool,
 }
 impl JumpLedgeSegment {
@@ -14,9 +15,13 @@ impl JumpLedgeSegment {
   pub fn new(input: Input) -> Self {
     Self {
       input,
+      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       debug_output: false,
     }
   }
+}
+impl WithOutputBufferSize for JumpLedgeSegment {
+  fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
 }
 impl WithDebugOutput for JumpLedgeSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
@@ -25,6 +30,13 @@ impl WithDebugOutput for JumpLedgeSegment {
 impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Segment<T> for JumpLedgeSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_debug_output(self.debug_output).execute(gb, iter)
+  }
+}
+impl<R: Rom + Gen2MapEventsAddresses> ParallelSegment<R> for JumpLedgeSegment {
+  type Key = ();
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_parallel(gbe, iter)
   }
 }
 

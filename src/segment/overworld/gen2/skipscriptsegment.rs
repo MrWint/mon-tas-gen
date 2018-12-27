@@ -35,3 +35,15 @@ impl<T: Rom + Gen2MapEventsAddresses> Segment<T> for SkipScriptSegment {
     )).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute(gb, iter)
   }
 }
+
+impl<R: Rom + Gen2MapEventsAddresses> ParallelSegment<R> for SkipScriptSegment {
+  type Key = super::OverworldInteractionResult;
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v|
+        v != &super::OverworldInteractionResult::MapCoordEvent &&
+        v != &super::OverworldInteractionResult::SceneScript &&
+        v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::MapScript)
+    )).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_parallel(gbe, iter)
+  }
+}

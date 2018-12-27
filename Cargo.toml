@@ -5,8 +5,6 @@ authors = ["MrWint"]
 
 [dependencies]
 bincode = "1.0"
-bitflags = "1.0"
-byteorder = "1.2.7"
 flate2 = "1.0"
 gambatte = { path = "gambatte" }
 num_cpus = "1.8.0"

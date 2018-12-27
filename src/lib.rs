@@ -2,7 +2,6 @@
 #![feature(unsized_locals)]
 
 extern crate bincode;
-extern crate byteorder;
 extern crate gambatte;
 extern crate sdl2;
 extern crate serde;

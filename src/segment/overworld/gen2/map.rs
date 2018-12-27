@@ -8,7 +8,7 @@ pub struct Map {
   allow_water_tiles: bool,
   pub width: usize,
   pub height: usize,
-  pub tile_collision: Vec<u8>,
+  tile_collision: Vec<u8>,
   pub tile_allowed_movements: Vec<Input>,
 }
 

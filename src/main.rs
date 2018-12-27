@@ -13,6 +13,7 @@ use montas::segment::*;
 #[allow(unused_imports)] use montas::util::*;
 use montas::sdl::*;
 use montas::statebuffer::StateBuffer;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
@@ -40,9 +41,9 @@ fn main() {
   // if true {return;}
 
 
-  playback_inputs();
-  // convert_efl();
-  if true {return;}
+  // playback_inputs();
+  // // convert_efl();
+  // if true {return;}
 
   // BlueTestSegment::run();
   YellowTestSegment::run();
@@ -191,147 +192,151 @@ pub struct YellowTestSegment {}
 impl YellowTestSegment {
   #[allow(dead_code)]
   fn run() {
-    let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-    let mut gb = Gb::<Yellow>::create(Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */)));
-    let states = vec![gb.save()];
-    let sb = YellowTestSegment{}.execute(&mut gb, states);
-    test_segment_end(&mut gb, &sb, "temp/yellow_test.txt");
+    // let mut gbe = SingleGb::<Yellow>::with_screen();
+    let mut gbe = GbPool::<Yellow>::with_screen();
+    let states = vec![gbe.get_initial_state()];
+    let _sb = YellowTestSegment{}.execute_parallel_single(&mut gbe, states);
+    // test_segment_end(&mut gb, &sb, "temp/yellow_test.txt");
   }
 }
-impl Segment<Yellow> for YellowTestSegment {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<Yellow>, _iter: I) -> StateBuffer {
-  //   let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute(gb, _iter);
-  //   println!("{}", sb);
-  //   let sb = MoveSegment::new(A).with_max_skips(15).with_buffer_size(4096).execute(gb, sb);
-  //   println!("{}", sb);
-  //   let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute(gb, sb);
-  //   println!("{}", sb);
-  //   let sb = DelaySegment::new(MoveSegment::with_metric(A, TrainerIDMetric{}.filter(|v| { v == &0x26F1 }))).with_debug_output(true).execute(gb, sb); // new game
-  //   sb.save("yellow_after_tid");
+impl ParallelSegment<Yellow> for YellowTestSegment {
+  type Key = ();
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<Yellow>>(&self, gbe: &mut E, _iter: I) -> HashMap<Self::Key, StateBuffer> {
+    let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, _iter);
+    println!("{}", sb);
+    let sb = MoveSegment::new(A).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, sb);
+    println!("{}", sb);
+    let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, sb);
+    println!("{}", sb);
+    let sb = DelaySegment::new(MoveSegment::with_metric(A, TrainerIDMetric{}.filter(|v| { v == &0x26F1 }).into_unit())).with_debug_output(true).execute_parallel_single(gbe, sb); // new game
+    sb.save("yellow_after_tid");
   //   let sb = StateBuffer::load("yellow_after_tid");
   //   println!("{}", sb);
-  //   let sb = SkipTextsSegment::new(13, B).execute(gb, sb); // skip texts until player name
-  //   let sb = MoveSegment::new(D).execute(gb, sb); // Name: Yellow
-  //   let sb = MoveSegment::new(A).execute(gb, sb); // Name: Yellow
-  //   let sb = SkipTextsSegment::new(5, B).execute(gb, sb); // skip texts until rival name
-  //   let sb = MoveSegment::new(D).execute(gb, sb); // Name: Blue
-  //   let sb = MoveSegment::new(A).execute(gb, sb); // Name: Blue
-  //   let sb = SkipTextsSegment::new(7, B).execute(gb, sb); // skip texts until game start
-  //   let sb = TextSegment::new(A).execute(gb, sb); // ...awaits, let's go
+  //   let sb = SkipTextsSegment::new(13, B).execute_parallel_single(gbe, sb); // skip texts until player name
+  //   let sb = MoveSegment::new(D).execute_parallel_single(gbe, sb); // Name: Yellow
+  //   let sb = MoveSegment::new(A).execute_parallel_single(gbe, sb); // Name: Yellow
+  //   let sb = SkipTextsSegment::new(5, B).execute_parallel_single(gbe, sb); // skip texts until rival name
+  //   let sb = MoveSegment::new(D).execute_parallel_single(gbe, sb); // Name: Blue
+  //   let sb = MoveSegment::new(A).execute_parallel_single(gbe, sb); // Name: Blue
+  //   let sb = SkipTextsSegment::new(7, B).execute_parallel_single(gbe, sb); // skip texts until game start
+  //   let sb = TextSegment::new(A).execute_parallel_single(gbe, sb); // ...awaits, let's go
   //   println!("{}", sb);
-  //   let sb = MoveSegment::new(START).execute(gb, sb);
-  //   let sb = MoveSegment::new(U).execute(gb, sb);
-  //   let sb = MoveSegment::new(NIL).execute(gb, sb);
-  //   let sb = MoveSegment::new(U).execute(gb, sb);
-  //   let sb = MoveSegment::new(L|A).execute(gb, sb);
-  //   let sb = MoveSegment::new(B).execute(gb, sb);
-  //   let sb = MoveSegment::new(START).execute(gb, sb);
+  //   let sb = MoveSegment::new(START).execute_parallel_single(gbe, sb);
+  //   let sb = MoveSegment::new(U).execute_parallel_single(gbe, sb);
+  //   let sb = MoveSegment::new(NIL).execute_parallel_single(gbe, sb);
+  //   let sb = MoveSegment::new(U).execute_parallel_single(gbe, sb);
+  //   let sb = MoveSegment::new(L|A).execute_parallel_single(gbe, sb);
+  //   let sb = MoveSegment::new(B).execute_parallel_single(gbe, sb);
+  //   let sb = MoveSegment::new(START).execute_parallel_single(gbe, sb);
   //   sb.save("yellow_after_intro_256_div");
   //   let sb = StateBuffer::load("yellow_after_intro_256_div");
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  // let sb = MoveSegment::new(NIL).execute(gb, sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  // let sb = MoveSegment::new(NIL).execute_parallel_single(gbe, sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
 
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(L, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
 
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
   //   sb.save("yellow_grass_256_wait1_");
   //   let sb = StateBuffer::load("yellow_grass_256_wait1_");
-  //   let sb = SkipTextsSegment::new(3, B).execute(gb, sb); // oak in grass
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = SkipTextsSegment::new(3, B).execute(gb, sb); // oak vs pikachu, catch pikachu
-  //   let sb = SkipTextsSegment::new(7, B).execute(gb, sb); // oak in grass
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = SkipTextsSegment::new(15, B).execute(gb, sb); // oak speech
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(A, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
+  //   let sb = SkipTextsSegment::new(3, B).execute_parallel_single(gbe, sb); // oak in grass
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = SkipTextsSegment::new(3, B).execute_parallel_single(gbe, sb); // oak vs pikachu, catch pikachu
+  //   let sb = SkipTextsSegment::new(7, B).execute_parallel_single(gbe, sb); // oak in grass
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = SkipTextsSegment::new(15, B).execute_parallel_single(gbe, sb); // oak speech
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(D, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(A, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
   //   sb.save("yellow_before_collect_pikachu_256_wait1_");
   //   let sb = StateBuffer::load("yellow_before_collect_pikachu_256_wait1_");
-  //   let sb = MoveSegment::new(NIL).execute(gb, sb); // Release A button to start sequence
-  //   let sb = SkipTextsSegment::new(10, B).execute(gb, sb); // Rival snatches
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gb, sb); println!("{}", sb);
-  //   let sb = SkipTextsSegment::new(4, B).execute(gb, sb); // get Pikachu
+  //   let sb = MoveSegment::new(NIL).execute_parallel_single(gbe, sb); // Release A button to start sequence
+  //   let sb = SkipTextsSegment::new(10, B).execute_parallel_single(gbe, sb); // Rival snatches
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
+  //   let sb = SkipTextsSegment::new(4, B).execute_parallel_single(gbe, sb); // get Pikachu
   //   sb.save("yellow_before_collect_pikachu_2_256_wait1_");
-    let sb = StateBuffer::load("yellow_before_collect_pikachu_2_256_wait1_");
-    let sb = SkipTextsSegment::new(2, B).with_buffer_size(256).execute(gb, sb); // get Pikachu
-    let sb = TextSegment::new(A).with_buffer_size(256).execute(gb, sb); // Nickname?
-    let sb = DelaySegment::new(MoveSegment::with_metric(B, Gen1DVMetric {}.filter(|v| {
-      let dvs = u16::from(v.atk) << 12 | u16::from(v.def) << 8 | u16::from(v.spd) << 4 | u16::from(v.spc);
-      let div = ((dvs >> 8) as u8).wrapping_sub(dvs as u8);
-      if ::rand::random::<u8>() < 0x04 {
-        print!("{:X}", div);
-        // print!("/{:X}", v.div_state >> 6);
-        // print!("/{}", to_human_readable_time(v.cycle_count));
-        print!(" ");
-      }
-      if v.atk != 7 { return false; }
-      if v.spc != 8 && v.spc != 9 { return false; }
-      if v.def != 0 && v.def != 1 { return false; }
-      if v.spd != 12 && v.spd != 13 { return false; }
-      println!("Chosen DVs: {:?}", v); true
-    }))).with_debug_output(true).execute(gb, sb); println!("{}", sb);
+  //   let sb = StateBuffer::load("yellow_before_collect_pikachu_2_256_wait1_");
+  //   let sb = SkipTextsSegment::new(2, B).with_buffer_size(256).execute_parallel_single(gbe, sb); // get Pikachu
+  //   let sb = TextSegment::new(A).with_buffer_size(256).execute_parallel_single(gbe, sb); // Nickname?
+  //   let sb = DelaySegment::new(MoveSegment::with_metric(B, Gen1DVMetric {}.filter(|v| {
+  //     let dvs = u16::from(v.atk) << 12 | u16::from(v.def) << 8 | u16::from(v.spd) << 4 | u16::from(v.spc);
+  //     let div = ((dvs >> 8) as u8).wrapping_sub(dvs as u8);
+  //     if ::rand::random::<u8>() < 0x04 {
+  //       print!("{:X}", div);
+  //       // print!("/{:X}", v.div_state >> 6);
+  //       // print!("/{}", to_human_readable_time(v.cycle_count));
+  //       print!(" ");
+  //     }
+  //     if v.atk != 7 { return false; }
+  //     if v.spc != 8 && v.spc != 9 { return false; }
+  //     if v.def != 0 && v.def != 1 { return false; }
+  //     if v.spd != 12 && v.spd != 13 { return false; }
+  //     println!("Chosen DVs: {:?}", v); true
+  //   }).into_unit())).with_debug_output(true).execute_parallel_single(gbe, sb);// println!("{}", sb);
     // sb.save("yellow_after_collect_pikachu_256_div");
     // let sb = StateBuffer::load("yellow_after_collect_pikachu_256_div");
-    // let sb = IdentifyInputSegment::new().execute(gb, sb);
+    // let sb = IdentifyInputSegment::new().execute_parallel_single(gbe, sb);
     sleep(Duration::from_millis(1000));
-    sb
+    let mut result = HashMap::new();
+    result.insert((), sb);
+    result
   }
 }
 

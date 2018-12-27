@@ -36,6 +36,16 @@ impl<T: Rom + Gen2MapEventsAddresses> Segment<T> for WarpSegment {
   }
 }
 
+impl<R: Rom + Gen2MapEventsAddresses> ParallelSegment<R> for WarpSegment {
+  type Key = OverworldInteractionResult;
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    let sb = MoveSegment::with_metric(self.input, WarpMetric {}).with_debug_output(self.debug_output).execute_parallel_single(gbe, iter);
+    let sb = MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp)).into_unit()).with_debug_output(self.debug_output).execute_parallel_single(gbe, sb);
+    MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ForcedMovement)).with_debug_output(self.debug_output).execute_parallel(gbe, sb)
+  }
+}
+
 struct WarpMetric {}
 impl<R: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Metric<R> for WarpMetric {
   type ValueType = ();

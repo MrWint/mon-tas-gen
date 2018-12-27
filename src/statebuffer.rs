@@ -11,7 +11,8 @@ pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 4096;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
 /// ```StateBuffer```s have a maximum size, and prune excess states if they become too full.
-/// The decision which states to prune is made based on the cycle_count and the RNG state of the ```State```.
+/// The decision which states to prune is made based on the cycle_count and the RNG state of the ```State```,
+/// preferring a diverse collection of states with minimal cycles.
 #[derive(Serialize, Deserialize)]
 pub struct StateBuffer {
   /// Maps RNG states to stored ```State```s. If two ```State```s have the same RNG state, they are assumed to exhibit identical future behavior.
@@ -21,31 +22,15 @@ pub struct StateBuffer {
 }
 
 impl Default for StateBuffer {
-  fn default() -> Self {
-    StateBuffer {
-      states: HashMap::with_capacity(STATE_BUFFER_DEFAULT_MAX_SIZE),
-      max_size: STATE_BUFFER_DEFAULT_MAX_SIZE,
-    }
-  }
+  fn default() -> Self { Self::with_max_size(STATE_BUFFER_DEFAULT_MAX_SIZE) }
 }
 impl StateBuffer {
   pub fn new() -> Self { Default::default() }
-  pub fn empty() -> Self {
-    StateBuffer {
-      states: HashMap::with_capacity(0),
-      max_size: STATE_BUFFER_DEFAULT_MAX_SIZE,
-    }
-  }
+  pub fn unbounded() -> Self { Self::with_max_size(STATE_BUFFER_UNBOUNDED_MAX_SIZE) }
   pub fn with_max_size(max_size: usize) -> Self {
     StateBuffer {
-      states: HashMap::with_capacity(max_size),
+      states: HashMap::with_capacity(0), // don't allocate.
       max_size,
-    }
-  }
-  pub fn unbounded() -> Self {
-    StateBuffer {
-      states: HashMap::with_capacity(STATE_BUFFER_UNBOUNDED_MAX_SIZE),
-      max_size: STATE_BUFFER_UNBOUNDED_MAX_SIZE,
     }
   }
   #[allow(dead_code)]
@@ -64,6 +49,9 @@ impl StateBuffer {
   /// Adds a state to the buffer.
   pub fn add_state(&mut self, s: State) {
     assert!(s.is_at_input, "Invalid state added to StateBuffer!");
+    if self.states.capacity() == 0 {
+      self.states.reserve(self.max_size + 1); // Reserve one additional element to hold excess before pruning.
+    }
     if let Some(old_s) = self.states.get(&s.rng_state) {
       if old_s.cycle_count <= s.cycle_count { return; }
     }

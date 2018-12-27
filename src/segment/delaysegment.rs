@@ -120,12 +120,6 @@ impl<'a, R, S: Segment<R>> SplitSegment<R> for WrapperSplitSegment<'a, R, S> {
   }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
-enum DelayKey {
-  ThisRound,
-  NextRound,
-}
-
 impl<R: Rom, S: ParallelSegment<R>> ParallelSegment<R> for DelaySegment<R, S> {
   type Key = S::Key;
 
@@ -138,34 +132,13 @@ impl<R: Rom, S: ParallelSegment<R>> ParallelSegment<R> for DelaySegment<R, S> {
     let mut nonempty_cycle_count = ::std::u64::MAX >> 1;
     while !active_states.is_empty() {
       if self.debug_output { println!("DelaySegment processing {} active states at {} skips", active_states.len(), skips); }
-      let cur_min_cycle_count = active_states.iter().map(|s| s.cycle_count).min().unwrap();
-      let max_skips = self.max_skips;
-      let debug_output = self.debug_output;
-      let mut ss = gbe.execute(active_states.drain(..), move |gb, s, tx| {
-        let mut proceed_to_next_round = true;
-        if skips > max_skips {
-          if debug_output { println!("DelaySegment interrupting search (maxDelay)"); }
-          proceed_to_next_round = false;
-        } else if s.cycle_count > full_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY {
-          if debug_output { println!("DelaySegment interrupting search (fullFrame)"); }
-          proceed_to_next_round = false;
-        } else if s.cycle_count > nonempty_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY {
-          if debug_output { println!("DelaySegment interrupting search (nonemptyFrame)"); }
-          proceed_to_next_round = false;
-        }
-        if proceed_to_next_round {
-          gb.restore(&s);
-          gb.input(::gambatte::Input::empty());
-          gb.step();
-          tx.send((DelayKey::NextRound, gb.save())).unwrap();
-        }
-        tx.send((DelayKey::ThisRound, s)).unwrap();
-      }).into_state_buffer_map(self.buffer_size);
-      if let Some(this_round) = ss.remove(&DelayKey::ThisRound) {
-        for (value, states) in self.segment.execute_parallel(gbe, this_round).into_iter() {
-          result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
-        }
+      // Try segment on current active states.
+      for (value, states) in self.segment.execute_parallel(gbe, active_states.clone()).into_iter() {
+        result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
+
+      // Update loop exit conditions.
+      let cur_min_cycle_count = active_states.iter().map(|s| s.cycle_count).min().unwrap();
       if !result.is_empty() && cur_min_cycle_count < nonempty_cycle_count {
         nonempty_cycle_count = cur_min_cycle_count;
         if self.debug_output { println!("DelaySegment set nonempty_cycle_count to {}", to_human_readable_time(nonempty_cycle_count)); }
@@ -175,9 +148,24 @@ impl<R: Rom, S: ParallelSegment<R>> ParallelSegment<R> for DelaySegment<R, S> {
         if self.debug_output { println!("DelaySegment set full_cycle_count to {}", to_human_readable_time(full_cycle_count)); }
       }
 
-      if let Some(next_round) = ss.remove(&DelayKey::NextRound) {
-        active_states.extend(next_round);
-      }
+      // Update active states for next loop iteration.
+      active_states = gbe.execute(active_states.into_iter().filter(|s| {
+        if skips > self.max_skips {
+          if self.debug_output { println!("DelaySegment interrupting search (maxDelay)"); }
+          false
+        } else if s.cycle_count > full_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY {
+          if self.debug_output { println!("DelaySegment interrupting search (fullFrame)"); }
+          false
+        } else if s.cycle_count > nonempty_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY {
+          if self.debug_output { println!("DelaySegment interrupting search (nonemptyFrame)"); }
+          false
+        } else { true }
+      }), move |gb, s, tx| {
+        gb.restore(&s);
+        gb.input(::gambatte::Input::empty());
+        gb.step();
+        tx.send(((), gb.save())).unwrap();
+      }).into_iter().collect();
 
       skips += 1;
     }

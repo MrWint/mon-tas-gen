@@ -47,3 +47,14 @@ impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> Segment<R
     goal_buffer
   }
 }
+
+impl<R: Rom + InputIdentificationAddresses> ParallelSegment<R> for IdentifyInputSegment {
+  type Key = ();
+
+  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    gbe.execute(iter, move |gb, s, tx| {
+      Self::print_identification(gb, &s);
+      tx.send(((), s)).unwrap();
+    }).into_state_buffer_map(self.buffer_size)
+  }
+}

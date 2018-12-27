@@ -97,7 +97,7 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveSe
 
 
 
-impl<R: Rom + 'static, M: Metric<R> + 'static> ParallelSegment<R> for MoveSegment<R, M> {
+impl<R: Rom, M: Metric<R>> ParallelSegment<R> for MoveSegment<R, M> {
   type Key = M::ValueType;
 
   fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {

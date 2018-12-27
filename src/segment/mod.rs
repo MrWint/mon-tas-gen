@@ -15,6 +15,15 @@ pub trait ParallelSegment<R: Rom> {
 
   fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
 }
+pub trait SingleParallelSegment<R: Rom> {
+  fn execute_parallel_single<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer;
+}
+impl<R: Rom, S: ParallelSegment<R,Key=()>> SingleParallelSegment<R> for S {
+  fn execute_parallel_single<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer {
+    self.execute_parallel(gb, iter).into_state_buffer()
+  }
+}
+
 pub trait WithDebugOutput {
   fn with_debug_output(self, debug_output: bool) -> Self;
 }
@@ -60,7 +69,7 @@ pub trait SingleStateBuffer {
 }
 impl<S: ::std::hash::BuildHasher> SingleStateBuffer for HashMap<(), StateBuffer, S> {
   fn into_state_buffer(self) -> StateBuffer {
-    self.into_iter().next().map_or(StateBuffer::empty(), |(_, v)| v)
+    self.into_iter().next().map_or_else(|| StateBuffer::new(), |(_, v)| v)
   }
 }
 

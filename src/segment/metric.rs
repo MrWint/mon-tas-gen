@@ -11,6 +11,12 @@ pub trait Metric<R>: Sync {
   fn filter<F>(self, f: F) -> Filter<R, Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
     Filter { metric: self, f, _rom: PhantomData, }
   }
+  fn map<F, K: StateKey>(self, f: F) -> Map<R, Self, F> where Self: Sized, F: Fn(Self::ValueType) -> K {
+    Map { metric: self, f, _rom: PhantomData, }
+  }
+  fn into_unit(self) -> IntoUnit<R, Self> where Self: Sized {
+    IntoUnit {metric: self, _rom: PhantomData, }
+  }
 }
 
 pub struct Filter<R, M, F> {
@@ -23,6 +29,29 @@ impl<R: Sync, M: Metric<R>, F: Sync> Metric<R> for Filter<R, M, F> where F: Fn(&
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     self.metric.evaluate(gb).filter(&self.f)
+  }
+}
+pub struct Map<R, M, F> {
+  metric: M,
+  f: F,
+  _rom: PhantomData<R>,
+}
+impl<R: Sync, M: Metric<R>, K: StateKey, F: Sync> Metric<R> for Map<R, M, F> where F: Fn(M::ValueType) -> K {
+  type ValueType = K;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    self.metric.evaluate(gb).map(&self.f)
+  }
+}
+pub struct IntoUnit<R, M> {
+  metric: M,
+  _rom: PhantomData<R>,
+}
+impl<R: Sync, M: Metric<R>> Metric<R> for IntoUnit<R, M> {
+  type ValueType = ();
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    self.metric.evaluate(gb).map(|_| ())
   }
 }
 

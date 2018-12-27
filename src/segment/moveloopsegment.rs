@@ -62,7 +62,6 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveLo
   }
 }
 
-
 impl<R: Rom, M: Metric<R>> ParallelSegment<R> for MoveLoopSegment<M> {
   type Key = M::ValueType;
 
