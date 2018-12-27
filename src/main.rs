@@ -41,12 +41,12 @@ fn main() {
   // if true {return;}
 
 
-  // playback_inputs();
+  playback_inputs();
   // // convert_efl();
   // if true {return;}
 
   // BlueTestSegment::run();
-  YellowTestSegment::run();
+  // YellowTestSegment::run();
 }
 
 #[allow(dead_code)]

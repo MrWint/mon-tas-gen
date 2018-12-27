@@ -7,7 +7,6 @@ fn main() {
       .cpp(true)
       .flag_if_supported("-Wno-unused-parameter")
       .flag_if_supported("-Wno-array-bounds")
-      .include(Path::new("libgambatte/include"))
       .include(Path::new("libgambatte/src"))
       .file("libgambatte/src/cinterface.cpp")
       .file("libgambatte/src/cpu.cpp")

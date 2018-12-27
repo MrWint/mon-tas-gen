@@ -40,6 +40,7 @@ void MemPtrs::reset(const uint32_t rombanks, const uint32_t rambanks, const uint
 	delete []interruptmemchunk_;
 	memchunk_len = 0x4000 + rombanks * 0x4000ul + 0x4000 + rambanks * 0x2000ul + wrambanks * 0x1000ul + 0x4000;
 	memchunk_ = new uint8_t[memchunk_len];
+	std::memset(memchunk_, 0, memchunk_len);
 
 	interruptmemchunk_ = new bool[rombanks * 0x4000ul];
 	std::memset(interruptmemchunk_, 0, rombanks * 0x4000ul);

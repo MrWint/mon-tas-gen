@@ -6,23 +6,6 @@
 
 using namespace gambatte;
 
-// new is actually called in a few different places, so replace all of them for determinism guarantees
-void *operator new(size_t n)
-{
-	void *p = std::malloc(n);
-	std::memset(p, 0, n);
-	return p;
-}
-
-void operator delete(void *p)
-{
-	std::free(p);
-}
-void operator delete(void *p, size_t)
-{
-	std::free(p);
-}
-
 GBEXPORT GB *gambatte_create()
 {
 	return new GB();
