@@ -1,8 +1,8 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
 use super::OverworldInteractionResult;
 
 pub struct JumpLedgeSegment {
@@ -15,7 +15,7 @@ impl JumpLedgeSegment {
   pub fn new(input: Input) -> Self {
     Self {
       input,
-      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       debug_output: false,
     }
   }

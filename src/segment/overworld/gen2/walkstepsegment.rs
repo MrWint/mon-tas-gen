@@ -1,8 +1,8 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
 use super::OverworldInteractionResult;
 
 pub struct WalkStepSegment {
@@ -19,7 +19,7 @@ impl WalkStepSegment {
       input,
       into_result: OverworldInteractionResult::NoEvents,
       max_skips: 0,
-      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       debug_output: false,
     }
   }
@@ -35,7 +35,7 @@ impl WithDebugOutput for WalkStepSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> ::segment::Segment<T> for WalkStepSegment {
+impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> crate::segment::Segment<T> for WalkStepSegment {
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     iter.into_iter().flat_map(|mut s| {
       let mut result = vec![];
@@ -56,19 +56,18 @@ impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> ::segment::Segm
           gb.step();
           result.push(gb.save());
         }
-        if skips >= self.max_skips || facing_dir != self.input { break; }
+        if skips >= self.max_skips || facing_dir != self.input { break result; }
         gb.restore(&s);
         gb.input(Input::empty());
         gb.step();
         s = gb.save();
         skips += 1;
       }
-      result
     }).collect()
   }
 }
 
-impl<R: Rom + Gen2MapEventsAddresses> ::segment::ParallelSegment<R> for WalkStepSegment {
+impl<R: Rom + Gen2MapEventsAddresses> crate::segment::ParallelSegment<R> for WalkStepSegment {
   type Key = ();
 
   fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {

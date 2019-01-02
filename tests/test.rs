@@ -1,9 +1,5 @@
 #![feature(test)]
 
-extern crate gambatte;
-extern crate montas;
-extern crate test;
-
 use gambatte::*;
 use gambatte::inputs::*;
 use montas::gb::*;

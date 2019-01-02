@@ -1,7 +1,7 @@
 #![feature(test)]
 
-extern crate gambatte;
-extern crate montas;
+
+
 extern crate test;
 
 use gambatte::*;

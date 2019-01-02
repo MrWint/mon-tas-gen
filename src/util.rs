@@ -9,4 +9,3 @@ pub fn to_human_readable_time(cycle_counter: u64) -> String {
   let num_sub_frames = cycle_counter % 35112;
   format!("{:02}:{:02}:{:02}.{:03} ({}:{:05})", num_hours, num_minutes, num_seconds, num_millis, num_frames, num_sub_frames)
 }
-pub fn pair_get_second<K, V>(pair: (K, V)) -> V { pair.1 }

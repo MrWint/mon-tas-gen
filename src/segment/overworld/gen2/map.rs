@@ -1,6 +1,6 @@
+use crate::gb::*;
+use crate::rom::*;
 use gambatte::Input;
-use gb::*;
-use rom::*;
 
 #[derive(Default)]
 pub struct Map {
@@ -12,7 +12,7 @@ pub struct Map {
   pub tile_allowed_movements: Vec<Input>,
 }
 
-impl ::segment::WithDebugOutput for Map {
+impl crate::segment::WithDebugOutput for Map {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 impl Map {

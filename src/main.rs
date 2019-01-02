@@ -1,7 +1,3 @@
-extern crate gambatte;
-extern crate montas;
-extern crate rand;
-
 use gambatte::*;
 use gambatte::inputs::*;
 use montas::ftii;

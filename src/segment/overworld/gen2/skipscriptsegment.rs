@@ -1,7 +1,7 @@
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
 
 pub struct SkipScriptSegment {
   debug_output: bool,
@@ -11,7 +11,7 @@ impl Default for SkipScriptSegment {
   fn default() -> Self {
     Self {
       debug_output: false,
-      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
 }

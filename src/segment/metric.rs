@@ -1,6 +1,6 @@
-use gb::*;
-use gbexecutor::StateKey;
-use rom::*;
+use crate::gb::*;
+use crate::gbexecutor::StateKey;
+use crate::rom::*;
 use std::marker::PhantomData;
 
 pub trait Metric<R>: Sync {

@@ -1,10 +1,10 @@
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
+use crate::util::*;
 use std::collections::HashMap;
 use std::marker::PhantomData;
-use util::*;
 
 const DELAY_SEGMENT_DEFAULT_MAX_SKIPS: u32 = 1000;
 const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u64 = 3 * 35112;
@@ -22,7 +22,7 @@ impl<R, S> DelaySegment<R, S> {
     Self {
       segment,
       debug_output: false,
-      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       max_skips: DELAY_SEGMENT_DEFAULT_MAX_SKIPS,
       _rom: PhantomData,
     }
@@ -103,7 +103,7 @@ impl<R: JoypadAddresses + RngAddresses, S: SplitSegment<R>> SplitSegment<R> for 
   }
 }
 
-struct WrapperSplitSegment<'a, R, S: 'a> {
+struct WrapperSplitSegment<'a, R, S> {
   segment: &'a S,
   _rom: PhantomData<R>,
 }

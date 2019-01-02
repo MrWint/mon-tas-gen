@@ -1,5 +1,6 @@
+use crate::rom::*;
 use gambatte::*;
-use rom::*;
+use serde_derive::{Serialize, Deserialize};
 use std::marker::PhantomData;
 
 pub type State = ::std::sync::Arc<RawState>;

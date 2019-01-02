@@ -1,8 +1,8 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
 use std::collections::BTreeMap;
 
 pub struct TextSegment {
@@ -23,7 +23,7 @@ impl TextSegment {
     TextSegment {
       skip_input,
       debug_output: false,
-      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       expect_conflicting_inputs: false,
       ignore_conflicting_inputs: false,
     }

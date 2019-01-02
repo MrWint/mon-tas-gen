@@ -1,8 +1,8 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::WithDebugOutput;
+use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use gb::*;
-use rom::*;
-use segment::WithDebugOutput;
-use statebuffer::StateBuffer;
 use std::collections::VecDeque;
 use super::OverworldInteractionResult;
 
@@ -31,7 +31,7 @@ impl WithDebugOutput for WalkToSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapAddresses + Gen2MapEventsAddresses> ::segment::Segment<T> for WalkToSegment {
+impl<T: JoypadAddresses + RngAddresses + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment<T> for WalkToSegment {
   #[allow(clippy::cyclomatic_complexity)]
   fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
     let initial_states: Vec<_> = iter.into_iter().collect();

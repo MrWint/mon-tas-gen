@@ -1,5 +1,5 @@
+use crate::rom::*;
 use gambatte::*;
-use rom::*;
 
 pub fn from_ftii<R: JoypadAddresses>(mut gb: Gambatte, hi_inputs: Vec<i32>, lo_inputs: Vec<i32>) -> Vec<Input> {
   let mut inputs:  Vec<Input> = vec![];

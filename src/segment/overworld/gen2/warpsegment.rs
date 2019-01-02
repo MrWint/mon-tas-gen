@@ -1,8 +1,8 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
 use super::{OverworldInteractionResult,PlayerEventScript};
 
 #[allow(dead_code)]

@@ -1,7 +1,7 @@
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 
@@ -18,7 +18,7 @@ impl<R, S> ApplyIndividuallySegment<R, S> {
     Self {
       segment,
       debug_output: false,
-      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       _rom: PhantomData,
     }
   }

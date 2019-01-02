@@ -1,8 +1,8 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
+use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use gb::*;
-use rom::*;
-use segment::*;
-use statebuffer::StateBuffer;
 
 pub struct IdentifyInputSegment {
   debug_output: bool,
@@ -18,7 +18,7 @@ impl Default for IdentifyInputSegment {
   fn default() -> Self {
     IdentifyInputSegment {
       debug_output: false,
-      buffer_size: ::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
 }

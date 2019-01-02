@@ -1,7 +1,7 @@
-use gb::*;
-use gbexecutor::*;
-use rom::*;
-use statebuffer::StateBuffer;
+use crate::gb::*;
+use crate::gbexecutor::*;
+use crate::rom::*;
+use crate::statebuffer::StateBuffer;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
@@ -30,7 +30,7 @@ pub trait WithDebugOutput {
 pub trait WithOutputBufferSize {
   fn with_buffer_size(self, buffer_size: usize) -> Self;
   fn with_unbounded_buffer(self) -> Self where Self: Sized {
-    self.with_buffer_size(::statebuffer::STATE_BUFFER_UNBOUNDED_MAX_SIZE)
+    self.with_buffer_size(crate::statebuffer::STATE_BUFFER_UNBOUNDED_MAX_SIZE)
   }
 }
 pub trait SplitSegment<R> {

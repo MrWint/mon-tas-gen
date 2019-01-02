@@ -1,7 +1,7 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::segment::*;
 use gambatte::Input;
-use gb::*;
-use rom::*;
-use segment::*;
 
 
 mod map;

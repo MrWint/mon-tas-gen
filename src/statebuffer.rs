@@ -1,10 +1,11 @@
-use gb::State;
+use crate::gb::State;
+use crate::util::*;
+use serde_derive::{Serialize, Deserialize};
 use std::cmp::min;
 use std::collections::HashMap;
 use std::fmt;
 use std::fs::File;
 use std::iter::FromIterator;
-use util::*;
 
 pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 256;
 pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 4096;
@@ -139,11 +140,10 @@ impl FromIterator<State> for StateBuffer {
 
 impl IntoIterator for StateBuffer {
   type Item = State;
-  #[allow(clippy::type_complexity)]
-  type IntoIter = ::std::iter::Map<::std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
+  existential type IntoIter: Iterator<Item=State>; // = ::std::iter::Map<::std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {
-    self.states.into_iter().map(pair_get_second)
+    self.states.into_iter().map(|(_, v)| v)
   }
 }
 impl<'a> IntoIterator for &'a StateBuffer {
@@ -156,7 +156,7 @@ impl<'a> IntoIterator for &'a StateBuffer {
 }
 
 impl fmt::Display for StateBuffer {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let max_cycle_count = self.states.values().map(|s| s.cycle_count).max().unwrap_or(0);
     let min_cycle_count = self.states.values().map(|s| s.cycle_count).min().unwrap_or(0);
     let max_dsum = self.states.values().map(|s| s.get_d_sum()).max().unwrap_or(0);

@@ -1,8 +1,8 @@
+use crate::gb::*;
+use crate::rom::*;
+use crate::sdl::*;
+use crate::statebuffer::*;
 use gambatte::*;
-use gb::*;
-use rom::*;
-use sdl::*;
-use statebuffer::*;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -50,7 +50,7 @@ impl<R: BasicRomInfo + JoypadAddresses + RngAddresses> SingleGb<R> {
 }
 
 pub struct GbPool<R: Rom> {
-  jobs: Sender<Box<FnOnce(&mut Gb<R>) + Send>>,
+  jobs: Sender<Box<dyn FnOnce(&mut Gb<R>) + Send>>,
 }
 
 impl<R: Rom> GbPool<R> {
@@ -65,7 +65,7 @@ impl<R: Rom> GbPool<R> {
     let num_threads = ::num_cpus::get();
     let sdl = if has_screen { Some(Sdl::init_sdl(num_threads as u32 /* num screens */, 1 /* scale */)) } else { None };
 
-    let (tx, rx) = channel::<Box<FnOnce(&mut Gb<R>) + Send>>();
+    let (tx, rx) = channel::<Box<dyn FnOnce(&mut Gb<R>) + Send>>();
 
     let job_receiver = Arc::new(Mutex::new(rx));
 
@@ -101,10 +101,10 @@ pub struct GbResults<T> {
 }
 impl IntoIterator for GbResults<((), State)> {
   type Item = State;
-  type IntoIter = ::std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
+  existential type IntoIter: Iterator<Item=State>; // = ::std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {
-    self.rx.into_iter().map(::util::pair_get_second)
+    self.rx.into_iter().map(|(_, v)| v)
   }
 }
 impl<K: StateKey> GbResults<(K, State)> {
@@ -127,11 +127,11 @@ impl GbResults<((), State)> {
   }
 }
 
-type GbFn<'a, R, K> = Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync + 'a;
+type GbFn<'a, R, K> = dyn Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync + 'a;
 impl<R: Rom> GbExecutor<R> for GbPool<R> {
   fn execute<K: StateKey, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<(K, State)> {
     // Wrap functon in an Arc.
-    let f: Arc<GbFn<R, K>> = Arc::new(f);
+    let f: Arc<GbFn<'_, R, K>> = Arc::new(f);
     // Erase lifetime constraints: The resulting iterator must be fully consumed before the life time of F ends (ideally within the same statement) for this to be safe.
     let f: Arc<GbFn<'static, R, K>> = unsafe { ::std::mem::transmute(f) };
 
