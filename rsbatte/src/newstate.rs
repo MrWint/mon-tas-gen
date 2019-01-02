@@ -8,7 +8,7 @@ pub trait SyncObject {
 pub trait SyncState {
   fn sync<T>(&mut self, value: &mut T);
   fn sync_object<S: SyncObject>(&mut self, value: &mut S);
-  fn sync_slice(&mut self, value: &mut [u8]);
+  fn sync_offset(&mut self, value: &mut *mut u8, base: *mut u8);
 }
 
 pub struct LoadState<'a> {
@@ -32,15 +32,10 @@ impl<'a> SyncState for LoadState<'a> {
     self.position += size_of::<T>();
   }
   fn sync_object<S: SyncObject>(&mut self, value: &mut S) { value.sync(self) }
-  fn sync_slice(&mut self, value: &mut [u8]) {
-    assert!(value.len() + self.position <= self.data.len());
-    unsafe {
-      copy_nonoverlapping(
-          self.data.as_ptr().offset(self.position as isize),
-          value.as_mut_ptr(),
-          value.len());
-    }
-    self.position += value.len();
+  fn sync_offset(&mut self, value: &mut *mut u8, base: *mut u8) {
+    let mut offset = 0;
+    self.sync(&mut offset);
+    *value = unsafe { base.offset(offset) };
   }
 }
 
@@ -64,14 +59,25 @@ impl SyncState for SaveState {
     }
   }
   fn sync_object<S: SyncObject>(&mut self, value: &mut S) { value.sync(self) }
-  fn sync_slice(&mut self, value: &mut [u8]) {
-    self.data.reserve(value.len());
-    unsafe {
-      copy_nonoverlapping(
-          value.as_ptr(),
-          self.data.as_mut_ptr().offset(self.data.len() as isize),
-          value.len());
-      self.data.set_len(self.data.len() + value.len());
-    }
+  fn sync_offset(&mut self, value: &mut *mut u8, base: *mut u8) {
+    let mut offset = unsafe { value.offset_from(base) };
+    self.sync(&mut offset);
+  }
+}
+pub struct StateLen {
+  len: usize,
+}
+impl StateLen {
+  pub fn new() -> Self {
+    StateLen { len: 0 }
+  }
+}
+impl SyncState for StateLen {
+  fn sync<T>(&mut self, value: &mut T) {
+    self.len += size_of::<T>();
+  }
+  fn sync_object<S: SyncObject>(&mut self, value: &mut S) { value.sync(self) }
+  fn sync_offset(&mut self, value: &mut *mut u8, base: *mut u8) {
+    self.len += size_of::<isize>();
   }
 }
