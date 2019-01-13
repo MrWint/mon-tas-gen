@@ -11,8 +11,8 @@ pub struct Rtc {
 
   // savable state.
   registers: [u8; 5], // rtc registers, holding the latched time and flags.
-  base_rtc: Wrapping<u32>, // Specifies rtc value at 0:00. When halted, current rtc is always 0.
-  ready_to_latch: bool, // whether the last clock latch data input was 0
+  base_rtc: Wrapping<u32>, // Specifies rtc value at 0:00.
+  ready_to_latch: bool, // whether the last clock latch data input was 0.
 }
 impl SyncObject for Rtc {
   fn sync<S: SyncState>(&mut self, s: &mut S) {
@@ -32,6 +32,7 @@ impl Rtc {
     }
   }
   #[inline] pub fn set_current_rtc(&mut self, current_rtc: Wrapping<u32>) { self.current_rtc = current_rtc }
+  #[inline] fn get_current_time(&self) -> u32 { (self.current_rtc - self.base_rtc).0 }
 
   pub fn reset(&mut self) {
     // base_rtc is kept in savedata.
@@ -40,27 +41,10 @@ impl Rtc {
     // selected_register is not reset.
   }
 
-  #[inline]
-  fn is_halted(&self) -> bool {
-    self.registers[REGISTER_DAYS_HIGH] & 0x40 != 0
-  }
-
-  #[inline]
-  fn get_current_time(&self) -> u32 {
-    (if self.is_halted() { Wrapping(0) } else { self.current_rtc } - self.base_rtc).0
-  }
-
   fn set_days_high(&mut self, new_dh: u8) {
     let old_highdays = (self.get_current_time() / (86400 * 0x100)) & 0x1;
     self.base_rtc += Wrapping(old_highdays * (86400 * 0x100));
     self.base_rtc -= Wrapping(u32::from(new_dh & 0x1) * (86400 * 0x100));
-    
-    let new_is_halted = new_dh & 0x40 != 0;
-    if new_is_halted && !self.is_halted() { // halt
-      self.base_rtc -= self.current_rtc;
-    } else if !new_is_halted && self.is_halted() { // unhalt
-      self.base_rtc += self.current_rtc;
-    }
   }
 
   fn set_days_low(&mut self, new_lowdays: u8) {
