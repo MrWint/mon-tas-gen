@@ -477,6 +477,7 @@ dependencies = [
  "gambatte 0.1.0",
  "num_cpus 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rsbatte 0.1.0",
  "sdl2 0.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.81 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.37 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -816,6 +817,10 @@ dependencies = [
  "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "rsbatte"
+version = "0.1.0"
 
 [[package]]
 name = "rustc_version"

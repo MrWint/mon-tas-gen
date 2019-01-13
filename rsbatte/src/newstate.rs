@@ -73,11 +73,11 @@ impl StateLen {
   }
 }
 impl SyncState for StateLen {
-  fn sync<T>(&mut self, value: &mut T) {
+  fn sync<T>(&mut self, _value: &mut T) {
     self.len += size_of::<T>();
   }
   fn sync_object<S: SyncObject>(&mut self, value: &mut S) { value.sync(self) }
-  fn sync_offset(&mut self, value: &mut *mut u8, base: *mut u8) {
+  fn sync_offset(&mut self, _value: &mut *mut u8, _base: *mut u8) {
     self.len += size_of::<isize>();
   }
 }

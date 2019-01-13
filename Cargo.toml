@@ -10,6 +10,7 @@ flate2 = "1.0"
 gambatte = { path = "gambatte" }
 num_cpus = "1.8.0"
 rand = "0.6.1"
+rsbatte = { path = "rsbatte" }
 sdl2 = { version = "0.32", features = ["bundled", "static-link"] }
 serde = { version = "1.0", features = ["rc"] }
 serde_derive = "1.0"

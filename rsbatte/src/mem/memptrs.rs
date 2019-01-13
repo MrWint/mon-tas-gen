@@ -38,6 +38,10 @@ impl MemPtrs {
     let sram_data_ptr = unsafe { vram_data_ptr.add(0x4000) };
     let wram_data_ptr = unsafe { sram_data_ptr.add(SRAM_BANKS * 0x2000) };
 
+    unsafe { std::ptr::write_bytes(sram_data_ptr, 0xff, SRAM_BANKS * 0x2000) };
+    // VRAM cleared by boot ROM.
+    // WRAM cleared by game ROMs.
+
     let interrupt_memchunk = vec![false; rombanks * 0x4000];
 
     let memory_map = unsafe { [
@@ -58,6 +62,16 @@ impl MemPtrs {
       sram_data_ptr,
       wram_data_ptr,
     }
+  }
+
+  pub fn reset(&mut self) {
+    // VRAM cleared by boot ROM.
+    // WRAM cleared by game ROMs.
+    // SRAM kept as backed by battery.
+    self.set_rombank(1);
+    self.set_vrambank(0);
+    self.set_srambank(0);
+    self.set_wrambank(1);
   }
 
   pub fn set_rombank(&mut self, new_rombank: u8) {
@@ -85,9 +99,18 @@ impl MemPtrs {
 
   pub fn set_wrambank(&mut self, new_wrambank: u8) {
     assert!(new_wrambank >= 1 && new_wrambank <= 7);
-    // let new_wrambank = if new_wrambank & 0x7 == 0 { 1 } else new_wrambank & 0x7; 
     self.memory_map[0xD] = unsafe { self.wram_data_ptr.offset(isize::from(new_wrambank) * 0x1000 - 0xD000) };
     self.memory_map[0xF] = unsafe { self.wram_data_ptr.offset(isize::from(new_wrambank) * 0x1000 - 0xF000) };
+  }
+
+  #[inline]
+  pub fn read(&self, address: u16) -> u8 {
+    unsafe { *self.memory_map[usize::from(address >> 12)].offset(address as isize) }
+  }
+
+  #[inline]
+  pub fn read_u16_le(&self, address: u16) -> u16 {
+    unsafe { u16::from_le(std::ptr::read_unaligned(self.memory_map[usize::from(address >> 12)].offset(address as isize) as *mut u16)) }
   }
 
   pub fn set_interrupt(&mut self, rom_address: usize) {
@@ -96,7 +119,8 @@ impl MemPtrs {
   pub fn clear_interrupt(&mut self, rom_address: usize) {
     self.interrupt_memchunk[rom_address] = false;
   }
-  pub fn is_interrupt(&mut self, memory_address: u16) {
-    self.interrupt_memchunk[rom_address] = false;
+  pub fn is_interrupt(&mut self, memory_address: u16) -> usize {
+    let rom_address = usize::from(memory_address) + unsafe { self.memory_map[0x4].offset_from(self.rom_data_ptr) as usize };
+    if self.interrupt_memchunk[rom_address] { rom_address } else { 0 }
   }
 }

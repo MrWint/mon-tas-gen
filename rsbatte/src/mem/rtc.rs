@@ -1,12 +1,5 @@
-#![allow(dead_code)]
-
 use crate::newstate::{SyncObject, SyncState};
 use std::num::Wrapping;
-
-pub trait RtcCallback {
-  /// Returns the current rtc clock value. It increases by 1 every second.
-  fn current_rtc(&self) -> Wrapping<u32>;
-}
 
 const REGISTER_SECONDS: usize = 0x0;
 const REGISTER_MINUTES: usize = 0x1;
@@ -14,7 +7,7 @@ const REGISTER_HOURS: usize = 0x2;
 const REGISTER_DAYS_LOW: usize = 0x3;
 const REGISTER_DAYS_HIGH: usize = 0x4;
 pub struct Rtc {
-  rtc_callback: Box<dyn RtcCallback>, // trait object to avoid generics.
+  current_rtc: Wrapping<u32>, // Current rtc clock value. It increases by 1 every second.
 
   // savable state.
   registers: [u8; 5], // rtc registers, holding the latched time and flags.
@@ -30,16 +23,17 @@ impl SyncObject for Rtc {
 }
 
 impl Rtc {
-  pub fn new<R: 'static + RtcCallback>(rtc_callback: R) -> Rtc {
+  pub fn new() -> Rtc {
     Rtc {
-      rtc_callback: Box::new(rtc_callback),
+      current_rtc: Wrapping(0),
       registers: [0; 5],
       base_rtc: Wrapping(0),
       ready_to_latch: true,
     }
   }
+  #[inline] pub fn set_current_rtc(&mut self, current_rtc: Wrapping<u32>) { self.current_rtc = current_rtc }
 
-  pub fn init_state(&mut self) {
+  pub fn reset(&mut self) {
     // base_rtc is kept in savedata.
     self.registers = [0; 5];
     self.ready_to_latch = true;
@@ -53,7 +47,7 @@ impl Rtc {
 
   #[inline]
   fn get_current_time(&self) -> u32 {
-    (if self.is_halted() { Wrapping(0) } else { self.rtc_callback.current_rtc() } - self.base_rtc).0
+    (if self.is_halted() { Wrapping(0) } else { self.current_rtc } - self.base_rtc).0
   }
 
   fn set_days_high(&mut self, new_dh: u8) {
@@ -63,9 +57,9 @@ impl Rtc {
     
     let new_is_halted = new_dh & 0x40 != 0;
     if new_is_halted && !self.is_halted() { // halt
-      self.base_rtc -= self.rtc_callback.current_rtc();
+      self.base_rtc -= self.current_rtc;
     } else if !new_is_halted && self.is_halted() { // unhalt
-      self.base_rtc += self.rtc_callback.current_rtc();
+      self.base_rtc += self.current_rtc;
     }
   }
 

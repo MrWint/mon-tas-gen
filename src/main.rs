@@ -37,7 +37,7 @@ fn main() {
   // if true {return;}
 
 
-  playback_inputs();
+  playback_demos();
   // // convert_efl();
   // if true {return;}
 
@@ -546,6 +546,37 @@ fn playback_inputs() {
     gb.set_input(input);
     gb.step();
     // sleep(Duration::from_millis(1));
+  }
+}
+
+#[allow(dead_code)]
+fn playback_demos() {
+  let sdl = Sdl::init_sdl(4 /* num screens */, 3 /* scale */);
+  let mut gb1 = Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  let mut gb2 = Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl.clone(), 1 /* screen */));
+  let mut gb3 = Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl.clone(), 2 /* screen */));
+  let mut gb4 = Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl.clone(), 3 /* screen */));
+  gb1.load_gbc_bios("roms/gbc_bios.bin");
+  gb2.load_gbc_bios("roms/gbc_bios.bin");
+  gb3.load_gbc_bios("roms/gbc_bios.bin");
+  gb4.load_gbc_bios("roms/gbc_bios.bin");
+  gb1.load_rom("roms/blue.gb");
+  gb2.load_rom("roms/yellow.gbc");
+  gb3.load_rom("roms/silver.gbc");
+  gb4.load_rom("roms/crystal.gbc");
+  let mut inputs1 = load_inputs("temp/blue_NSC.txt");
+  inputs1.truncate(20000); // truncate the code execution part.
+  let inputs2 = load_inputs("temp/yellow_glitchless.txt");
+  let inputs3 = vec![NIL; 1000];
+  let inputs4 = load_inputs("temp/crystal_demo.txt");
+  for i in 0..1000000 {
+    let mut has_input = false;
+    gb1.set_input(if inputs1.len() > i {has_input = true; inputs1[i]} else {Input::from_bits_truncate(1 << (rand::random::<u8>() & 7))}); gb1.step();
+    gb2.set_input(if inputs2.len() > i {has_input = true; inputs2[i]} else {Input::from_bits_truncate(1 << (rand::random::<u8>() & 7))}); gb2.step();
+    gb3.set_input(if inputs3.len() > i {has_input = true; inputs3[i]} else {Input::from_bits_truncate(1 << (rand::random::<u8>() & 7))}); gb3.step();
+    gb4.set_input(if inputs4.len() > i {has_input = true; inputs4[i]} else {Input::from_bits_truncate(1 << (rand::random::<u8>() & 7))}); gb4.step();
+    if !has_input { break; }
+    if i == 47000 { gb4.write_memory(0xdce7, 0x20); } // give XP
   }
 }
 
