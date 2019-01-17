@@ -564,8 +564,8 @@ fn playback_demos() {
   gb2.load_rom("roms/yellow.gbc");
   gb3.load_rom("roms/silver.gbc");
   gb4.load_rom("roms/crystal.gbc");
-  let mut inputs1 = load_inputs("temp/blue_NSC.txt");
-  inputs1.truncate(20000); // truncate the code execution part.
+  let inputs1 = load_inputs("temp/blue_demo.txt");
+  // inputs1.truncate(20000); // truncate the code execution part.
   let inputs2 = load_inputs("temp/yellow_glitchless.txt");
   let inputs3 = vec![NIL; 1000];
   let inputs4 = load_inputs("temp/crystal_demo.txt");
@@ -576,6 +576,7 @@ fn playback_demos() {
     gb3.set_input(if inputs3.len() > i {has_input = true; inputs3[i]} else {Input::from_bits_truncate(1 << (rand::random::<u8>() & 7))}); gb3.step();
     gb4.set_input(if inputs4.len() > i {has_input = true; inputs4[i]} else {Input::from_bits_truncate(1 << (rand::random::<u8>() & 7))}); gb4.step();
     if !has_input { break; }
+    if i == 8711 { gb1.write_memory(0xd179, 0x10); } // give XP
     if i == 47000 { gb4.write_memory(0xdce7, 0x20); } // give XP
   }
 }
