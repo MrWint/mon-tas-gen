@@ -36,7 +36,7 @@ impl Cartridge {
       self.cur_srambank = data;
       if self.cur_srambank <= 0x3 { self.mem_ptrs.set_srambank(self.cur_srambank); }
     } else if address == 0x6000 { // RTC latch
-      if let Some(ref mut rtc) = self.rtc { rtc.latch(data); }
+      if let Some(ref mut rtc) = self.rtc { rtc.latch(); }
     }
 	}
 
