@@ -3,10 +3,12 @@ use crate::newstate::{SyncObject, SyncState};
 pub struct MemPtrs {
   memchunk: Vec<u8>,
   interrupt_memchunk: Vec<bool>,
+
   rom_data_ptr: *mut u8,
   vram_data_ptr: *mut u8,
   sram_data_ptr: *mut u8,
   wram_data_ptr: *mut u8,
+
   memory_map: [*mut u8; 16],
 }
 impl SyncObject for MemPtrs {
@@ -48,7 +50,7 @@ impl MemPtrs {
       rom_data_ptr, rom_data_ptr, rom_data_ptr, rom_data_ptr, // ROM bank 0 loaded
       rom_data_ptr, rom_data_ptr, rom_data_ptr, rom_data_ptr, // ROM bank 1 loaded
       vram_data_ptr.offset(-0x8000), vram_data_ptr.offset(-0x8000), // VRAM bank 0 loaded
-      sram_data_ptr.offset(-0xa000), vram_data_ptr.offset(-0xa000), // SRAM bank 0 loaded (assuming no reads or writes while SRAM is disabled)
+      sram_data_ptr.offset(-0xa000), sram_data_ptr.offset(-0xa000), // SRAM bank 0 loaded (assuming no reads or writes while SRAM is disabled)
       wram_data_ptr.offset(-0xc000), wram_data_ptr.offset(-0xc000), // WRAM bank 0+1 loaded
       wram_data_ptr.offset(-0xe000), wram_data_ptr.offset(-0xe000), // echo RAM loaded
     ] };

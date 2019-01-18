@@ -63,12 +63,12 @@ impl Memory {
   pub fn read_ff_nontrivial(&self, _address: u16, _cycle_counter: u64) -> u8 {
     panic!("unimplemented");
   }
-  pub fn oam_dma(&mut self, src: u8) {
+  pub fn oam_dma(&mut self, _src: u8) {
     panic!("unimplemented");
     // memcpy(ioamhram, cart.wramdata(data >> 4 & 1) + (data << 8 & 0xFFF), 0xa0);
     // display.oamChange(cycleCounter);
   }
-  pub fn write(&self, address: u16, value: u8, cycle_counter: u64) {
+  pub fn write(&self, _address: u16, _value: u8, _cycle_counter: u64) {
     panic!("unimplemented");
   }
 
