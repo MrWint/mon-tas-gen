@@ -54,10 +54,8 @@ pub struct Registers {
 }
 
 extern {
-  fn gambatte_create() -> *mut c_void;
+  fn gambatte_create(biosdata: *const u8, romfiledata: *const u8, romfilelength: usize) -> *mut c_void;
   fn gambatte_destroy(gb: *mut c_void);
-  fn gambatte_loadgbcbios(gb: *mut c_void, biosdata: *const u8);
-  fn gambatte_load(gb: *mut c_void, romfiledata: *const u8, romfilelength: usize);
 
   fn gambatte_setvideobuffer(gb: *mut c_void, videobuf: *mut u32, pitch: usize);
 
@@ -131,9 +129,11 @@ pub struct Gambatte {
 
 impl Gambatte {
   /// Create a new Gambatte instance.
-  pub fn create<S: ScreenUpdateCallback + 'static>(equal_length_frames: bool, screen_update_callback: S) -> Gambatte {
+  pub fn create<S: ScreenUpdateCallback + 'static>(bios_file_name: &str, rom_file_name: &str, equal_length_frames: bool, screen_update_callback: S) -> Gambatte {
+    let bios_data = load_file(bios_file_name);
+    let rom_data = load_file(rom_file_name);
     unsafe {
-      let gb = gambatte_create();
+      let gb = gambatte_create(bios_data.as_ptr(), rom_data.as_ptr(), rom_data.len());
 
       let input_getter = Box::new(InputGetter { input: inputs::NIL });
       let input_getter_ptr = Box::into_raw(input_getter);
@@ -153,28 +153,13 @@ impl Gambatte {
         gb,
         input_getter,
         frame,
-        rom_data: vec![],
+        rom_data,
         equal_length_frames,
         is_on_frame_boundaries: true,
         overflow_samples: 0,
         cycle_count: 0,
         screen_update_callback: Box::new(screen_update_callback),
       }
-    }
-  }
-
-  /// Loads the GBC BIOS ROM from a file.
-  pub fn load_gbc_bios(&self, file_name: &str) {
-    let bios_data = load_file(file_name);
-    unsafe {
-      gambatte_loadgbcbios(self.gb, bios_data.as_ptr());
-    }
-  }
-  /// Loads the game ROM from a file.
-  pub fn load_rom(&mut self, file_name: &str) {
-    self.rom_data = load_file(file_name);
-    unsafe {
-      gambatte_load(self.gb, self.rom_data.as_ptr(), self.rom_data.len());
     }
   }
 

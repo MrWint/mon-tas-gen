@@ -39,12 +39,12 @@ impl<R: BasicRomInfo + JoypadAddresses + RngAddresses> SingleGb<R> {
   pub fn with_screen() -> Self {
     let sdl = Sdl::init_sdl(1 /* num screens */, 1 /* scale */);
     SingleGb {
-      gb: Gb::<R>::create(Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */))),
+      gb: Gb::<R>::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */)),
     }
   }
   pub fn no_screen() -> Self {
     SingleGb {
-      gb: Gb::<R>::create(Gambatte::create(false /* equal length frames */, NoScreen {})),
+      gb: Gb::<R>::create(false /* equal length frames */, NoScreen {}),
     }
   }
 }
@@ -74,11 +74,11 @@ impl<R: Rom> GbPool<R> {
       let job_receiver = Arc::clone(&job_receiver);
       let sdl = sdl.clone();
       thread::spawn(move || {
-        let mut gb = Gb::<R>::create(if has_screen {
-          Gambatte::create(false /* equal length frames */, SdlScreen::new(sdl.unwrap(), i as u32 /* screen */))
+        let mut gb = if has_screen {
+          Gb::<R>::create(false /* equal length frames */, SdlScreen::new(sdl.unwrap(), i as u32 /* screen */))
         } else {
-          Gambatte::create(false /* equal length frames */, NoScreen {})
-        });
+          Gb::<R>::create(false /* equal length frames */, NoScreen {})
+        };
 
         loop {
           let message = job_receiver.lock().expect("Worker thread unable to lock job_receiver").recv();

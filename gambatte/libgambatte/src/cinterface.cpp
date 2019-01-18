@@ -6,26 +6,18 @@
 
 using namespace gambatte;
 
-GBEXPORT GB *gambatte_create()
+GBEXPORT GB *gambatte_create(const uint8_t* biosfiledata, const uint8_t *romfiledata, size_t romfilelength)
 {
-	return new GB();
+	GB* g = new GB();
+	g->loadGBCBios(biosfiledata);
+	g->load(romfiledata, romfilelength, 0 /* now */, GB::GBA_CGB, 0 /* div */);
+	g->setLayers(0x7);
+	return g;
 }
 
 GBEXPORT void gambatte_destroy(GB *g)
 {
 	delete g;
-}
-
-GBEXPORT int32_t gambatte_load(GB *g, const uint8_t *romfiledata, size_t romfilelength)
-{
-	int32_t ret = g->load(romfiledata, romfilelength, 0 /* now */, GB::GBA_CGB, 0 /* div */);
-	g->setLayers(0x7);
-	return ret;
-}
-
-GBEXPORT void gambatte_loadgbcbios(GB* g, const uint8_t* biosfiledata)
-{
-	g->loadGBCBios(biosfiledata);
 }
 
 GBEXPORT int32_t gambatte_runfor(GB *g, uint32_t *samples)

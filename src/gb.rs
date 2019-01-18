@@ -58,9 +58,8 @@ pub struct Gb<R> {
 
 impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
   /// Creates a new game execution using the given Gambatte instance.
-  pub fn create(mut gambatte: Gambatte) -> Self {
-    gambatte.load_gbc_bios("roms/gbc_bios.bin");
-    gambatte.load_rom(R::ROM_NAME);
+  pub fn create<S: ScreenUpdateCallback + 'static>(equal_length_frames: bool, screen_update_callback: S) -> Self {
+    let gambatte = Gambatte::create("roms/gbc_bios.bin", R::ROM_NAME, equal_length_frames, screen_update_callback);
     let initial_gambatte_state = gambatte.save_state();
     let mut pgb = Gb {
       gb: gambatte,

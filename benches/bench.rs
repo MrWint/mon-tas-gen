@@ -30,7 +30,7 @@ use test::{Bencher, black_box};
 
 #[bench]
 fn new_game_step(b: &mut Bencher) {
-  let mut gb = Gb::<Crystal>::create(Gambatte::create(false /* equal length frames */, NoScreen {}));
+  let mut gb = Gb::<Crystal>::create(false /* equal length frames */, NoScreen {});
 
   b.iter(|| {
     gb.restore_initial_state();
@@ -41,7 +41,7 @@ fn new_game_step(b: &mut Bencher) {
 
 #[bench]
 fn new_game_movesegment(b: &mut Bencher) {
-  let mut gb = Gb::<Crystal>::create(Gambatte::create(false /* equal length frames */, NoScreen {}));
+  let mut gb = Gb::<Crystal>::create(false /* equal length frames */, NoScreen {});
 
   b.iter(|| {
     gb.restore_initial_state();
@@ -53,9 +53,7 @@ fn new_game_movesegment(b: &mut Bencher) {
 
 #[bench]
 fn new_game_direct_gambatte(b: &mut Bencher) {
-  let mut gambatte = Gambatte::create(false /* equal length frames */, NoScreen {});
-  gambatte.load_gbc_bios("roms/gbc_bios.bin");
-  gambatte.load_rom("roms/crystal.gbc");
+  let mut gambatte = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, NoScreen {});
   let initial_gambatte_state = gambatte.save_state();
 
   b.iter(|| {
