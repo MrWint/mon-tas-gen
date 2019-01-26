@@ -27,16 +27,11 @@ impl WithDebugOutput for JumpLedgeSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Segment<T> for JumpLedgeSegment {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
-    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_debug_output(self.debug_output).execute(gb, iter)
-  }
-}
-impl<R: Rom + Gen2MapEventsAddresses> ParallelSegment<R> for JumpLedgeSegment {
+impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for JumpLedgeSegment {
   type Key = ();
 
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_parallel(gbe, iter)
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_split(gbe, iter)
   }
 }
 

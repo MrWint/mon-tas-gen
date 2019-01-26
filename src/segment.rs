@@ -7,20 +7,17 @@ use std::iter::FromIterator;
 
 
 /// Represents a transition from one decision point to another decision point.
-pub trait Segment<R> {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer;
-}
-pub trait ParallelSegment<R: Rom> {
+pub trait Segment<R: Rom> {
   type Key: StateKey;
 
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
 }
-pub trait SingleParallelSegment<R: Rom> {
-  fn execute_parallel_single<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer;
+pub trait SingleSegment<R: Rom> {
+  fn execute<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer;
 }
-impl<R: Rom, S: ParallelSegment<R,Key=()>> SingleParallelSegment<R> for S {
-  fn execute_parallel_single<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer {
-    self.execute_parallel(gb, iter).into_state_buffer()
+impl<R: Rom, S: Segment<R,Key=()>> SingleSegment<R> for S {
+  fn execute<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer {
+    self.execute_split(gb, iter).into_state_buffer()
   }
 }
 
@@ -32,11 +29,6 @@ pub trait WithOutputBufferSize {
   fn with_unbounded_buffer(self) -> Self where Self: Sized {
     self.with_buffer_size(crate::statebuffer::STATE_BUFFER_UNBOUNDED_MAX_SIZE)
   }
-}
-pub trait SplitSegment<R> {
-  type Key: StateKey;
-
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::Key, StateBuffer>;
 }
 
 
@@ -69,7 +61,7 @@ pub trait SingleStateBuffer {
 }
 impl<S: ::std::hash::BuildHasher> SingleStateBuffer for HashMap<(), StateBuffer, S> {
   fn into_state_buffer(self) -> StateBuffer {
-    self.into_iter().next().map_or_else(|| StateBuffer::new(), |(_, v)| v)
+    self.into_iter().next().map_or_else(StateBuffer::new, |(_, v)| v)
   }
 }
 
@@ -78,7 +70,7 @@ impl<S: ::std::hash::BuildHasher> SingleStateBuffer for HashMap<(), StateBuffer,
 
 
 
-/// Assumes th execution is stopped right after an input was performed on a decision point.
+/// Assumes the execution is stopped right after an input was performed on a decision point.
 /// Checks whether a vblank input that was just made uses the input in the expected way.
 /// ```pre_address``` and ```post_address``` identify the expected before/after state around the use and should be closer than one frame to each other.
 fn is_correct_input_use<R: JoypadAddresses>(gb: &mut Gb<R>, pre_address: i32, use_address: i32, post_address: i32) -> bool {

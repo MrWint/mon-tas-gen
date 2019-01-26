@@ -37,21 +37,11 @@ impl IdentifyInputSegment {
     println!("Input not identified");
   }
 }
-impl<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses> Segment<R> for IdentifyInputSegment {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
-    let mut goal_buffer = StateBuffer::with_max_size(self.buffer_size);
-    for s in iter.into_iter() {
-      Self::print_identification(gb, &s);
-      goal_buffer.add_state(s);
-    }
-    goal_buffer
-  }
-}
 
-impl<R: Rom + InputIdentificationAddresses> ParallelSegment<R> for IdentifyInputSegment {
+impl<R: Rom + InputIdentificationAddresses> Segment<R> for IdentifyInputSegment {
   type Key = ();
 
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     gbe.execute(iter, move |gb, s, tx| {
       Self::print_identification(gb, &s);
       tx.send(((), s)).unwrap();

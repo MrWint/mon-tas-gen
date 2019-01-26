@@ -51,56 +51,10 @@ impl<R, M> WithOutputBufferSize for MoveSegment<R, M> {
   fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
 }
 
-impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> Segment<R> for MoveSegment<R, M> {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
-    self.execute_split(gb, iter).merge_state_buffers_sized(self.buffer_size)
-  }
-}
-impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> SplitSegment<R> for MoveSegment<R, M> {
+impl<R: Rom, M: Metric<R>> Segment<R> for MoveSegment<R, M> {
   type Key = M::ValueType;
 
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let mut result: HashMap<Self::Key, StateBuffer> = HashMap::new();
-    for mut s in iter {
-      gb.restore(&s);
-      let mut skips = 0;
-      loop {
-        if self.debug_output && skips == 0 {
-          gb.input(self.input);
-          let hit = gb.step_until(R::JOYPAD_USE_ADDRESSES);
-          println!("MoveSegment use at pc {:04x} {}", hit, gb.get_stack_trace_string());
-          gb.restore(&s);
-        }
-        gb.input(self.input);
-        if let Some(value) = self.metric.evaluate(gb) {
-          if gb.skipped_relevant_inputs { // restore state if metric overran next input
-            gb.restore(&s);
-            gb.input(self.input);
-          }
-          if !gb.is_at_input { gb.step(); }
-          result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_state(gb.save());
-        }
-        if skips >= self.max_skips { break; }
-        gb.restore(&s);
-        gb.input(Input::empty());
-        gb.step();
-        s = gb.save();
-        skips += 1;
-      }
-    }
-    result
-  }
-}
-
-
-
-
-
-
-impl<R: Rom, M: Metric<R>> ParallelSegment<R> for MoveSegment<R, M> {
-  type Key = M::ValueType;
-
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     gbe.execute(iter, move |gb, mut s, tx| {
       gb.restore(&s);
       let mut skips = 0;

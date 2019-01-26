@@ -30,34 +30,13 @@ impl<R, S> WithOutputBufferSize for ApplyIndividuallySegment<R, S> {
   fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
 }
 
-impl<R: JoypadAddresses + RngAddresses, S: Segment<R>> Segment<R> for ApplyIndividuallySegment<R, S> {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
-    StateBuffer::from_iter_sized(iter.into_iter().flat_map(|s| self.segment.execute(gb, vec![s])), self.buffer_size)
-  }
-}
-impl<R: JoypadAddresses + RngAddresses, S: SplitSegment<R>> SplitSegment<R> for ApplyIndividuallySegment<R, S> {
+impl<R: Rom, S: Segment<R>> Segment<R> for ApplyIndividuallySegment<R, S> {
   type Key = S::Key;
 
-  fn execute_split<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
     for s in iter {
-      for (value, states) in self.segment.execute_split(gb, vec![s]).into_iter() {
-        result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
-      }
-    }
-    result
-  }
-}
-
-
-
-impl<R: Rom, S: ParallelSegment<R>> ParallelSegment<R> for ApplyIndividuallySegment<R, S> {
-  type Key = S::Key;
-
-  fn execute_parallel<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
-    for s in iter {
-      for (value, states) in self.segment.execute_parallel(gbe, vec![s]).into_iter() {
+      for (value, states) in self.segment.execute_split(gbe, vec![s]).into_iter() {
         result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
     }

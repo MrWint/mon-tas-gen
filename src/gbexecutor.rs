@@ -116,6 +116,7 @@ pub struct GbResults<T> {
 }
 impl IntoIterator for GbResults<((), State)> {
   type Item = State;
+  #[allow(clippy::type_complexity)]
   type IntoIter = ::std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {

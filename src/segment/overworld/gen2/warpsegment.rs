@@ -28,21 +28,13 @@ impl WithDebugOutput for WarpSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: Rom + Gen2MapEventsAddresses> Segment<T> for WarpSegment {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
-    let sb = MoveSegment::with_metric(self.input, WarpMetric {}).with_debug_output(self.debug_output).execute(gb, iter);
-    let sb = MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp))).with_debug_output(self.debug_output).execute(gb, sb);
-    MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ForcedMovement)).with_debug_output(self.debug_output).execute(gb, sb)
-  }
-}
-
-impl<R: Rom + Gen2MapEventsAddresses> ParallelSegment<R> for WarpSegment {
+impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for WarpSegment {
   type Key = OverworldInteractionResult;
 
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let sb = MoveSegment::with_metric(self.input, WarpMetric {}).with_debug_output(self.debug_output).execute_parallel_single(gbe, iter);
-    let sb = MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp)).into_unit()).with_debug_output(self.debug_output).execute_parallel_single(gbe, sb);
-    MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ForcedMovement)).with_debug_output(self.debug_output).execute_parallel(gbe, sb)
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    let sb = MoveSegment::with_metric(self.input, WarpMetric {}).with_debug_output(self.debug_output).execute(gbe, iter);
+    let sb = MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp)).into_unit()).with_debug_output(self.debug_output).execute(gbe, sb);
+    MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ForcedMovement)).with_debug_output(self.debug_output).execute_split(gbe, sb)
   }
 }
 

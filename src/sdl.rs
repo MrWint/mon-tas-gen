@@ -62,7 +62,7 @@ impl Sdl {
     Sdl {
       num_screens,
       screen_update_tx,
-      surface_base_pointer: surface_base_pointer,
+      surface_base_pointer,
       surface_pitch,
     }
   }

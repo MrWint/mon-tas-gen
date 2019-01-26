@@ -35,42 +35,10 @@ impl WithDebugOutput for WalkStepSegment {
   fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
 }
 
-impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> crate::segment::Segment<T> for WalkStepSegment {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<T>, iter: I) -> StateBuffer {
-    iter.into_iter().flat_map(|mut s| {
-      let mut result = vec![];
-      let mut skips = 0;
-      loop {
-        gb.restore(&s);
-        let facing_dir = match gb.gb.read_memory(T::PLAYER_DIRECTION_MEM_ADDRESS) & 0b1100 {
-          0x0 => Input::DOWN,
-          0x4 => Input::UP,
-          0x8 => Input::LEFT,
-          0xc => Input::RIGHT,
-          _ => panic!("got invalid direction"),
-        };
-        gb.input(self.input);
-        if walk_step_check(gb, &self.into_result) {
-          gb.restore(&s);
-          gb.input(self.input);
-          gb.step();
-          result.push(gb.save());
-        }
-        if skips >= self.max_skips || facing_dir != self.input { break result; }
-        gb.restore(&s);
-        gb.input(Input::empty());
-        gb.step();
-        s = gb.save();
-        skips += 1;
-      }
-    }).collect()
-  }
-}
-
-impl<R: Rom + Gen2MapEventsAddresses> crate::segment::ParallelSegment<R> for WalkStepSegment {
+impl<R: Rom + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkStepSegment {
   type Key = ();
 
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     gbe.execute(iter, move |gb, mut s, tx| {
       let mut skips = 0;
       loop {

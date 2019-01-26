@@ -23,32 +23,19 @@ impl SkipTextsSegment {
     }
   }
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> Segment<R> for SkipTextsSegment {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
-    let skip_input = if self.confirm_input.contains(Input::A) { Input::B } else { Input::A };
-    let text_segment = TextSegment::new(skip_input).with_buffer_size(self.buffer_size);
-    let confirm_segment = MoveSegment::new(self.confirm_input).with_buffer_size(self.buffer_size);
-    let mut sb = text_segment.execute(gb, iter);
-    for _ in 1..self.num_texts {
-      sb = confirm_segment.execute(gb, sb);
-      sb = text_segment.execute(gb, sb);
-    }
-    confirm_segment.execute(gb, sb)
-  }
-}
 
-impl<R: Rom + TextAddresses> ParallelSegment<R> for SkipTextsSegment {
+impl<R: Rom + TextAddresses> Segment<R> for SkipTextsSegment {
   type Key = ();
 
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let skip_input = if self.confirm_input.contains(Input::A) { Input::B } else { Input::A };
     let text_segment = TextSegment::new(skip_input).with_buffer_size(self.buffer_size);
     let confirm_segment = MoveSegment::new(self.confirm_input).with_buffer_size(self.buffer_size);
-    let mut sb = text_segment.execute_parallel_single(gbe, iter);
+    let mut sb = text_segment.execute(gbe, iter);
     for _ in 1..self.num_texts {
-      sb = confirm_segment.execute_parallel_single(gbe, sb);
-      sb = text_segment.execute_parallel_single(gbe, sb);
+      sb = confirm_segment.execute(gbe, sb);
+      sb = text_segment.execute(gbe, sb);
     }
-    confirm_segment.execute_parallel(gbe, sb)
+    confirm_segment.execute_split(gbe, sb)
   }
 }

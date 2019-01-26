@@ -167,6 +167,7 @@ impl FromIterator<State> for StateBuffer {
 
 impl IntoIterator for StateBuffer {
   type Item = State;
+  #[allow(clippy::type_complexity)]
   type IntoIter = ::std::iter::Map<::std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {

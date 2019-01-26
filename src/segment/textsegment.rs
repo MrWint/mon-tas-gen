@@ -92,46 +92,11 @@ impl TextSegment {
     }
   }
 }
-impl<R: JoypadAddresses + RngAddresses + TextAddresses> Segment<R> for TextSegment {
-  fn execute<I: IntoIterator<Item=State>>(&self, gb: &mut Gb<R>, iter: I) -> StateBuffer {
-    // intermediate buffers are larger by default so the goal buffer ends up with enough (varied) states.
-    let intermediate_buffer_size = self.buffer_size; // << 2;
 
-    let mut goal_buffer = StateBuffer::with_max_size(self.buffer_size);
-    let mut active_states: BTreeMap<u32, StateBuffer> = BTreeMap::new();
-    for s in iter.into_iter() {
-      gb.restore(&s);
-      if !Self::is_print_letter_delay_frame(gb) {
-        println!("WARNING: found State not at PrintLetterDelay initially, maybe there's another input before. Dropping state.");
-      } else {
-        active_states.entry(0).or_insert_with(|| StateBuffer::with_max_size(intermediate_buffer_size)).add_state(s);
-      }
-    }
-    while !active_states.is_empty() {
-      let min_cycles: u32 = *active_states.keys().next().unwrap();
-      let max_cycles: u32 = *active_states.keys().next_back().unwrap();
-      let sb = active_states.remove(&min_cycles).unwrap();
-      if self.debug_output { println!("TextSegment loop cycles {}-{}, min cycle size {}, goal_buffer size {}", min_cycles, max_cycles, sb.len(), goal_buffer.len()); }
-      for s in sb.into_iter() {
-        for (s, num_cycles) in self.progress_print_letter_delay_frame(gb, s) {
-          gb.restore(&s);
-          if Self::is_print_letter_delay_frame(gb) {
-            active_states.entry(min_cycles + num_cycles).or_insert_with(|| StateBuffer::with_max_size(intermediate_buffer_size)).add_state(s);
-          } else {
-            goal_buffer.add_state(s);
-          }
-        }
-      }
-    }
-    goal_buffer
-  }
-}
-
-
-impl<R: Rom + TextAddresses> ParallelSegment<R> for TextSegment {
+impl<R: Rom + TextAddresses> Segment<R> for TextSegment {
   type Key = ();
 
-  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     // intermediate buffers are larger by default so the goal buffer ends up with enough (varied) states.
     let intermediate_buffer_size = self.buffer_size; // << 2;
 
