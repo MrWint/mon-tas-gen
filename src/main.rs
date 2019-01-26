@@ -37,12 +37,12 @@ fn main() {
   // if true {return;}
 
 
-  playback_demos();
+  // playback_demos();
   // // convert_efl();
   // if true {return;}
 
   // BlueTestSegment::run();
-  // YellowTestSegment::run();
+  YellowTestSegment::run();
 }
 
 #[allow(dead_code)]
@@ -66,22 +66,25 @@ fn test_gambatte() {
   }
 }
 
-fn test_segment_end<R: Rom>(gb: &mut Gb<R>, sb: &StateBuffer, file_name: &str) {
+fn test_segment_end<R: Rom, E: GbExecutor<R>>(gbe: &mut E, sb: &StateBuffer, file_name: &str) {
   {
     println!("Creating sample input file...");
-    gb.restore(sb.into_iter().next().unwrap());
-    let inputs = gb.create_inputs();
+    let inputs = gbe.execute(sb, move |gb, s, tx| {
+      gb.restore(&s);
+      tx.send((gb.create_inputs(), s)).unwrap();
+    }).into_map_iter().map(|(i, _)| i).min_by_key(Vec::len).unwrap();
     save_inputs(file_name, inputs);
   }
   println!("Rendering end states of {}", sb);
-  for s in sb {
-    gb.restore(s);
-    for _ in 0..1000 {
+  gbe.execute(sb, move |gb, s, tx| {
+    gb.restore(&s);
+    for _ in 0..10000 {
       gb.input(Input::empty());
       gb.step();
     }
     std::thread::sleep(std::time::Duration::from_millis(100));
-  }
+    tx.send(((), s)).unwrap();
+  }).into_state_buffer_map(0);
 }
 
 pub struct BlueTestSegment {}
@@ -91,8 +94,8 @@ impl BlueTestSegment {
     let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
     let mut gb = Gb::<Blue>::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */));
     let states = vec![gb.save()];
-    let sb = BlueTestSegment{}.execute(&mut gb, states);
-    test_segment_end(&mut gb, &sb, "temp/blue_test.txt");
+    let _sb = BlueTestSegment{}.execute(&mut gb, states);
+    // test_segment_end(&mut gb, &sb, "temp/blue_test.txt");
   }
 }
 impl Segment<Blue> for BlueTestSegment {
@@ -188,21 +191,21 @@ impl YellowTestSegment {
     let mut gbe = GbPool::<Yellow>::with_screen();
     let states = vec![gbe.get_initial_state()];
     let _sb = YellowTestSegment{}.execute_parallel_single(&mut gbe, states);
-    // test_segment_end(&mut gb, &sb, "temp/yellow_test.txt");
+    test_segment_end(&mut gbe, &_sb, "temp/yellow_test.txt");
   }
 }
 impl ParallelSegment<Yellow> for YellowTestSegment {
   type Key = ();
 
   fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<Yellow>>(&self, gbe: &mut E, _iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, _iter);
-    println!("{}", sb);
-    let sb = MoveSegment::new(A).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, sb);
-    println!("{}", sb);
-    let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, sb);
-    println!("{}", sb);
-    let sb = DelaySegment::new(MoveSegment::with_metric(A, TrainerIDMetric{}.filter(|v| { v == &0x26F1 }).into_unit())).with_debug_output(true).execute_parallel_single(gbe, sb); // new game
-    sb.save("yellow_after_tid");
+  //   let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, _iter);
+  //   println!("{}", sb);
+  //   let sb = MoveSegment::new(A).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, sb);
+  //   println!("{}", sb);
+  //   let sb = MoveSegment::new(START).with_max_skips(15).with_buffer_size(4096).execute_parallel_single(gbe, sb);
+  //   println!("{}", sb);
+  //   let sb = DelaySegment::new(MoveSegment::with_metric(A, TrainerIDMetric{}.filter(|v| { v == &0x26F1 }).into_unit())).with_debug_output(true).execute_parallel_single(gbe, sb); // new game
+  //   sb.save("yellow_after_tid");
   //   let sb = StateBuffer::load("yellow_after_tid");
   //   println!("{}", sb);
   //   let sb = SkipTextsSegment::new(13, B).execute_parallel_single(gbe, sb); // skip texts until player name
@@ -304,27 +307,27 @@ impl ParallelSegment<Yellow> for YellowTestSegment {
   //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute_parallel_single(gbe, sb); println!("{}", sb);
   //   let sb = SkipTextsSegment::new(4, B).execute_parallel_single(gbe, sb); // get Pikachu
   //   sb.save("yellow_before_collect_pikachu_2_256_wait1_");
-  //   let sb = StateBuffer::load("yellow_before_collect_pikachu_2_256_wait1_");
-  //   let sb = SkipTextsSegment::new(2, B).with_buffer_size(256).execute_parallel_single(gbe, sb); // get Pikachu
-  //   let sb = TextSegment::new(A).with_buffer_size(256).execute_parallel_single(gbe, sb); // Nickname?
-  //   let sb = DelaySegment::new(MoveSegment::with_metric(B, Gen1DVMetric {}.filter(|v| {
-  //     let dvs = u16::from(v.atk) << 12 | u16::from(v.def) << 8 | u16::from(v.spd) << 4 | u16::from(v.spc);
-  //     let div = ((dvs >> 8) as u8).wrapping_sub(dvs as u8);
-  //     if ::rand::random::<u8>() < 0x04 {
-  //       print!("{:X}", div);
-  //       // print!("/{:X}", v.div_state >> 6);
-  //       // print!("/{}", to_human_readable_time(v.cycle_count));
-  //       print!(" ");
-  //     }
-  //     if v.atk != 7 { return false; }
-  //     if v.spc != 8 && v.spc != 9 { return false; }
-  //     if v.def != 0 && v.def != 1 { return false; }
-  //     if v.spd != 12 && v.spd != 13 { return false; }
-  //     println!("Chosen DVs: {:?}", v); true
-  //   }).into_unit())).with_debug_output(true).execute_parallel_single(gbe, sb);// println!("{}", sb);
-    // sb.save("yellow_after_collect_pikachu_256_div");
-    // let sb = StateBuffer::load("yellow_after_collect_pikachu_256_div");
-    // let sb = IdentifyInputSegment::new().execute_parallel_single(gbe, sb);
+    let sb = StateBuffer::load("yellow_before_collect_pikachu_2_256_wait1_");
+    let sb = SkipTextsSegment::new(2, B).with_buffer_size(4096).execute_parallel_single(gbe, sb); // get Pikachu
+    let sb = TextSegment::new(A).with_buffer_size(4096).execute_parallel_single(gbe, sb); // Nickname?
+    let sb = DelaySegment::new(MoveSegment::with_metric(B, Gen1DVMetric {}.filter(|v| {
+      let dvs = u16::from(v.atk) << 12 | u16::from(v.def) << 8 | u16::from(v.spd) << 4 | u16::from(v.spc);
+      let div = ((dvs >> 8) as u8).wrapping_sub(dvs as u8);
+      if ::rand::random::<u8>() < 0x04 {
+        print!("{:X}", div);
+        // print!("/{:X}", v.div_state >> 6);
+        // print!("/{}", to_human_readable_time(v.cycle_count));
+        print!(" ");
+      }
+      if v.atk != 7 { return false; }
+      if v.spc != 8 && v.spc != 9 { return false; }
+      if v.def != 0 && v.def != 1 { return false; }
+      if v.spd != 12 && v.spd != 13 { return false; }
+      println!("Chosen DVs: {:?}", v); true
+    }).into_unit())).with_debug_output(true).execute_parallel_single(gbe, sb);// println!("{}", sb);
+    sb.save("yellow_after_collect_pikachu_256_div");
+    let sb = StateBuffer::load("yellow_after_collect_pikachu_256_div");
+    let sb = IdentifyInputSegment::new().execute_parallel_single(gbe, sb);
     sleep(Duration::from_millis(1000));
     let mut result = HashMap::new();
     result.insert((), sb);

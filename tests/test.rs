@@ -1,6 +1,5 @@
 #![feature(test)]
 
-use gambatte::*;
 use gambatte::inputs::*;
 use montas::gb::*;
 use montas::rom::*;

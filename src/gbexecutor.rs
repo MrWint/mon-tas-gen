@@ -3,6 +3,7 @@ use crate::rom::*;
 use crate::sdl::*;
 use crate::statebuffer::*;
 use gambatte::*;
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -14,7 +15,7 @@ pub trait StateKey: Eq + Hash + Debug + Send + 'static {}
 impl<T: Eq + Hash + Debug + Send + 'static> StateKey for T {}
 
 pub trait GbExecutor<R: Rom> {
-  fn execute<K: StateKey, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<(K, State)>;
+  fn execute<S: Borrow<State>, K: StateKey, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<(K, State)>;
   fn get_initial_state(&mut self) -> State;
 }
 
@@ -22,10 +23,10 @@ pub struct SingleGb<R> {
   gb: Gb<R>,
 }
 impl<R: Rom> GbExecutor<R> for SingleGb<R> {
-  fn execute<K: StateKey, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, sb: I, f: F) -> GbResults<(K, State)> {
+  fn execute<S: Borrow<State>, K: StateKey, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, sb: I, f: F) -> GbResults<(K, State)> {
     let (tx, rx) = channel::<(K, State)>();
     for s in sb {
-      f(&mut self.gb, s, tx.clone());
+      f(&mut self.gb, Arc::clone(s.borrow()), tx.clone());
     }
     GbResults { rx }
   }
@@ -53,6 +54,8 @@ pub struct GbPool<R: Rom> {
   jobs: Sender<Box<dyn FnOnce(&mut Gb<R>) + Send>>,
 }
 
+const STACK_SIZE: usize = 8 * 1024 * 1024;
+
 impl<R: Rom> GbPool<R> {
   pub fn with_screen() -> GbPool<R> {
     Self::new(true)
@@ -73,21 +76,25 @@ impl<R: Rom> GbPool<R> {
     for i in 0..num_threads {
       let job_receiver = Arc::clone(&job_receiver);
       let sdl = sdl.clone();
-      thread::spawn(move || {
-        let mut gb = if has_screen {
-          Gb::<R>::create(false /* equal length frames */, SdlScreen::new(sdl.unwrap(), i as u32 /* screen */))
-        } else {
-          Gb::<R>::create(false /* equal length frames */, NoScreen {})
-        };
+      thread::Builder::new()
+          .name(format!("GbPool worker {}", i))
+          .stack_size(STACK_SIZE)
+          .spawn(move || {
+            let mut gb = if has_screen {
+              Gb::<R>::create(false /* equal length frames */, SdlScreen::new(sdl.unwrap(), i as u32 /* screen */))
+            } else {
+              Gb::<R>::create(false /* equal length frames */, NoScreen {})
+            };
 
-        loop {
-          let message = job_receiver.lock().expect("Worker thread unable to lock job_receiver").recv();
-          match message {
-            Ok(job) => job(&mut gb),
-            Err(..) => break, // The Pool was dropped.
-          };
-        }
-      });
+            loop {
+              let message = job_receiver.lock().expect("Worker thread unable to lock job_receiver").recv();
+              match message {
+                Ok(job) => job(&mut gb),
+                Err(..) => break, // The Pool was dropped.
+              };
+            }
+          })
+          .unwrap();
     }
 
     GbPool {
@@ -101,7 +108,7 @@ pub struct GbResults<T> {
 }
 impl IntoIterator for GbResults<((), State)> {
   type Item = State;
-  existential type IntoIter: Iterator<Item=State>; // = ::std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
+  type IntoIter = ::std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.rx.into_iter().map(|(_, v)| v)
@@ -129,7 +136,7 @@ impl GbResults<((), State)> {
 
 type GbFn<'a, R, K> = dyn Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync + 'a;
 impl<R: Rom> GbExecutor<R> for GbPool<R> {
-  fn execute<K: StateKey, I: IntoIterator<Item=State>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<(K, State)> {
+  fn execute<S: Borrow<State>, K: StateKey, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<(K, State)> {
     // Wrap functon in an Arc.
     let f: Arc<GbFn<'_, R, K>> = Arc::new(f);
     // Erase lifetime constraints: The resulting iterator must be fully consumed before the life time of F ends (ideally within the same statement) for this to be safe.
@@ -140,6 +147,7 @@ impl<R: Rom> GbExecutor<R> for GbPool<R> {
     for s in states.into_iter() {
       let tx = tx.clone();
       let f = Arc::clone(&f);
+      let s = Arc::clone(s.borrow());
       let job = Box::new(move |gb: &mut Gb<R>| { f(gb, s, tx) });
       self.jobs.send(job).unwrap();
     }
