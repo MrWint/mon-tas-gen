@@ -40,7 +40,7 @@ impl<R: JoypadAddresses + RngAddresses + TextAddresses> Segment<R> for SkipTexts
 impl<R: Rom + TextAddresses> ParallelSegment<R> for SkipTextsSegment {
   type Key = ();
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let skip_input = if self.confirm_input.contains(Input::A) { Input::B } else { Input::A };
     let text_segment = TextSegment::new(skip_input).with_buffer_size(self.buffer_size);
     let confirm_segment = MoveSegment::new(self.confirm_input).with_buffer_size(self.buffer_size);

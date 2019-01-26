@@ -37,7 +37,7 @@ impl<T: Rom + Gen2MapEventsAddresses> Segment<T> for TurnSegment {
 impl<R: Rom + Gen2MapEventsAddresses> ParallelSegment<R> for TurnSegment {
   type Key = super::OverworldInteractionResult;
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let sb = MoveSegment::with_metric(self.input, TurnMetric {}).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_parallel_single(gbe, iter);
     MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::JoyChangeFacing))).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_parallel(gbe, sb)
   }

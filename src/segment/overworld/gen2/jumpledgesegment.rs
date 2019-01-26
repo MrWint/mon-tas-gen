@@ -35,7 +35,7 @@ impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Segment<T> for 
 impl<R: Rom + Gen2MapEventsAddresses> ParallelSegment<R> for JumpLedgeSegment {
   type Key = ();
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_parallel(gbe, iter)
   }
 }

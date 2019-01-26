@@ -70,7 +70,7 @@ impl<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> crate::segment:
 impl<R: Rom + Gen2MapEventsAddresses> crate::segment::ParallelSegment<R> for WalkStepSegment {
   type Key = ();
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     gbe.execute(iter, move |gb, mut s, tx| {
       let mut skips = 0;
       loop {

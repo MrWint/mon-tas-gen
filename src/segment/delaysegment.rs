@@ -123,17 +123,17 @@ impl<'a, R, S: Segment<R>> SplitSegment<R> for WrapperSplitSegment<'a, R, S> {
 impl<R: Rom, S: ParallelSegment<R>> ParallelSegment<R> for DelaySegment<R, S> {
   type Key = S::Key;
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_parallel<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
 
-    let mut active_states: Vec<State> = iter.into_iter().collect();
+    let mut active_states: Vec<State> = iter.into_iter().map(|s| s.to_state()).collect();
     let mut skips = 0;
     let mut full_cycle_count = ::std::u64::MAX >> 1;
     let mut nonempty_cycle_count = ::std::u64::MAX >> 1;
     while !active_states.is_empty() {
       if self.debug_output { println!("DelaySegment processing {} active states at {} skips", active_states.len(), skips); }
       // Try segment on current active states.
-      for (value, states) in self.segment.execute_parallel(gbe, active_states.clone()).into_iter() {
+      for (value, states) in self.segment.execute_parallel(gbe, &active_states).into_iter() {
         result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
 

@@ -131,7 +131,7 @@ impl<R: JoypadAddresses + RngAddresses + TextAddresses> Segment<R> for TextSegme
 impl<R: Rom + TextAddresses> ParallelSegment<R> for TextSegment {
   type Key = ();
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     // intermediate buffers are larger by default so the goal buffer ends up with enough (varied) states.
     let intermediate_buffer_size = self.buffer_size; // << 2;
 

@@ -13,13 +13,13 @@ pub trait Segment<R> {
 pub trait ParallelSegment<R: Rom> {
   type Key: StateKey;
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
+  fn execute_parallel<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
 }
 pub trait SingleParallelSegment<R: Rom> {
-  fn execute_parallel_single<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer;
+  fn execute_parallel_single<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer;
 }
 impl<R: Rom, S: ParallelSegment<R,Key=()>> SingleParallelSegment<R> for S {
-  fn execute_parallel_single<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer {
+  fn execute_parallel_single<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer {
     self.execute_parallel(gb, iter).into_state_buffer()
   }
 }

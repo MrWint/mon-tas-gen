@@ -3,6 +3,18 @@ use gambatte::*;
 use serde_derive::{Serialize, Deserialize};
 use std::marker::PhantomData;
 
+pub trait StateRef {
+  fn to_state(self) -> State;
+  fn as_ref(&self) -> &State;
+}
+impl StateRef for State {
+  fn to_state(self) -> State { self }
+  fn as_ref(&self) -> &State { self }
+}
+impl<'a, S: StateRef> StateRef for &'a S {
+  fn to_state(self) -> State { ::std::sync::Arc::clone(self.as_ref()) }
+  fn as_ref(&self) -> &State { (*self).as_ref() }
+}
 pub type State = ::std::sync::Arc<RawState>;
 /// Represents a saved state of a game execution.
 #[derive(Serialize, Deserialize)]

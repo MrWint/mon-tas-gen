@@ -54,7 +54,7 @@ impl<R: JoypadAddresses + RngAddresses, S: SplitSegment<R>> SplitSegment<R> for 
 impl<R: Rom, S: ParallelSegment<R>> ParallelSegment<R> for ApplyIndividuallySegment<R, S> {
   type Key = S::Key;
 
-  fn execute_parallel<I: IntoIterator<Item=State>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_parallel<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
     for s in iter {
       for (value, states) in self.segment.execute_parallel(gbe, vec![s]).into_iter() {

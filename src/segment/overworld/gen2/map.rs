@@ -2,7 +2,7 @@ use crate::gb::*;
 use crate::rom::*;
 use gambatte::Input;
 
-#[derive(Default)]
+#[derive(Debug, Default, Hash, Eq, PartialEq)]
 pub struct Map {
   debug_output: bool,
   allow_water_tiles: bool,
