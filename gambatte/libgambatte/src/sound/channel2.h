@@ -19,9 +19,11 @@
 #ifndef SOUND_CHANNEL2_H
 #define SOUND_CHANNEL2_H
 
+#include "gbint.h"
 #include "length_counter.h"
-#include "master_disabler.h"
+#include "duty_unit.h"
 #include "envelope_unit.h"
+#include "static_output_tester.h"
 #include "newstate.h"
 
 namespace gambatte {
@@ -29,26 +31,40 @@ namespace gambatte {
 struct SaveState;
 
 class Channel2 {
-	MasterDisabler disableMaster;
+	friend class StaticOutputTester<Channel2,DutyUnit>;
+	
+	StaticOutputTester<Channel2,DutyUnit> staticOutputTest;
+	DutyMasterDisabler disableMaster;
 	LengthCounter lengthCounter;
+	DutyUnit dutyUnit;
 	EnvelopeUnit envelopeUnit;
 	
-	uint32_t cycleCounter;
+	SoundUnit *nextEventUnit;
 	
-	uint8_t nr4;
+	unsigned long cycleCounter;
+	unsigned long soMask;
+	unsigned long prevOut;
+	
+	unsigned char nr4;
 	bool master;
-
+	
+	void setEvent();
+	
 public:
 	Channel2();
-	void setNr1(uint32_t data);
-	void setNr2(uint32_t data);
-	void setNr4(uint32_t data);
+	void setNr1(unsigned data);
+	void setNr2(unsigned data);
+	void setNr3(unsigned data);
+	void setNr4(unsigned data);
 	
+	void setSo(unsigned long soMask);
+	// void deactivate() { disableMaster(); setEvent(); }
 	bool isActive() const { return master; }
 	
-	void update(uint32_t cycles);
+	void update(unsigned long soBaseVol, unsigned long cycles);
 	
 	void reset();
+	void init(bool cgb);
 	void loadState(const SaveState &state);
 
 	template<bool isReader>void SyncState(NewState *ns);

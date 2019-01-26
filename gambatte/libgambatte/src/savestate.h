@@ -19,7 +19,6 @@
 #ifndef SAVESTATE_H
 #define SAVESTATE_H
 
-#include <cstddef>
 #include <cstdint>
 
 namespace gambatte {
@@ -30,50 +29,50 @@ struct SaveState {
 	template<typename T>
 	class Ptr {
 		T *ptr;
-		size_t sz;
+		unsigned long sz;
 		
 	public:
 		Ptr() : ptr(0), sz(0) {}
 		const T* get() const { return ptr; }
-		size_t getSz() const { return sz; }
-		void set(T *ptr, const size_t sz) { this->ptr = ptr; this->sz = sz; }
+		unsigned long getSz() const { return sz; }
+		void set(T *ptr, const unsigned long sz) { this->ptr = ptr; this->sz = sz; }
 		
 		friend class SaverList;
-		friend void setInitState(SaveState &, bool, bool, uint32_t, unsigned);
+		friend void setInitState(SaveState &, bool, bool, std::uint32_t, unsigned);
 	};
 
 	struct CPU {
-		uint32_t cycleCounter;
-		uint16_t PC;
-		uint16_t SP;
-		uint8_t A;
-		uint8_t B;
-		uint8_t C;
-		uint8_t D;
-		uint8_t E;
-		uint8_t F;
-		uint8_t H;
-		uint8_t L;
+		unsigned long cycleCounter;
+		unsigned short PC;
+		unsigned short SP;
+		unsigned char A;
+		unsigned char B;
+		unsigned char C;
+		unsigned char D;
+		unsigned char E;
+		unsigned char F;
+		unsigned char H;
+		unsigned char L;
 		bool skip;
 	} cpu;
 	
 	struct Mem {
-		Ptr<uint8_t> vram;
-		Ptr<uint8_t> sram;
-		Ptr<uint8_t> wram;
-		Ptr<uint8_t> ioamhram;
-		uint32_t divLastUpdate;
-		uint32_t timaLastUpdate;
-		uint32_t tmatime;
-		uint32_t nextSerialtime;
-		uint32_t lastOamDmaUpdate;
-		uint32_t minIntTime;
-		uint32_t unhaltTime;
-		uint16_t rombank;
-		uint16_t dmaSource;
-		uint16_t dmaDestination;
-		uint8_t rambank;
-		uint8_t oamDmaPos;
+		Ptr<unsigned char> vram;
+		Ptr<unsigned char> sram;
+		Ptr<unsigned char> wram;
+		Ptr<unsigned char> ioamhram;
+		unsigned long divLastUpdate;
+		unsigned long timaLastUpdate;
+		unsigned long tmatime;
+		unsigned long nextSerialtime;
+		unsigned long lastOamDmaUpdate;
+		unsigned long minIntTime;
+		unsigned long unhaltTime;
+		unsigned short rombank;
+		unsigned short dmaSource;
+		unsigned short dmaDestination;
+		unsigned char rambank;
+		unsigned char oamDmaPos;
 		bool IME;
 		bool halted;
 		bool enableRam;
@@ -86,36 +85,36 @@ struct SaveState {
 	} mem;
 	
 	struct PPU {
-		Ptr<uint8_t> bgpData;
-		Ptr<uint8_t> objpData;
+		Ptr<unsigned char> bgpData;
+		Ptr<unsigned char> objpData;
 		//SpriteMapper::OamReader
-		Ptr<uint8_t> oamReaderBuf;
+		Ptr<unsigned char> oamReaderBuf;
 		Ptr<bool> oamReaderSzbuf;
 		
-		uint32_t videoCycles;
-		uint32_t enableDisplayM0Time;
-		uint16_t lastM0Time;
-		uint16_t nextM0Irq;
-		uint16_t tileword;
-		uint16_t ntileword;
-		uint8_t spAttribList[10];
-		uint8_t spByte0List[10];
-		uint8_t spByte1List[10];
-		uint8_t winYPos;
-		uint8_t xpos;
-		uint8_t endx;
-		uint8_t reg0;
-		uint8_t reg1;
-		uint8_t attrib;
-		uint8_t nattrib;
-		uint8_t state;
-		uint8_t nextSprite;
-		uint8_t currentSprite;
-		uint8_t lyc;
-		uint8_t m0lyc;
-		uint8_t oldWy;
-		uint8_t winDrawState;
-		uint8_t wscx;
+		unsigned long videoCycles;
+		unsigned long enableDisplayM0Time;
+		unsigned short lastM0Time;
+		unsigned short nextM0Irq;
+		unsigned short tileword;
+		unsigned short ntileword;
+		unsigned char spAttribList[10];
+		unsigned char spByte0List[10];
+		unsigned char spByte1List[10];
+		unsigned char winYPos;
+		unsigned char xpos;
+		unsigned char endx;
+		unsigned char reg0;
+		unsigned char reg1;
+		unsigned char attrib;
+		unsigned char nattrib;
+		unsigned char state;
+		unsigned char nextSprite;
+		unsigned char currentSprite;
+		unsigned char lyc;
+		unsigned char m0lyc;
+		unsigned char oldWy;
+		unsigned char winDrawState;
+		unsigned char wscx;
 		bool weMaster;
 		bool pendingLcdstatIrq;
 		bool isCgb;
@@ -123,61 +122,77 @@ struct SaveState {
 	
 	struct SPU {
 		struct Duty {
-			uint8_t nr3;
+			unsigned long nextPosUpdate;
+			unsigned char nr3;
+			unsigned char pos;
+		};
+		
+		struct Env {
+			unsigned long counter;
+			unsigned char volume;
 		};
 		
 		struct LCounter {
-			uint32_t counter;
-			uint16_t lengthCounter;
+			unsigned long counter;
+			unsigned short lengthCounter;
 		};
 		
 		struct {
 			struct {
-				uint32_t counter;
-				uint16_t shadow;
-				uint8_t nr0;
+				unsigned long counter;
+				unsigned short shadow;
+				unsigned char nr0;
 				bool negging;
 			} sweep;
 			Duty duty;
+			Env env;
 			LCounter lcounter;
-			uint8_t nr4;
+			unsigned char nr4;
 			bool master;
 		} ch1;
 		
 		struct {
+			Duty duty;
+			Env env;
 			LCounter lcounter;
-			uint8_t nr4;
+			unsigned char nr4;
 			bool master;
 		} ch2;
 		
 		struct {
-			Ptr<uint8_t> waveRam;
+			Ptr<unsigned char> waveRam;
 			LCounter lcounter;
-			uint32_t waveCounter;
-			uint32_t lastReadTime;
-			uint8_t nr3;
-			uint8_t nr4;
-			uint8_t wavePos;
+			unsigned long waveCounter;
+			unsigned long lastReadTime;
+			unsigned char nr3;
+			unsigned char nr4;
+			unsigned char wavePos;
+			unsigned char sampleBuf;
 			bool master;
 		} ch3;
 		
 		struct {
+			struct {
+				unsigned long counter;
+				unsigned short reg;
+			} lfsr;
+			Env env;
 			LCounter lcounter;
-			uint8_t nr4;
+			unsigned char nr4;
 			bool master;
 		} ch4;
 		
-		uint32_t cycleCounter;
+		unsigned long cycleCounter;
 	} spu;
 	
 	struct RTC {
-		uint32_t baseTime;
-		uint32_t haltTime;
-		uint8_t dataDh;
-		uint8_t dataDl;
-		uint8_t dataH;
-		uint8_t dataM;
-		uint8_t dataS;
+		unsigned long baseTime;
+		unsigned long haltTime;
+		unsigned char dataDh;
+		unsigned char dataDl;
+		unsigned char dataH;
+		unsigned char dataM;
+		unsigned char dataS;
 		bool lastLatchData;
 	} rtc;
 };

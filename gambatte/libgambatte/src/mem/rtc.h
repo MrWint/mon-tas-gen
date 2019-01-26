@@ -28,40 +28,41 @@ struct SaveState;
 
 class Rtc {
 private:
-	uint8_t *activeData;
-	void (Rtc::*activeSet)(uint8_t);
-	uint32_t baseTime;
-	uint32_t haltTime;
-	uint8_t index;
-	uint8_t dataDh;
-	uint8_t dataDl;
-	uint8_t dataH;
-	uint8_t dataM;
-	uint8_t dataS;
+	unsigned char *activeData;
+	void (Rtc::*activeSet)(unsigned);
+	std::uint32_t baseTime;
+	std::uint32_t haltTime;
+	unsigned char index;
+	unsigned char dataDh;
+	unsigned char dataDl;
+	unsigned char dataH;
+	unsigned char dataM;
+	unsigned char dataS;
 	bool enabled;
-	uint8_t lastLatchData;
-	uint32_t (*timeCB)(void*);
+	bool lastLatchData;
+	std::uint32_t (*timeCB)(void*);
 	void* timeCBcontext;
 	
 	void doLatch();
 	void doSwapActive();
-	void setDh(uint8_t new_dh);
-	void setDl(uint8_t new_lowdays);
-	void setH(uint8_t new_hours);
-	void setM(uint8_t new_minutes);
-	void setS(uint8_t new_seconds);
+	void setDh(unsigned new_dh);
+	void setDl(unsigned new_lowdays);
+	void setH(unsigned new_hours);
+	void setM(unsigned new_minutes);
+	void setS(unsigned new_seconds);
 	
 public:
 	Rtc();
 	
-	const uint8_t* getActive() const { return activeData; }
-	uint32_t getBaseTime() const { return baseTime; }
+	const unsigned char* getActive() const { return activeData; }
+	std::uint32_t getBaseTime() const { return baseTime; }
 	
-	void setBaseTime(const uint32_t _baseTime) {
-		baseTime = _baseTime;
+	void setBaseTime(const std::uint32_t baseTime) {
+		this->baseTime = baseTime;
+// 		doLatch();
 	}
 	
-	void latch(const uint8_t data) {
+	void latch(const unsigned data) {
 		if (!lastLatchData && data == 1)
 			doLatch();
 		
@@ -70,22 +71,23 @@ public:
 	
 	void loadState(const SaveState &state);
 	
-	void set(const bool _enabled, uint8_t bank) {
+	void set(const bool enabled, unsigned bank) {
 		bank &= 0xF;
 		bank -= 8;
 		
-		enabled = _enabled;
-		index = bank;
+		this->enabled = enabled;
+		this->index = bank;
 		
 		doSwapActive();
 	}
 	
-	void write(const uint8_t data) {
+	void write(const unsigned data) {
+// 		if (activeSet)
 		(this->*activeSet)(data);
 		*activeData = data;
 	}
 
-	void setRTCCallback(uint32_t (*callback)(void*), void* context) {
+	void setRTCCallback(std::uint32_t (*callback)(void*), void* context) {
 		timeCB = callback;
 		timeCBcontext = context;
 	}

@@ -22,38 +22,87 @@
 namespace gambatte {
 
 Channel2::Channel2() :
-	disableMaster(master),
+	staticOutputTest(*this, dutyUnit),
+	disableMaster(master, dutyUnit),
 	lengthCounter(disableMaster, 0x3F),
-	envelopeUnit(),
+	envelopeUnit(staticOutputTest),
 	cycleCounter(0),
+	soMask(0),
+	prevOut(0),
 	nr4(0),
-	master(false) {}
+	master(false)
+{
+	setEvent();
+}
 
-void Channel2::setNr1(const uint32_t data) {
+void Channel2::setEvent() {
+// 	nextEventUnit = &dutyUnit;
+// 	if (envelopeUnit.getCounter() < nextEventUnit->getCounter())
+		nextEventUnit = &envelopeUnit;
+	if (lengthCounter.getCounter() < nextEventUnit->getCounter())
+		nextEventUnit = &lengthCounter;
+}
+
+void Channel2::setNr1(const unsigned data) {
 	lengthCounter.nr1Change(data, nr4, cycleCounter);
+	dutyUnit.nr1Change(data, cycleCounter);
+	
+	setEvent();
 }
 
-void Channel2::setNr2(const uint32_t data) {
-	if (envelopeUnit.nr2Change(data)) master = false;
+void Channel2::setNr2(const unsigned data) {
+	if (envelopeUnit.nr2Change(data))
+		disableMaster();
+	else
+		staticOutputTest(cycleCounter);
+	
+	setEvent();
 }
 
-void Channel2::setNr4(const uint32_t data) {
+void Channel2::setNr3(const unsigned data) {
+	dutyUnit.nr3Change(data, cycleCounter);
+	setEvent();
+}
+
+void Channel2::setNr4(const unsigned data) {
 	lengthCounter.nr4Change(nr4, data, cycleCounter);
 		
 	nr4 = data;
 	
 	if (data & 0x80) { //init-bit
 		nr4 &= 0x7F;
-		master = !envelopeUnit.nr4Init();
+		master = !envelopeUnit.nr4Init(cycleCounter);
+		staticOutputTest(cycleCounter);
 	}
+	
+	dutyUnit.nr4Change(data, cycleCounter);
+	
+	setEvent();
+}
+
+void Channel2::setSo(const unsigned long soMask) {
+	this->soMask = soMask;
+	staticOutputTest(cycleCounter);
+	setEvent();
 }
 
 void Channel2::reset() {
 	cycleCounter = 0x1000 | (cycleCounter & 0xFFF); // cycleCounter >> 12 & 7 represents the frame sequencer position.
+	
+// 	lengthCounter.reset();
+	dutyUnit.reset();
+	envelopeUnit.reset();
+	
+	setEvent();
+}
+
+void Channel2::init(const bool cgb) {
+	lengthCounter.init(cgb);
 }
 
 void Channel2::loadState(const SaveState &state) {
-	envelopeUnit.loadState(state.mem.ioamhram.get()[0x117]);
+	dutyUnit.loadState(state.spu.ch2.duty, state.mem.ioamhram.get()[0x116], state.spu.ch2.nr4,state.spu.cycleCounter);
+	envelopeUnit.loadState(state.spu.ch2.env, state.mem.ioamhram.get()[0x117], state.spu.cycleCounter);
 	lengthCounter.loadState(state.spu.ch2.lcounter, state.spu.cycleCounter);
 	
 	cycleCounter = state.spu.cycleCounter;
@@ -61,14 +110,41 @@ void Channel2::loadState(const SaveState &state) {
 	master = state.spu.ch2.master;
 }
 
-void Channel2::update(uint32_t cycles) {
-	cycleCounter += cycles;
-	if (lengthCounter.getCounter() < cycleCounter)
-		lengthCounter.event(); // lengthCounter can only trigger once, and disables adterwards.
+void Channel2::update(const unsigned long soBaseVol, unsigned long cycles) {
+	const unsigned long outBase = envelopeUnit.dacIsOn() ? soBaseVol & soMask : 0;
+	const unsigned long outLow = outBase * (0 - 15ul);
+	const unsigned long endCycles = cycleCounter + cycles;
+	
+	for (;;) {
+		const unsigned long outHigh = master ? outBase * (envelopeUnit.getVolume() * 2 - 15ul) : outLow;
+		const unsigned long nextMajorEvent = nextEventUnit->getCounter() < endCycles ? nextEventUnit->getCounter() : endCycles;
+		unsigned long out = dutyUnit.isHighState() ? outHigh : outLow;
+		
+		while (dutyUnit.getCounter() <= nextMajorEvent) {
+			prevOut = out;
+			cycleCounter = dutyUnit.getCounter();
+			
+			dutyUnit.event();
+			out = dutyUnit.isHighState() ? outHigh : outLow;
+		}
+		
+		if (cycleCounter < nextMajorEvent) {
+			prevOut = out;
+			cycleCounter = nextMajorEvent;
+		}
+		
+		if (nextEventUnit->getCounter() == nextMajorEvent) {
+			nextEventUnit->event();
+			setEvent();
+		} else
+			break;
+	}
 	
 	if (cycleCounter & SoundUnit::COUNTER_MAX) {
-		lengthCounter.resetCounters();
-
+		dutyUnit.resetCounters(cycleCounter);
+		lengthCounter.resetCounters(cycleCounter);
+		envelopeUnit.resetCounters(cycleCounter);
+		
 		cycleCounter -= SoundUnit::COUNTER_MAX;
 	}
 }
@@ -76,9 +152,18 @@ void Channel2::update(uint32_t cycles) {
 SYNCFUNC(Channel2)
 {
 	SSS(lengthCounter);
+	SSS(dutyUnit);
 	SSS(envelopeUnit);
 
+	EBS(nextEventUnit, 0);
+	EVS(nextEventUnit, &dutyUnit, 1);
+	EVS(nextEventUnit, &envelopeUnit, 2);
+	EVS(nextEventUnit, &lengthCounter, 3);
+	EES(nextEventUnit, NULL);
+
 	NSS(cycleCounter);
+	NSS(soMask);
+	NSS(prevOut);
 
 	NSS(nr4);
 	NSS(master);

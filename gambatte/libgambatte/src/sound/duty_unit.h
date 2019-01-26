@@ -19,28 +19,52 @@
 #ifndef DUTY_UNIT_H
 #define DUTY_UNIT_H
 
+#include "sound_unit.h"
+#include "master_disabler.h"
 #include "../savestate.h"
 #include "newstate.h"
 
 namespace gambatte {
 
-class DutyUnit {
-	uint32_t nextPosUpdate;
-	uint16_t period;
-	uint8_t pos;
+class DutyUnit : public SoundUnit {
+	unsigned long nextPosUpdate;
+	unsigned short period;
+	unsigned char pos;
+	unsigned char duty;
+	bool high;
+	bool enableEvents;
+
+	void setCounter();
+	void setDuty(unsigned nr1);
+	void updatePos(unsigned long cc);
 
 public:
 	DutyUnit();
-	void nr3Change(uint32_t newNr3);
-	void nr4Change(uint32_t newNr4);
-	void loadState(const SaveState::SPU::Duty &dstate, uint32_t nr4);
-
+	void event();
+	bool isHighState() const { return high; }
+	void nr1Change(unsigned newNr1, unsigned long cc);
+	void nr3Change(unsigned newNr3, unsigned long cc);
+	void nr4Change(unsigned newNr4, unsigned long cc);
+	void reset();
+	void loadState(const SaveState::SPU::Duty &dstate, unsigned nr1, unsigned nr4, unsigned long cc);
+	void resetCounters(unsigned long oldCc);
+	void killCounter();
+	void reviveCounter(unsigned long cc);
+	
 	//intended for use by SweepUnit only.
-	uint32_t getFreq() const { return 2048 - (period >> 1); }
-	void setFreq(uint32_t newFreq);
+	unsigned getFreq() const { return 2048 - (period >> 1); }
+	void setFreq(unsigned newFreq, unsigned long cc);
 
 	template<bool isReader>void SyncState(NewState *ns);
 };
+
+class DutyMasterDisabler : public MasterDisabler {
+	DutyUnit &dutyUnit;
+public:
+	DutyMasterDisabler(bool &m, DutyUnit &dutyUnit) : MasterDisabler(m), dutyUnit(dutyUnit) {}
+	void operator()() { MasterDisabler::operator()(); dutyUnit.killCounter(); }
+};
+
 }
 
 #endif

@@ -19,19 +19,19 @@
 #ifndef GAMBATTE_H
 #define GAMBATTE_H
 
+#include "gbint.h"
 #include <string>
 #include <sstream>
 #include <cstdint>
 #include "newstate.h"
-#include "cpu.h"
 
 namespace gambatte {
-class GB {
-	CPU cpu;
-	uint8_t loadflags;
+enum { BG_PALETTE = 0, SP1_PALETTE = 1, SP2_PALETTE = 2 };
 
+class GB {
 public:
 	GB();
+	~GB();
 	
 	enum LoadFlag {
 		FORCE_DMG        = 1, /**< Treat the ROM as not having CGB support regardless of what its header advertises. */
@@ -45,10 +45,10 @@ public:
 	  * @param flags    ORed combination of LoadFlags.
 	  * @return 0 on success, negative value on failure.
 	  */
-	int32_t load(const uint8_t *romfiledata, size_t romfilelength, uint32_t now, uint8_t flags, uint32_t div);
+	int load(const char *romfiledata, unsigned romfilelength, std::uint32_t now, unsigned flags, unsigned div);
 	
-	void loadGBCBios(const uint8_t* biosfiledata);
-	void loadDMGBios(const uint8_t* biosfiledata);
+	int loadGBCBios(const char* biosfiledata);
+	int loadDMGBios(const char* biosfiledata);
 
 	/** Emulates until at least 'samples' stereo sound samples are produced in the supplied buffer,
 	  * or until a video frame has been drawn.
@@ -56,50 +56,78 @@ public:
 	  * There are 35112 stereo sound samples in a video frame.
 	  * May run for up to 2064 stereo samples too long.
 	  * A stereo sample consists of two native endian 2s complement 16-bit PCM samples,
-	  * with the left sample preceding the right one.
+	  * with the left sample preceding the right one. Usually casting soundBuf to/from
+	  * short* is OK and recommended. The reason for not using a short* in the interface
+	  * is to avoid implementation-defined behaviour without compromising performance.
 	  *
 	  * Returns early when a new video frame has finished drawing in the video buffer,
 	  * such that the caller may update the video output before the frame is overwritten.
 	  * The return value indicates whether a new video frame has been drawn, and the
 	  * exact time (in number of samples) at which it was drawn.
 	  *
+	  * @param soundBuf buffer with space >= samples + 2064
 	  * @param samples in: number of stereo samples to produce, out: actual number of samples produced
 	  * @return sample number at which the video frame was produced. -1 means no frame was produced.
 	  */
-	int32_t runFor(uint32_t &samples);
+	long runFor(unsigned &samples);
 
-	void setLayers(uint8_t mask);
+	void setLayers(unsigned mask);
 
 	/** Reset to initial state.
 	  * Equivalent to reloading a ROM image, or turning a Game Boy Color off and on again.
 	  */
-	void reset(uint32_t now, uint32_t div);
+	void reset(std::uint32_t now, unsigned div);
+	
+	/** @param palNum 0 <= palNum < 3. One of BG_PALETTE, SP1_PALETTE and SP2_PALETTE.
+	  * @param colorNum 0 <= colorNum < 4
+	  */
+	void setDmgPaletteColor(unsigned palNum, unsigned colorNum, unsigned rgb32);
+	
+	void setCgbPalette(unsigned *lut);
 
 	/** Sets the callback used for getting input state. */
-	void setInputGetter(uint8_t (*getInput)(void *), void* context);
+	void setInputGetter(unsigned (*getInput)(void *), void* context);
 	
-	void setRTCCallback(uint32_t (*callback)(void*), void* context);
+	void setRTCCallback(std::uint32_t (*callback)(void*), void* context);
+
+	/** Returns true if the currently loaded ROM image is treated as having CGB support. */
+	bool isCgb() const;
+	
+	/** Returns true if a ROM image is loaded. */
+	bool isLoaded() const;
 
 	/** Writes persistent cartridge data to disk. NOT Done implicitly on ROM close. */
-	void loadSavedata(const uint8_t *data);
-	size_t saveSavedataLength();
-	void saveSavedata(uint8_t *dest);
+	void loadSavedata(const char *data);
+	int saveSavedataLength();
+	void saveSavedata(char *dest);
 	
 	// 0 = vram, 1 = rom, 2 = wram, 3 = cartram, 4 = oam, 5 = hram
-	bool getMemoryArea(int32_t which, uint8_t **data, int32_t *length);
+	bool getMemoryArea(int which, unsigned char **data, int *length);
+	
+	/** ROM header title of currently loaded ROM image. */
+	const std::string romTitle() const;
 
-	uint8_t ExternalRead(uint16_t addr);
-	void ExternalWrite(uint16_t addr, uint8_t val);
+	unsigned char ExternalRead(unsigned short addr);
+	void ExternalWrite(unsigned short addr, unsigned char val);
 
-	void GetRegs(uint32_t *dest);
+	int LinkStatus(int which);
 
-	void SetInterruptAddresses(int32_t *addrs, size_t numAddrs);
-	int32_t GetHitInterruptAddress();
+	void GetRegs(int *dest);
+
+	void SetInterruptAddresses(int *addrs, int numAddrs);
+	int GetHitInterruptAddress();
 
 	uint16_t getDivState();
-	void setVideoBuffer(uint32_t *const videoBuf, const size_t pitch);
+	void setVideoBuffer(uint_least32_t *const videoBuf, const int pitch);
 
 	template<bool isReader>void SyncState(NewState *ns);
+
+private:
+	struct Priv;
+	Priv *const p_;
+
+	GB(const GB &);
+	GB & operator=(const GB &);
 };
 }
 

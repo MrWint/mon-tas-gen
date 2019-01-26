@@ -27,62 +27,62 @@ enum OamDmaSrc { OAM_DMA_SRC_ROM, OAM_DMA_SRC_SRAM, OAM_DMA_SRC_VRAM,
                  OAM_DMA_SRC_WRAM, OAM_DMA_SRC_INVALID, OAM_DMA_SRC_OFF };
 
 class MemPtrs {
-	const uint8_t *rmem_[0x10];
-	      uint8_t *wmem_[0x10];
+	const unsigned char *rmem_[0x10];
+	      unsigned char *wmem_[0x10];
 	
-	uint8_t *romdata_[2];
-	uint8_t *wramdata_[2];
-	uint8_t *vrambankptr_;
-	uint8_t *rsrambankptr_;
-	uint8_t *wsrambankptr_;
-	uint8_t *memchunk_;
-	uint8_t *rambankdata_;
-	uint8_t *wramdataend_;
+	unsigned char *romdata_[2];
+	unsigned char *wramdata_[2];
+	unsigned char *vrambankptr_;
+	unsigned char *rsrambankptr_;
+	unsigned char *wsrambankptr_;
+	unsigned char *memchunk_;
+	unsigned char *rambankdata_;
+	unsigned char *wramdataend_;
 	bool *interruptmemchunk_; // Somewhat wasteful but allows faster lookups
 	
 	OamDmaSrc oamDmaSrc_;
 
-	uint32_t curRomBank_;
+	unsigned curRomBank_;
 
-	int32_t memchunk_len;
-	int32_t memchunk_saveoffs;
-	int32_t memchunk_savelen;
+	int memchunk_len;
+	int memchunk_saveoffs;
+	int memchunk_savelen;
 
 	MemPtrs(const MemPtrs &);
 	MemPtrs & operator=(const MemPtrs &);
 	void disconnectOamDmaAreas();
-	uint8_t * rdisabledRamw() const { return wramdataend_         ; }
-	uint8_t * wdisabledRam()  const { return wramdataend_ + 0x2000; }
+	unsigned char * rdisabledRamw() const { return wramdataend_         ; }
+	unsigned char * wdisabledRam()  const { return wramdataend_ + 0x2000; }
 public:
 	enum RamFlag { READ_EN = 1, WRITE_EN = 2, RTC_EN = 4 };
 	
 	MemPtrs();
 	~MemPtrs();
-	void reset(uint32_t rombanks, uint32_t rambanks, uint32_t wrambanks);
+	void reset(unsigned rombanks, unsigned rambanks, unsigned wrambanks);
 	
-	const uint8_t * rmem(uint32_t area) const { return rmem_[area]; }
-	uint8_t * wmem(uint32_t area) const { return wmem_[area]; }
-	uint8_t * vramdata() const { return rambankdata_ - 0x4000; }
-	uint8_t * vramdataend() const { return rambankdata_; }
-	uint8_t * romdata() const { return memchunk_ + 0x4000; }
-	uint8_t * romdata(uint32_t area) const { return romdata_[area]; }
-	uint8_t * romdataend() const { return rambankdata_ - 0x4000; }
-	uint8_t * wramdata(uint32_t area) const { return wramdata_[area]; }
-	uint8_t * wramdataend() const { return wramdataend_; }
-	uint8_t * rambankdata() const { return rambankdata_; }
-	uint8_t * rambankdataend() const { return wramdata_[0]; }
-	const uint8_t * rdisabledRam() const { return rdisabledRamw(); }
-	const uint8_t * rsrambankptr() const { return rsrambankptr_; }
-	uint8_t * wsrambankptr() const { return wsrambankptr_; }
-	uint8_t * vrambankptr() const { return vrambankptr_; }
+	const unsigned char * rmem(unsigned area) const { return rmem_[area]; }
+	unsigned char * wmem(unsigned area) const { return wmem_[area]; }
+	unsigned char * vramdata() const { return rambankdata_ - 0x4000; }
+	unsigned char * vramdataend() const { return rambankdata_; }
+	unsigned char * romdata() const { return memchunk_ + 0x4000; }
+	unsigned char * romdata(unsigned area) const { return romdata_[area]; }
+	unsigned char * romdataend() const { return rambankdata_ - 0x4000; }
+	unsigned char * wramdata(unsigned area) const { return wramdata_[area]; }
+	unsigned char * wramdataend() const { return wramdataend_; }
+	unsigned char * rambankdata() const { return rambankdata_; }
+	unsigned char * rambankdataend() const { return wramdata_[0]; }
+	const unsigned char * rdisabledRam() const { return rdisabledRamw(); }
+	const unsigned char * rsrambankptr() const { return rsrambankptr_; }
+	unsigned char * wsrambankptr() const { return wsrambankptr_; }
+	unsigned char * vrambankptr() const { return vrambankptr_; }
 	OamDmaSrc oamDmaSrc() const { return oamDmaSrc_; }
-	uint32_t curRomBank() const { return curRomBank_; }
+	unsigned curRomBank() const { return curRomBank_; }
 
-	void setRombank0(uint32_t bank);
-	void setRombank(uint32_t bank);
-	void setRambank(uint32_t ramFlags, uint32_t rambank);
-	void setVrambank(uint32_t bank) { vrambankptr_ = vramdata() + bank * 0x2000ul - 0x8000; }
-	void setWrambank(uint32_t bank);
+	void setRombank0(unsigned bank);
+	void setRombank(unsigned bank);
+	void setRambank(unsigned ramFlags, unsigned rambank);
+	void setVrambank(unsigned bank) { vrambankptr_ = vramdata() + bank * 0x2000ul - 0x8000; }
+	void setWrambank(unsigned bank);
 	void setOamDmaSrc(OamDmaSrc oamDmaSrc);
 
 	inline bool isInterrupt(uint32_t romAddress) { return interruptmemchunk_[romAddress]; }

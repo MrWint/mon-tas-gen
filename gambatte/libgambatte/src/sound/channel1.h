@@ -19,10 +19,12 @@
 #ifndef SOUND_CHANNEL1_H
 #define SOUND_CHANNEL1_H
 
+#include "gbint.h"
 #include "master_disabler.h"
 #include "length_counter.h"
 #include "duty_unit.h"
 #include "envelope_unit.h"
+#include "static_output_tester.h"
 #include "newstate.h"
 
 namespace gambatte {
@@ -33,24 +35,27 @@ class Channel1 {
 	class SweepUnit : public SoundUnit {
 		MasterDisabler &disableMaster;
 		DutyUnit &dutyUnit;
-		uint16_t shadow;
-		uint8_t nr0;
+		unsigned short shadow;
+		unsigned char nr0;
 		bool negging;
 		
-		uint32_t calcFreq();
+		unsigned calcFreq();
 		
 	public:
 		SweepUnit(MasterDisabler &disabler, DutyUnit &dutyUnit);
 		void event();
-		void nr0Change(uint32_t newNr0);
-		void nr4Init(uint32_t cycleCounter);
+		void nr0Change(unsigned newNr0);
+		void nr4Init(unsigned long cycleCounter);
 		void reset();
 		void loadState(const SaveState &state);
 
 		template<bool isReader>void SyncState(NewState *ns);
 	};
 	
-	MasterDisabler disableMaster;
+	friend class StaticOutputTester<Channel1,DutyUnit>;
+	
+	StaticOutputTester<Channel1,DutyUnit> staticOutputTest;
+	DutyMasterDisabler disableMaster;
 	LengthCounter lengthCounter;
 	DutyUnit dutyUnit;
 	EnvelopeUnit envelopeUnit;
@@ -58,26 +63,30 @@ class Channel1 {
 	
 	SoundUnit *nextEventUnit;
 	
-	uint32_t cycleCounter;
+	unsigned long cycleCounter;
+	unsigned long soMask;
+	unsigned long prevOut;
 	
-	uint8_t nr4;
+	unsigned char nr4;
 	bool master;
 	
 	void setEvent();
 	
 public:
 	Channel1();
-	void setNr0(uint32_t data);
-	void setNr1(uint32_t data);
-	void setNr2(uint32_t data);
-	void setNr3(uint32_t data);
-	void setNr4(uint32_t data);
+	void setNr0(unsigned data);
+	void setNr1(unsigned data);
+	void setNr2(unsigned data);
+	void setNr3(unsigned data);
+	void setNr4(unsigned data);
 	
+	void setSo(unsigned long soMask);
 	bool isActive() const { return master; }
 	
-	void update(uint32_t cycles);
+	void update(unsigned long soBaseVol, unsigned long cycles);
 	
 	void reset();
+	void init(bool cgb);
 	void loadState(const SaveState &state);
 
 	template<bool isReader>void SyncState(NewState *ns);

@@ -16,40 +16,29 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef ENVELOPE_UNIT_H
-#define ENVELOPE_UNIT_H
+#ifndef STATIC_OUTPUT_TESTER_H
+#define STATIC_OUTPUT_TESTER_H
 
-#include "sound_unit.h"
-#include "../savestate.h"
-#include "newstate.h"
+#include "envelope_unit.h"
 
 namespace gambatte {
 
-class EnvelopeUnit : public SoundUnit {
+template<class Channel, class Unit>
+class StaticOutputTester : public EnvelopeUnit::VolOnOffEvent {
+	const Channel &ch;
+	Unit &unit;
 public:
-	struct VolOnOffEvent {
-		virtual ~VolOnOffEvent() {}
-		virtual void operator()(unsigned long /*cc*/) {}
-	};
-	
-private:
-	static VolOnOffEvent nullEvent;
-	VolOnOffEvent &volOnOffEvent;
-	unsigned char nr2;
-	unsigned char volume;
-	
-public:
-	explicit EnvelopeUnit(VolOnOffEvent &volOnOffEvent = nullEvent);
-	void event();
-	bool dacIsOn() const { return nr2 & 0xF8; }
-	unsigned getVolume() const { return volume; }
-	bool nr2Change(unsigned newNr2);
-	bool nr4Init(unsigned long cycleCounter);
-	void reset();
-	void loadState(const SaveState::SPU::Env &estate, unsigned nr2, unsigned long cc);
-
-	template<bool isReader>void SyncState(NewState *ns);
+	StaticOutputTester(const Channel &ch, Unit &unit) : ch(ch), unit(unit) {}
+	void operator()(unsigned long cc);
 };
+
+template<class Channel, class Unit>
+void StaticOutputTester<Channel, Unit>::operator()(const unsigned long cc) {
+	if (ch.soMask && ch.master && ch.envelopeUnit.getVolume())
+		unit.reviveCounter(cc);
+	else
+		unit.killCounter();
+}
 
 }
 

@@ -54,24 +54,27 @@ pub struct Registers {
 }
 
 extern {
-  fn gambatte_create(biosdata: *const u8, romfiledata: *const u8, romfilelength: usize) -> *mut c_void;
+  fn gambatte_create() -> *mut c_void;
+  fn gambatte_loadgbcbios(gb: *mut c_void, biosdata: *const u8);
+  fn gambatte_load(gb: *mut c_void, romfiledata: *const u8, romfilelength: usize, now: i64, flags: u32, div: u32);
+  fn gambatte_setlayers(gb: *mut c_void, layers: u32);
   fn gambatte_destroy(gb: *mut c_void);
 
-  fn gambatte_setvideobuffer(gb: *mut c_void, videobuf: *mut u32, pitch: usize);
+  fn gambatte_setvideobuffer(gb: *mut c_void, videobuf: *mut u32, pitch: i32);
 
-  fn gambatte_setinputgetter(gb: *mut c_void, cb: extern fn(*mut c_void) -> u8, target: *mut c_void);
+  fn gambatte_setinputgetter(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
   fn gambatte_setrtccallback(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
 
   fn gambatte_runfor(gb: *mut c_void, samples: *mut u32) -> i32;
-  fn gambatte_reset(gb: *mut c_void, now: u32);
+  fn gambatte_reset(gb: *mut c_void, now: i64, div: u32);
 
-  fn gambatte_setinterruptaddresses(gb: *mut c_void, interruptAddresses: *const i32, numInterruptAddresses: usize);
+  fn gambatte_setinterruptaddresses(gb: *mut c_void, interruptAddresses: *const i32, numInterruptAddresses: i32);
   fn gambatte_clearinterruptaddresses(gb: *mut c_void);
   fn gambatte_gethitinterruptaddress(gb: *mut c_void) -> i32;
 
-  fn gambatte_newstatelen(gb: *mut c_void) -> usize;
-  fn gambatte_newstatesave(gb: *mut c_void, data: *mut u8, len: usize) -> usize;
-  fn gambatte_newstateload(gb: *mut c_void, data: *const u8, len: usize) -> usize;
+  fn gambatte_newstatelen(gb: *mut c_void) -> i32;
+  fn gambatte_newstatesave(gb: *mut c_void, data: *mut u8, len: i32) -> i32;
+  fn gambatte_newstateload(gb: *mut c_void, data: *const u8, len: i32) -> i32;
 
   fn gambatte_cpuread(gb: *mut c_void, address: u16) -> u8;
   fn gambatte_cpuwrite(gb: *mut c_void, address: u16, value: u8);
@@ -82,8 +85,8 @@ extern {
 pub struct InputGetter {
   input: Input,
 }
-extern fn input_getter_fn(context: *mut c_void) -> u8 {
-  unsafe { (*(context as *mut InputGetter)).input.bits() }
+extern fn input_getter_fn(context: *mut c_void) -> u32 {
+  unsafe { u32::from((*(context as *mut InputGetter)).input.bits()) }
 }
 pub type FrameCounter = u32;
 
@@ -133,7 +136,10 @@ impl Gambatte {
     let bios_data = load_file(bios_file_name);
     let rom_data = load_file(rom_file_name);
     unsafe {
-      let gb = gambatte_create(bios_data.as_ptr(), rom_data.as_ptr(), rom_data.len());
+      let gb = gambatte_create();
+      gambatte_loadgbcbios(gb, bios_data.as_ptr());
+      gambatte_load(gb, rom_data.as_ptr(), rom_data.len(), 0 /*now*/, 2 /*GBA_CGB*/, 0 /*div*/);
+      gambatte_setlayers(gb, 7);
 
       let input_getter = Box::new(InputGetter { input: inputs::NIL });
       let input_getter_ptr = Box::into_raw(input_getter);
@@ -146,7 +152,7 @@ impl Gambatte {
       let frame = Box::from_raw(frame_ptr);
 
       if let Some((videobuf, pitch)) = screen_update_callback.get_screen_buffer_pointer_and_pitch() {
-        gambatte_setvideobuffer(gb, videobuf, pitch);
+        gambatte_setvideobuffer(gb, videobuf, pitch as i32);
       }
 
       Gambatte {
@@ -206,14 +212,14 @@ impl Gambatte {
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing), or until the execution reaches one of the given addresses.
   pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
-    unsafe { gambatte_setinterruptaddresses(self.gb, addresses.as_ptr(), addresses.len()); }
+    unsafe { gambatte_setinterruptaddresses(self.gb, addresses.as_ptr(), addresses.len() as i32); }
     let hit_address = self.step_internal();
     unsafe { gambatte_clearinterruptaddresses(self.gb); }
     hit_address
   }
   /// Runs the emulation until the execution reaches one of the given addresses.
   pub fn run_until(&mut self, addresses: &[i32]) -> i32 {
-    unsafe { gambatte_setinterruptaddresses(self.gb, addresses.as_ptr(), addresses.len()); }
+    unsafe { gambatte_setinterruptaddresses(self.gb, addresses.as_ptr(), addresses.len() as i32); }
     loop {
       let hit_address = self.step_internal();
       if hit_address != 0 {
@@ -229,15 +235,15 @@ impl Gambatte {
     if !self.is_on_frame_boundaries { // forward to next frame boundary
       self.step();
     }
-    unsafe { gambatte_reset(self.gb, (u64::from(*self.frame + 1) * 4389 / 262_144) as u32); } // temporarily add a frame since BizHawk increases the frame before checking for resets, so current time is accurate.
+    unsafe { gambatte_reset(self.gb, i64::from(*self.frame + 1) * 4389 / 262_144, 0 /*div*/); } // temporarily add a frame since BizHawk increases the frame before checking for resets, so current time is accurate.
     self.set_input(inputs::NIL);
     self.step(); // BizHawk completes a frame on the reset input
   }
 
   /// Restores a stored internal Gambatte state from the given byte data.
   pub fn load_state(&mut self, s: &SaveState) {
-    let actual_len = unsafe { gambatte_newstateload(self.gb, s.gambatte_state.as_ptr(), s.gambatte_state.len()) };
-    assert!(actual_len == s.gambatte_state.len(), "expected length {} not equal actual length {}", s.gambatte_state.len(), actual_len);
+    let success = unsafe { gambatte_newstateload(self.gb, s.gambatte_state.as_ptr(), s.gambatte_state.len() as i32) };
+    assert!(success == 1);
 
     self.input_getter.input = s.input;
     *self.frame = s.frame;
@@ -248,15 +254,15 @@ impl Gambatte {
 
   /// Stores the current internal Gambatte state to byte data.
   pub fn save_state(&self) -> SaveState {
-    let save_state_size = unsafe { gambatte_newstatelen(self.gb) };
+    let save_state_size = unsafe { gambatte_newstatelen(self.gb) } as usize;
     let mut gambatte_state = unsafe { // Avoid calling memset, Vec will be initialized with garbage.
       let mut data = Vec::with_capacity(save_state_size);
       let resized_data = Vec::from_raw_parts(data.as_mut_ptr(), save_state_size, save_state_size);
       ::std::mem::forget(data);
       resized_data
     };
-    let actual_len = unsafe { gambatte_newstatesave(self.gb, gambatte_state.as_mut_ptr(), save_state_size) };
-    assert!(actual_len == save_state_size);
+    let success = unsafe { gambatte_newstatesave(self.gb, gambatte_state.as_mut_ptr(), save_state_size as i32) };
+    assert!(success == 1);
 
     SaveState {
       gambatte_state,

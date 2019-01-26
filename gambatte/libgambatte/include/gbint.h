@@ -16,41 +16,50 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef ENVELOPE_UNIT_H
-#define ENVELOPE_UNIT_H
+#ifndef GAMBATTE_INT_H
+#define GAMBATTE_INT_H
 
-#include "sound_unit.h"
-#include "../savestate.h"
-#include "newstate.h"
+// note that this is a hack to overcome the fact that libgambatte's original defines are not propagated.
+#define HAVE_CSTDINT
+
+#ifdef HAVE_CSTDINT
+
+#include <cstdint>
 
 namespace gambatte {
-
-class EnvelopeUnit : public SoundUnit {
-public:
-	struct VolOnOffEvent {
-		virtual ~VolOnOffEvent() {}
-		virtual void operator()(unsigned long /*cc*/) {}
-	};
-	
-private:
-	static VolOnOffEvent nullEvent;
-	VolOnOffEvent &volOnOffEvent;
-	unsigned char nr2;
-	unsigned char volume;
-	
-public:
-	explicit EnvelopeUnit(VolOnOffEvent &volOnOffEvent = nullEvent);
-	void event();
-	bool dacIsOn() const { return nr2 & 0xF8; }
-	unsigned getVolume() const { return volume; }
-	bool nr2Change(unsigned newNr2);
-	bool nr4Init(unsigned long cycleCounter);
-	void reset();
-	void loadState(const SaveState::SPU::Env &estate, unsigned nr2, unsigned long cc);
-
-	template<bool isReader>void SyncState(NewState *ns);
-};
-
+using std::uint_least32_t;
+using std::uint_least16_t;
 }
+
+#elif defined(HAVE_STDINT_H)
+
+#include <stdint.h>
+
+namespace gambatte {
+using ::uint_least32_t;
+using ::uint_least16_t;
+}
+
+#else
+
+namespace gambatte {
+#ifdef CHAR_LEAST_32
+typedef unsigned char uint_least32_t;
+#elif defined(SHORT_LEAST_32)
+typedef unsigned short uint_least32_t;
+#elif defined(INT_LEAST_32)
+typedef unsigned uint_least32_t;
+#else
+typedef unsigned long uint_least32_t;
+#endif
+
+#ifdef CHAR_LEAST_16
+typedef unsigned char uint_least16_t;
+#else
+typedef unsigned short uint_least16_t;
+#endif
+}
+
+#endif
 
 #endif

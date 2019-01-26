@@ -17,145 +17,205 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 #include "gambatte.h"
+#include "cpu.h"
 #include "savestate.h"
 #include "initstate.h"
 #include <sstream>
 #include <cstring>
 
 namespace gambatte {
-	
-GB::GB() : loadflags(0) {}
+struct GB::Priv {
+	CPU cpu;
+	unsigned loadflags;
+	unsigned layersMask;
 
-int32_t GB::runFor(uint32_t &samples) {
-	if (!cpu.loaded()) {
+	Priv() : loadflags(0), layersMask(LAYER_MASK_BG | LAYER_MASK_OBJ)
+	{
+	}
+
+	~Priv()
+	{
+	}
+};
+	
+GB::GB() : p_(new Priv) {}
+
+GB::~GB() {
+	//if (p_->cpu.loaded())
+	//	p_->cpu.saveSavedata();
+	
+	delete p_;
+}
+
+long GB::runFor(unsigned &samples) {
+	if (!p_->cpu.loaded()) {
 		samples = 0;
 		return -1;
 	}
 	
-	cpu.setSoundBuffer();
-	const int32_t cyclesSinceBlit = cpu.runFor(samples * 2);
-	samples = cpu.fillSoundBuffer();
+	p_->cpu.setSoundBuffer();
+	const long cyclesSinceBlit = p_->cpu.runFor(samples * 2);
+	samples = p_->cpu.fillSoundBuffer();
 	
-	return cyclesSinceBlit < 0 ? cyclesSinceBlit : static_cast<int32_t>(samples) - (cyclesSinceBlit >> 1);
+	return cyclesSinceBlit < 0 ? cyclesSinceBlit : static_cast<long>(samples) - (cyclesSinceBlit >> 1);
 }
 
-void GB::setVideoBuffer(uint32_t *const videoBuf, const size_t pitch) {
-	cpu.setVideoBuffer(videoBuf, pitch);
-}
-
-void GB::setLayers(uint8_t mask)
+void GB::setLayers(unsigned mask)
 {
-	cpu.setLayers(mask);
+	p_->cpu.setLayers(mask);
 }
 
-void GB::reset(const uint32_t now, const uint32_t div) {
-	if (cpu.loaded()) {
+void GB::setVideoBuffer(uint_least32_t *const videoBuf, const int pitch) {
+	p_->cpu.setVideoBuffer(videoBuf, pitch);
+}
+
+void GB::reset(const std::uint32_t now, const unsigned div) {
+	if (p_->cpu.loaded()) {
 		
-		size_t length = cpu.saveSavedataLength();
-		uint8_t *s;
+		int length = p_->cpu.saveSavedataLength();
+		char *s;
 		if (length > 0)
 		{
-			s = (uint8_t *) std::malloc(length);
-			cpu.saveSavedata(s);
+			s = (char *) std::malloc(length);
+			p_->cpu.saveSavedata(s);
 		}
 		
 		SaveState state;
-		cpu.setStatePtrs(state);
-		setInitState(state, !(loadflags & FORCE_DMG), loadflags & GBA_CGB, now, div);
-		cpu.loadState(state);
+		p_->cpu.setStatePtrs(state);
+		setInitState(state, !(p_->loadflags & FORCE_DMG), p_->loadflags & GBA_CGB, now, div);
+		p_->cpu.loadState(state);
 		if (length > 0)
 		{
-			cpu.loadSavedata(s);
+			p_->cpu.loadSavedata(s);
 			std::free(s);
 		}
 	}
 }
 
-void GB::setInputGetter(uint8_t (*getInput)(void *), void* context) {
-	cpu.setInputGetter(getInput, context);
+void GB::setInputGetter(unsigned (*getInput)(void *), void* context) {
+	p_->cpu.setInputGetter(getInput, context);
 }
 
-void GB::setRTCCallback(uint32_t (*callback)(void*), void* context) {
-	cpu.setRTCCallback(callback, context);
+void GB::setRTCCallback(std::uint32_t (*callback)(void*), void* context) {
+	p_->cpu.setRTCCallback(callback, context);
 }
 
-int32_t GB::load(const uint8_t *romfiledata, size_t romfilelength, const uint32_t now, const uint8_t flags, const uint32_t div) {
-	const int32_t failed = cpu.load(romfiledata, romfilelength, flags & FORCE_DMG, flags & MULTICART_COMPAT);
+int GB::load(const char *romfiledata, unsigned romfilelength, const std::uint32_t now, const unsigned flags, const unsigned div) {
+	//if (p_->cpu.loaded())
+	//	p_->cpu.saveSavedata();
+	
+	const int failed = p_->cpu.load(romfiledata, romfilelength, flags & FORCE_DMG, flags & MULTICART_COMPAT);
 	
 	if (!failed) {
 		SaveState state;
-		cpu.setStatePtrs(state);
-		loadflags = flags;
+		p_->cpu.setStatePtrs(state);
+		p_->loadflags = flags;
 		setInitState(state, !(flags & FORCE_DMG), flags & GBA_CGB, now, div);
-		cpu.loadState(state);
+		p_->cpu.loadState(state);
+		//p_->cpu.loadSavedata();
 	}
 	
 	return failed;
 }
 
-void GB::loadGBCBios(const uint8_t* biosfiledata) {
-	memcpy(cpu.cgbBiosBuffer(), biosfiledata, 0x900);
+int GB::loadGBCBios(const char* biosfiledata) {
+	memcpy(p_->cpu.cgbBiosBuffer(), biosfiledata, 0x900);
+	return 0;
 }
 
-void GB::loadDMGBios(const uint8_t* biosfiledata) {
-	memcpy(cpu.dmgBiosBuffer(), biosfiledata, 0x100);
+int GB::loadDMGBios(const char* biosfiledata) {
+	memcpy(p_->cpu.dmgBiosBuffer(), biosfiledata, 0x100);
+	return 0;
 }
 
-void GB::saveSavedata(uint8_t *dest) {
-	if (cpu.loaded())
-		cpu.saveSavedata(dest);
+bool GB::isCgb() const {
+	return p_->cpu.isCgb();
 }
-void GB::loadSavedata(const uint8_t *data) {
-	if (cpu.loaded())
-		cpu.loadSavedata(data);
+
+bool GB::isLoaded() const {
+	return p_->cpu.loaded();
 }
-size_t GB::saveSavedataLength() {
-	if (cpu.loaded())
-		return cpu.saveSavedataLength();
+
+void GB::saveSavedata(char *dest) {
+	if (p_->cpu.loaded())
+		p_->cpu.saveSavedata(dest);
+}
+void GB::loadSavedata(const char *data) {
+	if (p_->cpu.loaded())
+		p_->cpu.loadSavedata(data);
+}
+int GB::saveSavedataLength() {
+	if (p_->cpu.loaded())
+		return p_->cpu.saveSavedataLength();
 	else
-		return 0;
+		return -1;
 }
 
-bool GB::getMemoryArea(int32_t which, uint8_t **data, int32_t *length) {
-	if (cpu.loaded())
-		return cpu.getMemoryArea(which, data, length);
+bool GB::getMemoryArea(int which, unsigned char **data, int *length) {
+	if (p_->cpu.loaded())
+		return p_->cpu.getMemoryArea(which, data, length);
 	else
 		return false;
 }
 
-uint8_t GB::ExternalRead(uint16_t addr) {
-	if (cpu.loaded())
-		return cpu.ExternalRead(addr);
+unsigned char GB::ExternalRead(unsigned short addr) {
+	if (p_->cpu.loaded())
+		return p_->cpu.ExternalRead(addr);
 	else
 		return 0;
 }
 
-void GB::ExternalWrite(uint16_t addr, uint8_t val) {
-	if (cpu.loaded())
-		cpu.ExternalWrite(addr, val);
+void GB::ExternalWrite(unsigned short addr, unsigned char val) {
+	if (p_->cpu.loaded())
+		p_->cpu.ExternalWrite(addr, val);
 }
 
-void GB::GetRegs(uint32_t *dest) {
-	cpu.GetRegs(dest);
+
+void GB::setDmgPaletteColor(unsigned palNum, unsigned colorNum, unsigned rgb32) {
+	p_->cpu.setDmgPaletteColor(palNum, colorNum, rgb32);
 }
 
-void GB::SetInterruptAddresses(int32_t *addrs, size_t numAddrs)
+void GB::setCgbPalette(unsigned *lut) {
+	p_->cpu.setCgbPalette(lut);
+}
+
+const std::string GB::romTitle() const {
+	if (p_->cpu.loaded()) {
+		char title[0x11];
+		std::memcpy(title, p_->cpu.romTitle(), 0x10);
+		title[(title[0xF] & 0x80) ? 0xF : 0x10] = '\0';
+		return std::string(title);
+	}
+	
+	return std::string();
+}
+
+int GB::LinkStatus(int which) {
+	return p_->cpu.LinkStatus(which);
+}
+
+void GB::GetRegs(int *dest) {
+	p_->cpu.GetRegs(dest);
+}
+
+void GB::SetInterruptAddresses(int *addrs, int numAddrs)
 {
-	cpu.SetInterruptAddresses(addrs, numAddrs);
+	p_->cpu.SetInterruptAddresses(addrs, numAddrs);
 }
 
-int32_t GB::GetHitInterruptAddress()
+int GB::GetHitInterruptAddress()
 {
-	return cpu.GetHitInterruptAddress();
+	return p_->cpu.GetHitInterruptAddress();
 }
 
 uint16_t GB::getDivState() {
-	return cpu.getDivState();
+	return p_->cpu.getDivState();
 }
 
 SYNCFUNC(GB)
 {
-	SSS(cpu);
+	SSS(p_->cpu);
+	NSS(p_->loadflags);
 }
 
 }

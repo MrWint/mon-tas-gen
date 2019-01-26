@@ -25,11 +25,11 @@
 namespace gambatte {
 
 class Interrupter {
-	uint16_t &SP;
-	uint16_t &PC;
+	unsigned short &SP;
+	unsigned short &PC;
 public:
-	Interrupter(uint16_t &SP, uint16_t &PC);
-	uint32_t interrupt(const uint32_t address, uint32_t cycleCounter, class Memory &memory);
+	Interrupter(unsigned short &SP, unsigned short &PC);
+	unsigned long interrupt(const unsigned address, unsigned long cycleCounter, class Memory &memory);
 };
 
 }

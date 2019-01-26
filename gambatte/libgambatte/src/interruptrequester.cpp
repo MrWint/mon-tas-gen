@@ -29,17 +29,17 @@ void InterruptRequester::loadState(const SaveState &state) {
 	iereg_ = state.mem.ioamhram.get()[0x1FF] & 0x1F;
 	intFlags.set(state.mem.IME, state.mem.halted);
 	
-	eventTimes.setValue<INTERRUPTS>(intFlags.imeOrHalted() && pendingIrqs() ? minIntTime : static_cast<uint32_t>(DISABLED_TIME));
+	eventTimes.setValue<INTERRUPTS>(intFlags.imeOrHalted() && pendingIrqs() ? minIntTime : static_cast<unsigned long>(DISABLED_TIME));
 }
 
-void InterruptRequester::resetCc(const uint32_t oldCc, const uint32_t newCc) {
+void InterruptRequester::resetCc(const unsigned long oldCc, const unsigned long newCc) {
 	minIntTime = minIntTime < oldCc ? 0 : minIntTime - (oldCc - newCc);
 	
 	if (eventTimes.value(INTERRUPTS) != DISABLED_TIME)
 		eventTimes.setValue<INTERRUPTS>(minIntTime);
 }
 
-void InterruptRequester::ei(const uint32_t cc) {
+void InterruptRequester::ei(const unsigned long cc) {
 	intFlags.setIme();
 	minIntTime = cc + 1;
 	
@@ -68,30 +68,30 @@ void InterruptRequester::unhalt() {
 		eventTimes.setValue<INTERRUPTS>(DISABLED_TIME);
 }
 
-void InterruptRequester::flagIrq(const uint32_t bit) {
+void InterruptRequester::flagIrq(const unsigned bit) {
 	ifreg_ |= bit;
 	
 	if (intFlags.imeOrHalted() && pendingIrqs())
 		eventTimes.setValue<INTERRUPTS>(minIntTime);
 }
 
-void InterruptRequester::ackIrq(const uint32_t bit) {
+void InterruptRequester::ackIrq(const unsigned bit) {
 	ifreg_ ^= bit;
 	di();
 }
 
-void InterruptRequester::setIereg(const uint8_t iereg) {
+void InterruptRequester::setIereg(const unsigned iereg) {
 	iereg_ = iereg & 0x1F;
 	
 	if (intFlags.imeOrHalted())
-		eventTimes.setValue<INTERRUPTS>(pendingIrqs() ? minIntTime : static_cast<uint32_t>(DISABLED_TIME));
+		eventTimes.setValue<INTERRUPTS>(pendingIrqs() ? minIntTime : static_cast<unsigned long>(DISABLED_TIME));
 }
 
-void InterruptRequester::setIfreg(const uint8_t ifreg) {
+void InterruptRequester::setIfreg(const unsigned ifreg) {
 	ifreg_ = ifreg;
 	
 	if (intFlags.imeOrHalted())
-		eventTimes.setValue<INTERRUPTS>(pendingIrqs() ? minIntTime : static_cast<uint32_t>(DISABLED_TIME));
+		eventTimes.setValue<INTERRUPTS>(pendingIrqs() ? minIntTime : static_cast<unsigned long>(DISABLED_TIME));
 }
 
 SYNCFUNC(InterruptRequester)

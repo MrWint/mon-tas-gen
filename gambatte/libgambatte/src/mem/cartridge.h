@@ -29,13 +29,26 @@
 
 namespace gambatte {
 
+	//DOOM
+//enum eAddressMappingType
+//{
+//	eAddressMappingType_ROM,
+//	eAddressMappingType_RAM
+//};
+//
+//struct AddressMapping
+//{
+//	int32_t address;
+//	eAddressMappingType type;
+//};
+
 class Mbc {
 public:
 	virtual ~Mbc() {}
-	virtual void romWrite(uint32_t P, uint32_t data) = 0;
+	virtual void romWrite(unsigned P, unsigned data) = 0;
 	virtual void loadState(const SaveState::Mem &ss) = 0;
-	virtual bool isAddressWithinAreaRombankCanBeMappedTo(uint32_t address, uint32_t rombank) const = 0;
-	//virtual void mapAddress(AddressMapping* mapping, uint32_t address) const = 0; //DOOM
+	virtual bool isAddressWithinAreaRombankCanBeMappedTo(unsigned address, unsigned rombank) const = 0;
+	//virtual void mapAddress(AddressMapping* mapping, unsigned address) const = 0; //DOOM
 
 	template<bool isReader>void SyncState(NewState *ns)
 	{
@@ -56,38 +69,39 @@ public:
 	
 	bool loaded() const { return mbc.get(); }
 	
-	const uint8_t * rmem(uint32_t area) const { return memptrs.rmem(area); }
-	uint8_t * wmem(uint32_t area) const { return memptrs.wmem(area); }
-	uint8_t * vramdata() const { return memptrs.vramdata(); }
-	uint8_t * romdata(uint32_t area) const { return memptrs.romdata(area); }
-	uint8_t * wramdata(uint32_t area) const { return memptrs.wramdata(area); }
-	const uint8_t * rdisabledRam() const { return memptrs.rdisabledRam(); }
-	const uint8_t * rsrambankptr() const { return memptrs.rsrambankptr(); }
-	uint8_t * wsrambankptr() const { return memptrs.wsrambankptr(); }
-	uint8_t * vrambankptr() const { return memptrs.vrambankptr(); }
+	const unsigned char * rmem(unsigned area) const { return memptrs.rmem(area); }
+	unsigned char * wmem(unsigned area) const { return memptrs.wmem(area); }
+	unsigned char * vramdata() const { return memptrs.vramdata(); }
+	unsigned char * romdata(unsigned area) const { return memptrs.romdata(area); }
+	unsigned char * wramdata(unsigned area) const { return memptrs.wramdata(area); }
+	const unsigned char * rdisabledRam() const { return memptrs.rdisabledRam(); }
+	const unsigned char * rsrambankptr() const { return memptrs.rsrambankptr(); }
+	unsigned char * wsrambankptr() const { return memptrs.wsrambankptr(); }
+	unsigned char * vrambankptr() const { return memptrs.vrambankptr(); }
 	OamDmaSrc oamDmaSrc() const { return memptrs.oamDmaSrc(); }
-	uint32_t curRomBank() const { return memptrs.curRomBank(); }
+	unsigned curRomBank() const { return memptrs.curRomBank(); }
 
-	void setVrambank(uint32_t bank) { memptrs.setVrambank(bank); }
-	void setWrambank(uint32_t bank) { memptrs.setWrambank(bank); }
+	void setVrambank(unsigned bank) { memptrs.setVrambank(bank); }
+	void setWrambank(unsigned bank) { memptrs.setWrambank(bank); }
 	void setOamDmaSrc(OamDmaSrc oamDmaSrc) { memptrs.setOamDmaSrc(oamDmaSrc); }
 	
-	void mbcWrite(uint32_t addr, uint32_t data) { mbc->romWrite(addr, data); }
+	void mbcWrite(unsigned addr, unsigned data) { mbc->romWrite(addr, data); }
 
 	bool isCgb() const { return gambatte::isCgb(memptrs); }
 	
-	void rtcWrite(uint8_t data) { rtc.write(data); }
-	uint8_t rtcRead() const { return *rtc.getActive(); }
+	void rtcWrite(unsigned data) { rtc.write(data); }
+	unsigned char rtcRead() const { return *rtc.getActive(); }
 	
-	void loadSavedata(const uint8_t *data);
-	size_t saveSavedataLength();
-	void saveSavedata(uint8_t *dest);
+	void loadSavedata(const char *data);
+	int saveSavedataLength();
+	void saveSavedata(char *dest);
 
-	bool getMemoryArea(int32_t which, uint8_t **data, int32_t *length) const;
+	bool getMemoryArea(int which, unsigned char **data, int *length) const;
 
-	int32_t loadROM(const uint8_t *romfiledata, size_t romfilelength, bool forceDmg, bool multicartCompat);
+	int loadROM(const char *romfiledata, unsigned romfilelength, bool forceDmg, bool multicartCompat);
+	const char * romTitle() const { return reinterpret_cast<const char *>(memptrs.romdata() + 0x134); }
 
-	void setRTCCallback(uint32_t (*callback)(void*), void* context) {
+	void setRTCCallback(std::uint32_t (*callback)(void*), void* context) {
 		rtc.setRTCCallback(callback, context);
 	}
 

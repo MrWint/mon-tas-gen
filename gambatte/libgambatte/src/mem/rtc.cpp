@@ -40,7 +40,7 @@ Rtc::Rtc()
 }
 
 void Rtc::doLatch() {
-	uint32_t tmp = ((dataDh & 0x40) ? haltTime : timeCB(timeCBcontext)) - baseTime;
+	std::uint32_t tmp = ((dataDh & 0x40) ? haltTime : timeCB(timeCBcontext)) - baseTime;
 	
 	while (tmp > 0x1FF * 86400) {
 		baseTime += 0x1FF * 86400;
@@ -103,9 +103,9 @@ void Rtc::loadState(const SaveState &state) {
 	doSwapActive();
 }
 
-void Rtc::setDh(const uint8_t new_dh) {
-	const uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
-	const uint32_t old_highdays = ((unixtime - baseTime) / 86400) & 0x100;
+void Rtc::setDh(const unsigned new_dh) {
+	const std::uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
+	const std::uint32_t old_highdays = ((unixtime - baseTime) / 86400) & 0x100;
 	baseTime += old_highdays * 86400;
 	baseTime -= ((new_dh & 0x1) << 8) * 86400;
 	
@@ -117,29 +117,29 @@ void Rtc::setDh(const uint8_t new_dh) {
 	}
 }
 
-void Rtc::setDl(const uint8_t new_lowdays) {
-	const uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
-	const uint32_t old_lowdays = ((unixtime - baseTime) / 86400) & 0xFF;
+void Rtc::setDl(const unsigned new_lowdays) {
+	const std::uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
+	const std::uint32_t old_lowdays = ((unixtime - baseTime) / 86400) & 0xFF;
 	baseTime += old_lowdays * 86400;
 	baseTime -= new_lowdays * 86400;
 }
 
-void Rtc::setH(const uint8_t new_hours) {
-	const uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
-	const uint32_t old_hours = ((unixtime - baseTime) / 3600) % 24;
+void Rtc::setH(const unsigned new_hours) {
+	const std::uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
+	const std::uint32_t old_hours = ((unixtime - baseTime) / 3600) % 24;
 	baseTime += old_hours * 3600;
 	baseTime -= new_hours * 3600;
 }
 
-void Rtc::setM(const uint8_t new_minutes) {
-	const uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
-	const uint32_t old_minutes = ((unixtime - baseTime) / 60) % 60;
+void Rtc::setM(const unsigned new_minutes) {
+	const std::uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
+	const std::uint32_t old_minutes = ((unixtime - baseTime) / 60) % 60;
 	baseTime += old_minutes * 60;
 	baseTime -= new_minutes * 60;
 }
 
-void Rtc::setS(const uint8_t new_seconds) {
-	const uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
+void Rtc::setS(const unsigned new_seconds) {
+	const std::uint32_t unixtime = (dataDh & 0x40) ? haltTime : timeCB(timeCBcontext);
 	baseTime += (unixtime - baseTime) % 60;
 	baseTime -= new_seconds;
 }

@@ -27,72 +27,87 @@ namespace gambatte {
 class CPU {
 	Memory memory;
 	
-	uint32_t cycleCounter_;
+	unsigned long cycleCounter_;
 
-	uint16_t PC;
-	uint16_t SP;
+	unsigned short PC;
+	unsigned short SP;
 	
-	uint32_t HF1, HF2, ZF, CF;
+	unsigned HF1, HF2, ZF, CF;
 
-	uint8_t A, B, C, D, E, /*F,*/ H, L;
+	unsigned char A, B, C, D, E, /*F,*/ H, L;
 
 	bool skip;
 	
-	int32_t *interruptAddresses;
-	uint32_t numInterruptAddresses;
-	int32_t hitInterruptAddress;
+	int *interruptAddresses;
+	int numInterruptAddresses;
+	int hitInterruptAddress;
 
-	void process(uint32_t cycles);
+	void process(unsigned long cycles);
 
 public:
 	
 	CPU();
 // 	void halt();
 
-// 	uint32_t interrupt(uint32_t address, uint32_t cycleCounter);
+// 	unsigned interrupt(unsigned address, unsigned cycleCounter);
 	
-	int32_t runFor(uint32_t cycles);
+	long runFor(unsigned long cycles);
 	void setStatePtrs(SaveState &state);
 	void loadState(const SaveState &state);
-	void setLayers(uint8_t mask) { memory.setLayers(mask); }
+	void setLayers(unsigned mask) { memory.setLayers(mask); }
 	
-	void loadSavedata(const uint8_t *data) { memory.loadSavedata(data); }
-	size_t saveSavedataLength() {return memory.saveSavedataLength(); }
-	void saveSavedata(uint8_t *dest) { memory.saveSavedata(dest); }
+	void loadSavedata(const char *data) { memory.loadSavedata(data); }
+	int saveSavedataLength() {return memory.saveSavedataLength(); }
+	void saveSavedata(char *dest) { memory.saveSavedata(dest); }
 	
-	bool getMemoryArea(int32_t which, uint8_t **data, int32_t *length) { return memory.getMemoryArea(which, data, length); }
+	bool getMemoryArea(int which, unsigned char **data, int *length) { return memory.getMemoryArea(which, data, length); }
 
-	void setVideoBuffer(uint32_t *const videoBuf, const int32_t pitch) {
+	void setVideoBuffer(uint_least32_t *const videoBuf, const int pitch) {
 		memory.setVideoBuffer(videoBuf, pitch);
 	}
 	
-	void setInputGetter(uint8_t (*getInput)(void *), void* context) {
+	void setInputGetter(unsigned (*getInput)(void *), void* context) {
 		memory.setInputGetter(getInput, context);
 	}
 
-	void setRTCCallback(uint32_t (*callback)(void*), void* context) {
+	void setRTCCallback(std::uint32_t (*callback)(void*), void* context) {
 		memory.setRTCCallback(callback, context);
 	}
-	
-	int32_t load(const uint8_t *romfiledata, size_t romfilelength, bool forceDmg, bool multicartCompat) {
+
+	int load(const char *romfiledata, unsigned romfilelength, bool forceDmg, bool multicartCompat) {
 		return memory.loadROM(romfiledata, romfilelength, forceDmg, multicartCompat);
 	}
 	
 	bool loaded() const { return memory.loaded(); }
-
-	void setSoundBuffer() { memory.setSoundBuffer(); }
-	uint32_t fillSoundBuffer() { return memory.fillSoundBuffer(cycleCounter_); }
+	const char * romTitle() const { return memory.romTitle(); }
 	
-	uint8_t* cgbBiosBuffer() { return memory.cgbBiosBuffer(); }
-	uint8_t* dmgBiosBuffer() { return memory.dmgBiosBuffer(); }
+	void setSoundBuffer() { memory.setSoundBuffer(); }
+	unsigned fillSoundBuffer() { return memory.fillSoundBuffer(cycleCounter_); }
+	
+	bool isCgb() const { return memory.isCgb(); }
+	
+	void setDmgPaletteColor(unsigned palNum, unsigned colorNum, unsigned rgb32) {
+		memory.setDmgPaletteColor(palNum, colorNum, rgb32);
+	}
 
-	uint8_t ExternalRead(uint16_t addr) { return memory.peek(addr); }
-	void ExternalWrite(uint16_t addr, uint8_t val) { memory.write_nocb(addr, val, cycleCounter_); }
+	void setCgbPalette(unsigned *lut) {
+		memory.setCgbPalette(lut);
+	}
+	
+	unsigned char* cgbBiosBuffer() { return memory.cgbBiosBuffer(); }
+	unsigned char* dmgBiosBuffer() { return memory.dmgBiosBuffer(); }
+	bool gbIsCgb() { return memory.gbIsCgb(); }
 
-	void GetRegs(uint32_t *dest);
+	//unsigned char ExternalRead(unsigned short addr) { return memory.read(addr, cycleCounter_); }
+	unsigned char ExternalRead(unsigned short addr) { return memory.peek(addr); }
+	void ExternalWrite(unsigned short addr, unsigned char val) { memory.write_nocb(addr, val, cycleCounter_); }
 
-	void SetInterruptAddresses(int32_t *addrs, size_t numAddrs);
-	inline int32_t GetHitInterruptAddress() { return hitInterruptAddress; }
+	int LinkStatus(int which) { return memory.LinkStatus(which); }
+
+	void GetRegs(int *dest);
+
+	void SetInterruptAddresses(int *addrs, int numAddrs);
+	int GetHitInterruptAddress();
 
 	uint16_t getDivState() { return memory.getDivState(cycleCounter_); }
 

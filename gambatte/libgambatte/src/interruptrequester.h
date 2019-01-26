@@ -29,13 +29,13 @@ enum MemEventId { UNHALT, END, BLIT, SERIAL, OAM, DMA, TIMA, VIDEO, INTERRUPTS }
 
 class InterruptRequester {
 	MinKeeper<INTERRUPTS + 1> eventTimes;
-	uint32_t minIntTime;
-	uint8_t ifreg_;
-	uint8_t iereg_;
+	unsigned long minIntTime;
+	unsigned ifreg_;
+	unsigned iereg_;
 	
 	class IntFlags {
 		friend class InterruptRequester;
-		uint8_t flags_;
+		unsigned char flags_;
 		enum { IME_MASK = 1, HALTED_MASK = 2 };
 		
 	public:
@@ -59,28 +59,28 @@ public:
 	
 	void loadState(const SaveState &);
 	
-	void resetCc(uint32_t oldCc, uint32_t newCc);
+	void resetCc(unsigned long oldCc, unsigned long newCc);
 	
-	uint8_t ifreg() const { return ifreg_; }
-	uint8_t iereg() const { return iereg_; }
-	uint32_t pendingIrqs() const { return ifreg_ & iereg_; }
+	unsigned ifreg() const { return ifreg_; }
+	unsigned iereg() const { return iereg_; }
+	unsigned pendingIrqs() const { return ifreg_ & iereg_; }
 	bool ime() const { return intFlags.ime(); }
 	bool halted() const { return intFlags.halted(); }
 	
-	void ei(uint32_t cc);
+	void ei(unsigned long cc);
 	void di();
 	void halt();
 	void unhalt();
-	void flagIrq(uint32_t bit);
-	void ackIrq(uint32_t bit);
-	void setIereg(uint8_t iereg);
-	void setIfreg(uint8_t ifreg);
+	void flagIrq(unsigned bit);
+	void ackIrq(unsigned bit);
+	void setIereg(unsigned iereg);
+	void setIfreg(unsigned ifreg);
 	
 	MemEventId minEventId() const { return static_cast<MemEventId>(eventTimes.min()); }
-	uint32_t minEventTime() const { return eventTimes.minValue(); }
-	template<MemEventId id> void setEventTime(uint32_t value) { eventTimes.setValue<id>(value); }
-	void setEventTime(const MemEventId id, uint32_t value) { eventTimes.setValue(id, value); }
-	uint32_t eventTime(MemEventId id) const { return eventTimes.value(id); }
+	unsigned long minEventTime() const { return eventTimes.minValue(); }
+	template<MemEventId id> void setEventTime(unsigned long value) { eventTimes.setValue<id>(value); }
+	void setEventTime(const MemEventId id, unsigned long value) { eventTimes.setValue(id, value); }
+	unsigned long eventTime(MemEventId id) const { return eventTimes.value(id); }
 
 	template<bool isReader>void SyncState(NewState *ns);
 };

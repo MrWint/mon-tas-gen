@@ -21,12 +21,12 @@
 
 namespace gambatte {
 
-Interrupter::Interrupter(uint16_t &SP_in, uint16_t &PC_in) :
+Interrupter::Interrupter(unsigned short &SP_in, unsigned short &PC_in) :
 	SP(SP_in),
 	PC(PC_in)
 {}
 
-uint32_t Interrupter::interrupt(const uint32_t address, uint32_t cycleCounter, Memory &memory) {
+unsigned long Interrupter::interrupt(const unsigned address, unsigned long cycleCounter, Memory &memory) {
 	cycleCounter += 8;
 	SP = (SP - 1) & 0xFFFF;
 	memory.write(SP, PC >> 8, cycleCounter);

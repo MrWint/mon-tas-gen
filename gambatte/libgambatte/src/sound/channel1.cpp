@@ -31,8 +31,8 @@ Channel1::SweepUnit::SweepUnit(MasterDisabler &disabler, DutyUnit &dutyUnit) :
 	negging(false)
 {}
 
-uint32_t Channel1::SweepUnit::calcFreq() {
-	uint32_t freq = shadow >> (nr0 & 0x07);
+unsigned Channel1::SweepUnit::calcFreq() {
+	unsigned freq = shadow >> (nr0 & 0x07);
 	
 	if (nr0 & 0x08) {
 		freq = shadow - freq;
@@ -47,14 +47,14 @@ uint32_t Channel1::SweepUnit::calcFreq() {
 }
 
 void Channel1::SweepUnit::event() {
-	const uint32_t period = nr0 >> 4 & 0x07;
+	const unsigned long period = nr0 >> 4 & 0x07;
 	
 	if (period) {
-		const uint32_t freq = calcFreq();
+		const unsigned freq = calcFreq();
 		
 		if (!(freq & 2048) && (nr0 & 0x07)) {
 			shadow = freq;
-			dutyUnit.setFreq(freq);
+			dutyUnit.setFreq(freq, counter);
 			calcFreq();
 		}
 		
@@ -63,19 +63,19 @@ void Channel1::SweepUnit::event() {
 		counter += 8ul << 14;
 }
 
-void Channel1::SweepUnit::nr0Change(const uint32_t newNr0) {
+void Channel1::SweepUnit::nr0Change(const unsigned newNr0) {
 	if (negging && !(newNr0 & 0x08))
 		disableMaster();
 	
 	nr0 = newNr0;
 }
 
-void Channel1::SweepUnit::nr4Init(const uint32_t cc) {
+void Channel1::SweepUnit::nr4Init(const unsigned long cc) {
 	negging = false;
 	shadow = dutyUnit.getFreq();
 	
-	const uint32_t period = nr0 >> 4 & 0x07;
-	const uint32_t shift = nr0 & 0x07;
+	const unsigned period = nr0 >> 4 & 0x07;
+	const unsigned shift = nr0 & 0x07;
 	
 	if (period | shift)
 		counter = ((cc >> 14) + (period ? period : 8)) << 14;
@@ -107,11 +107,14 @@ void Channel1::SweepUnit::SyncState(NewState *ns)
 }
 
 Channel1::Channel1() :
-	disableMaster(master),
+	staticOutputTest(*this, dutyUnit),
+	disableMaster(master, dutyUnit),
 	lengthCounter(disableMaster, 0x3F),
-	envelopeUnit(),
+	envelopeUnit(staticOutputTest),
 	sweepUnit(disableMaster, dutyUnit),
 	cycleCounter(0),
+	soMask(0),
+	prevOut(0),
 	nr4(0),
 	master(false)
 {
@@ -119,62 +122,83 @@ Channel1::Channel1() :
 }
 
 void Channel1::setEvent() {
-	nextEventUnit = &sweepUnit;
+// 	nextEventUnit = &dutyUnit;
+// 	if (sweepUnit.getCounter() < nextEventUnit->getCounter())
+		nextEventUnit = &sweepUnit;
+	if (envelopeUnit.getCounter() < nextEventUnit->getCounter())
+		nextEventUnit = &envelopeUnit;
 	if (lengthCounter.getCounter() < nextEventUnit->getCounter())
 		nextEventUnit = &lengthCounter;
 }
 
-void Channel1::setNr0(const uint32_t data) {
+void Channel1::setNr0(const unsigned data) {
 	sweepUnit.nr0Change(data);
 	setEvent();
 }
 
-void Channel1::setNr1(const uint32_t data) {
+void Channel1::setNr1(const unsigned data) {
 	lengthCounter.nr1Change(data, nr4, cycleCounter);
-
-	setEvent();
-}
-
-void Channel1::setNr2(const uint32_t data) {
-	if (envelopeUnit.nr2Change(data))
-		disableMaster();
+	dutyUnit.nr1Change(data, cycleCounter);
 	
 	setEvent();
 }
 
-void Channel1::setNr3(const uint32_t data) {
-	dutyUnit.nr3Change(data);
+void Channel1::setNr2(const unsigned data) {
+	if (envelopeUnit.nr2Change(data))
+		disableMaster();
+	else
+		staticOutputTest(cycleCounter);
+	
 	setEvent();
 }
 
-void Channel1::setNr4(const uint32_t data) {
+void Channel1::setNr3(const unsigned data) {
+	dutyUnit.nr3Change(data, cycleCounter);
+	setEvent();
+}
+
+void Channel1::setNr4(const unsigned data) {
 	lengthCounter.nr4Change(nr4, data, cycleCounter);
 		
 	nr4 = data;
 	
-	dutyUnit.nr4Change(data);
+	dutyUnit.nr4Change(data, cycleCounter);
 	
 	if (data & 0x80) { //init-bit
 		nr4 &= 0x7F;
-		master = !envelopeUnit.nr4Init();
+		master = !envelopeUnit.nr4Init(cycleCounter);
 		sweepUnit.nr4Init(cycleCounter);
+		staticOutputTest(cycleCounter);
 	}
 	
+	setEvent();
+}
+
+void Channel1::setSo(const unsigned long soMask) {
+	this->soMask = soMask;
+	staticOutputTest(cycleCounter);
 	setEvent();
 }
 
 void Channel1::reset() {
 	cycleCounter = 0x1000 | (cycleCounter & 0xFFF); // cycleCounter >> 12 & 7 represents the frame sequencer position.
 
+// 	lengthCounter.reset();
+	dutyUnit.reset();
+	envelopeUnit.reset();
 	sweepUnit.reset();
 	
 	setEvent();
 }
 
+void Channel1::init(const bool cgb) {
+	lengthCounter.init(cgb);
+}
+
 void Channel1::loadState(const SaveState &state) {
 	sweepUnit.loadState(state);
-	dutyUnit.loadState(state.spu.ch1.duty, state.spu.ch1.nr4);
-	envelopeUnit.loadState(state.mem.ioamhram.get()[0x112]);
+	dutyUnit.loadState(state.spu.ch1.duty, state.mem.ioamhram.get()[0x111], state.spu.ch1.nr4, state.spu.cycleCounter);
+	envelopeUnit.loadState(state.spu.ch1.env, state.mem.ioamhram.get()[0x112], state.spu.cycleCounter);
 	lengthCounter.loadState(state.spu.ch1.lcounter, state.spu.cycleCounter);
 	
 	cycleCounter = state.spu.cycleCounter;
@@ -182,13 +206,26 @@ void Channel1::loadState(const SaveState &state) {
 	master = state.spu.ch1.master;
 }
 
-void Channel1::update(uint32_t cycles) {
-	const uint32_t endCycles = cycleCounter + cycles;
+void Channel1::update(const unsigned long soBaseVol, unsigned long cycles) {
+	const unsigned long outBase = envelopeUnit.dacIsOn() ? soBaseVol & soMask : 0;
+	const unsigned long outLow = outBase * (0 - 15ul);
+	const unsigned long endCycles = cycleCounter + cycles;
 	
 	for (;;) {
-		const uint32_t nextMajorEvent = nextEventUnit->getCounter() < endCycles ? nextEventUnit->getCounter() : endCycles;
-
+		const unsigned long outHigh = master ? outBase * (envelopeUnit.getVolume() * 2 - 15ul) : outLow;
+		const unsigned long nextMajorEvent = nextEventUnit->getCounter() < endCycles ? nextEventUnit->getCounter() : endCycles;
+		unsigned long out = dutyUnit.isHighState() ? outHigh : outLow;
+		
+		while (dutyUnit.getCounter() <= nextMajorEvent) {
+			prevOut = out;
+			cycleCounter = dutyUnit.getCounter();
+			
+			dutyUnit.event();
+			out = dutyUnit.isHighState() ? outHigh : outLow;
+		}
+		
 		if (cycleCounter < nextMajorEvent) {
+			prevOut = out;
 			cycleCounter = nextMajorEvent;
 		}
 		
@@ -200,8 +237,10 @@ void Channel1::update(uint32_t cycles) {
 	}
 	
 	if (cycleCounter & SoundUnit::COUNTER_MAX) {
-		lengthCounter.resetCounters();
-		sweepUnit.resetCounters();
+		dutyUnit.resetCounters(cycleCounter);
+		lengthCounter.resetCounters(cycleCounter);
+		envelopeUnit.resetCounters(cycleCounter);
+		sweepUnit.resetCounters(cycleCounter);
 		
 		cycleCounter -= SoundUnit::COUNTER_MAX;
 	}
@@ -215,11 +254,15 @@ SYNCFUNC(Channel1)
 	SSS(sweepUnit);
 
 	EBS(nextEventUnit, 0);
-	EVS(nextEventUnit, &sweepUnit, 1);
-	EVS(nextEventUnit, &lengthCounter, 2);
+	EVS(nextEventUnit, &dutyUnit, 1);
+	EVS(nextEventUnit, &sweepUnit, 2);
+	EVS(nextEventUnit, &envelopeUnit, 3);
+	EVS(nextEventUnit, &lengthCounter, 4);
 	EES(nextEventUnit, NULL);
 
 	NSS(cycleCounter);
+	NSS(soMask);
+	NSS(prevOut);
 
 	NSS(nr4);
 	NSS(master);

@@ -35,12 +35,11 @@ MemPtrs::~MemPtrs() {
 	delete []interruptmemchunk_;
 }
 
-void MemPtrs::reset(const uint32_t rombanks, const uint32_t rambanks, const uint32_t wrambanks) {
+void MemPtrs::reset(const unsigned rombanks, const unsigned rambanks, const unsigned wrambanks) {
 	delete []memchunk_;
 	delete []interruptmemchunk_;
 	memchunk_len = 0x4000 + rombanks * 0x4000ul + 0x4000 + rambanks * 0x2000ul + wrambanks * 0x1000ul + 0x4000;
-	memchunk_ = new uint8_t[memchunk_len];
-	std::memset(memchunk_, 0, memchunk_len);
+	memchunk_ = new unsigned char[memchunk_len];
 
 	interruptmemchunk_ = new bool[rombanks * 0x4000ul];
 	std::memset(interruptmemchunk_, 0, rombanks * 0x4000ul);
@@ -66,21 +65,21 @@ void MemPtrs::reset(const uint32_t rombanks, const uint32_t rambanks, const uint
 	memchunk_savelen = wramdataend() - memchunk_ - memchunk_saveoffs;
 }
 
-void MemPtrs::setRombank0(const uint32_t bank) {
+void MemPtrs::setRombank0(const unsigned bank) {
 	romdata_[0] = romdata() + bank * 0x4000ul;
 	rmem_[0x3] = rmem_[0x2] = rmem_[0x1] = rmem_[0x0] = romdata_[0];
 	disconnectOamDmaAreas();
 }
 
-void MemPtrs::setRombank(const uint32_t bank) {
+void MemPtrs::setRombank(const unsigned bank) {
 	curRomBank_ = bank;
 	romdata_[1] = romdata() + bank * 0x4000ul - 0x4000;
 	rmem_[0x7] = rmem_[0x6] = rmem_[0x5] = rmem_[0x4] = romdata_[1];
 	disconnectOamDmaAreas();
 }
 
-void MemPtrs::setRambank(const uint32_t flags, const uint32_t rambank) {
-	uint8_t *const srambankptr = flags & RTC_EN
+void MemPtrs::setRambank(const unsigned flags, const unsigned rambank) {
+	unsigned char *const srambankptr = flags & RTC_EN
 			? 0
 			: (rambankdata() != rambankdataend()
 					? rambankdata_ + rambank * 0x2000ul - 0xA000 : wdisabledRam() - 0xA000);
@@ -92,7 +91,7 @@ void MemPtrs::setRambank(const uint32_t flags, const uint32_t rambank) {
 	disconnectOamDmaAreas();
 }
 
-void MemPtrs::setWrambank(const uint32_t bank) {
+void MemPtrs::setWrambank(const unsigned bank) {
 	wramdata_[1] = wramdata_[0] + ((bank & 0x07) ? (bank & 0x07) : 1) * 0x1000;
 	rmem_[0xD] = wmem_[0xD] = wramdata_[1] - 0xD000;
 	disconnectOamDmaAreas();
@@ -117,7 +116,7 @@ void MemPtrs::disconnectOamDmaAreas() {
 		case OAM_DMA_SRC_ROM:  // fall through
 		case OAM_DMA_SRC_SRAM:
 		case OAM_DMA_SRC_INVALID:
-			std::fill(rmem_, rmem_ + 8, static_cast<uint8_t *>(0));
+			std::fill(rmem_, rmem_ + 8, static_cast<unsigned char *>(0));
 			rmem_[0xB] = rmem_[0xA] = 0;
 			wmem_[0xB] = wmem_[0xA] = 0;
 			break;
@@ -136,7 +135,7 @@ void MemPtrs::disconnectOamDmaAreas() {
 		case OAM_DMA_SRC_SRAM:
 		case OAM_DMA_SRC_WRAM:
 		case OAM_DMA_SRC_INVALID:
-			std::fill(rmem_, rmem_ + 8, static_cast<uint8_t *>(0));
+			std::fill(rmem_, rmem_ + 8, static_cast<unsigned char *>(0));
 			rmem_[0xB] = rmem_[0xA] = 0;
 			wmem_[0xB] = wmem_[0xA] = 0;
 			rmem_[0xE] = rmem_[0xD] = rmem_[0xC] = 0;
@@ -156,6 +155,24 @@ void MemPtrs::disconnectOamDmaAreas() {
 
 SYNCFUNC(MemPtrs)
 {
+	/*
+	int memchunk_len_old = memchunk_len;
+	int memchunk_saveoffs_old = memchunk_saveoffs;
+	int memchunk_savelen_old = memchunk_savelen;
+	*/
+
+	NSS(memchunk_len);
+	NSS(memchunk_saveoffs);
+	NSS(memchunk_savelen);
+
+	/*
+	if (isReader)
+	{
+		if (memchunk_len != memchunk_len_old || memchunk_saveoffs != memchunk_saveoffs_old || memchunk_savelen != memchunk_savelen_old)
+			__debugbreak();
+	}
+	*/
+
 	PSS(memchunk_ + memchunk_saveoffs, memchunk_savelen);
 
 	MSS(rmem_[0x0]);
@@ -190,6 +207,11 @@ SYNCFUNC(MemPtrs)
 	MSS(wmem_[0xe]);
 	MSS(rmem_[0xf]);
 	MSS(wmem_[0xf]);
+	//for (int i = 0; i < 0x10; i++)
+	//{
+	//	MSS(rmem_[i]);
+	//	MSS(wmem_[i]);
+	//}
 	MSS(romdata_[0]);
 	MSS(romdata_[1]);
 	MSS(wramdata_[0]);
@@ -197,6 +219,8 @@ SYNCFUNC(MemPtrs)
 	MSS(vrambankptr_);
 	MSS(rsrambankptr_);
 	MSS(wsrambankptr_);
+	MSS(rambankdata_);
+	MSS(wramdataend_);
 	NSS(oamDmaSrc_);
 	NSS(curRomBank_);
 }

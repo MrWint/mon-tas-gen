@@ -19,6 +19,7 @@
 #ifndef SOUND_CHANNEL3_H
 #define SOUND_CHANNEL3_H
 
+#include "gbint.h"
 #include "master_disabler.h"
 #include "length_counter.h"
 #include "newstate.h"
@@ -29,31 +30,35 @@ struct SaveState;
 
 class Channel3 {
 	class Ch3MasterDisabler : public MasterDisabler {
-		uint32_t &waveCounter;
+		unsigned long &waveCounter;
 		
 	public:
-		Ch3MasterDisabler(bool &m, uint32_t &wC) : MasterDisabler(m), waveCounter(wC) {}
+		Ch3MasterDisabler(bool &m, unsigned long &wC) : MasterDisabler(m), waveCounter(wC) {}
 		void operator()() { MasterDisabler::operator()(); waveCounter = SoundUnit::COUNTER_DISABLED; }
 	};
 	
-	uint8_t waveRam[0x10];
+	unsigned char waveRam[0x10];
 	
 	Ch3MasterDisabler disableMaster;
 	LengthCounter lengthCounter;
 	
-	uint32_t cycleCounter;
-	uint32_t waveCounter;
-	uint32_t lastReadTime;
+	unsigned long cycleCounter;
+	unsigned long soMask;
+	unsigned long prevOut;
+	unsigned long waveCounter;
+	unsigned long lastReadTime;
 	
-	uint8_t nr0;
-	uint8_t nr3;
-	uint8_t nr4;
-	uint8_t wavePos;
-
+	unsigned char nr0;
+	unsigned char nr3;
+	unsigned char nr4;
+	unsigned char wavePos;
+	unsigned char rShift;
+	unsigned char sampleBuf;
+	
 	bool master;
 	bool cgb;
 	
-	void updateWaveCounter(uint32_t cc);
+	void updateWaveCounter(unsigned long cc);
 	
 public:
 	Channel3();
@@ -62,13 +67,15 @@ public:
 	void init(bool cgb);
 	void setStatePtrs(SaveState &state);
 	void loadState(const SaveState &state);
-	void setNr0(uint32_t data);
-	void setNr1(uint32_t data) { lengthCounter.nr1Change(data, nr4, cycleCounter); }
-	void setNr3(uint8_t data) { nr3 = data; }
-	void setNr4(uint32_t data);
-	void update(uint32_t cycles);
+	void setNr0(unsigned data);
+	void setNr1(unsigned data) { lengthCounter.nr1Change(data, nr4, cycleCounter); }
+	void setNr2(unsigned data);
+	void setNr3(unsigned data) { nr3 = data; }
+	void setNr4(unsigned data);
+	void setSo(unsigned long soMask);
+	void update(unsigned long soBaseVol, unsigned long cycles);
 	
-	uint8_t waveRamRead(uint32_t index) const {
+	unsigned waveRamRead(unsigned index) const {
 		if (master) {
 			if (!cgb && cycleCounter != lastReadTime)
 				return 0xFF;
@@ -79,7 +86,7 @@ public:
 		return waveRam[index];
 	}
 	
-	void waveRamWrite(uint32_t index, uint8_t data) {
+	void waveRamWrite(unsigned index, unsigned data) {
 		if (master) {
 			if (!cgb && cycleCounter != lastReadTime)
 				return;

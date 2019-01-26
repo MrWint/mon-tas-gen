@@ -19,7 +19,7 @@
 #include "tima.h"
 #include "savestate.h"
 
-static const uint8_t timaClock[4] = { 10, 4, 6, 8 };
+static const unsigned char timaClock[4] = { 10, 4, 6, 8 };
 
 namespace gambatte {
 
@@ -45,12 +45,12 @@ void Tima::loadState(const SaveState &state, const TimaInterruptRequester timaIr
 			          ? tmatime_
 			          : lastUpdate_ + ((256u - tima_) << timaClock[tac_ & 3]) + 3)
 		:
-			static_cast<uint32_t>(DISABLED_TIME)
+			static_cast<unsigned long>(DISABLED_TIME)
 	);
 }
 
-void Tima::resetCc(const uint32_t oldCc, const uint32_t newCc, const TimaInterruptRequester timaIrq) {
-	const uint32_t dec = oldCc - newCc;
+void Tima::resetCc(const unsigned long oldCc, const unsigned long newCc, const TimaInterruptRequester timaIrq) {
+	const unsigned long dec = oldCc - newCc;
 	
 	if (tac_ & 0x04) {
 		updateIrq(oldCc, timaIrq);
@@ -64,8 +64,8 @@ void Tima::resetCc(const uint32_t oldCc, const uint32_t newCc, const TimaInterru
 	}
 }
 
-void Tima::updateTima(const uint32_t cycleCounter) {
-	const uint32_t ticks = (cycleCounter - lastUpdate_) >> timaClock[tac_ & 3];
+void Tima::updateTima(const unsigned long cycleCounter) {
+	const unsigned long ticks = (cycleCounter - lastUpdate_) >> timaClock[tac_ & 3];
 
 	lastUpdate_ += ticks << timaClock[tac_ & 3];
 
@@ -76,7 +76,7 @@ void Tima::updateTima(const uint32_t cycleCounter) {
 		tima_ = tma_;
 	}
 
-	uint32_t tmp = tima_ + ticks;
+	unsigned long tmp = tima_ + ticks;
 
 	while (tmp > 0x100)
 		tmp -= 0x100 - tma_;
@@ -96,7 +96,7 @@ void Tima::updateTima(const uint32_t cycleCounter) {
 	tima_ = tmp;
 }
 
-void Tima::setTima(const uint32_t data, const uint32_t cycleCounter, const TimaInterruptRequester timaIrq) {
+void Tima::setTima(const unsigned data, const unsigned long cycleCounter, const TimaInterruptRequester timaIrq) {
 	if (tac_ & 0x04) {
 		updateIrq(cycleCounter, timaIrq);
 		updateTima(cycleCounter);
@@ -110,7 +110,7 @@ void Tima::setTima(const uint32_t data, const uint32_t cycleCounter, const TimaI
 	tima_ = data;
 }
 
-void Tima::setTma(const uint32_t data, const uint32_t cycleCounter, const TimaInterruptRequester timaIrq) {
+void Tima::setTma(const unsigned data, const unsigned long cycleCounter, const TimaInterruptRequester timaIrq) {
 	if (tac_ & 0x04) {
 		updateIrq(cycleCounter, timaIrq);
 		updateTima(cycleCounter);
@@ -119,9 +119,9 @@ void Tima::setTma(const uint32_t data, const uint32_t cycleCounter, const TimaIn
 	tma_ = data;
 }
 
-void Tima::setTac(const uint32_t data, const uint32_t cycleCounter, const TimaInterruptRequester timaIrq, bool gbIsCgb) {
+void Tima::setTac(const unsigned data, const unsigned long cycleCounter, const TimaInterruptRequester timaIrq, bool gbIsCgb) {
 	if (tac_ ^ data) {
-		uint32_t nextIrqEventTime = timaIrq.nextIrqEventTime();
+		unsigned long nextIrqEventTime = timaIrq.nextIrqEventTime();
 		
 		if (tac_ & 0x04) {
 			updateIrq(cycleCounter, timaIrq);
@@ -142,7 +142,7 @@ void Tima::setTac(const uint32_t data, const uint32_t cycleCounter, const TimaIn
 
 		if (data & 4) {
 			lastUpdate_ = (cycleCounter >> timaClock[data & 3]) << timaClock[data & 3];
-			uint32_t diff = cycleCounter - basetime_;
+			unsigned long diff = cycleCounter - basetime_;
 			
 			if (gbIsCgb) {
 				if (((diff >> (timaClock[tac_ & 3] - 1)) & 1) == 1 && ((diff >> (timaClock[data & 3] - 1)) & 1) == 0)
@@ -158,7 +158,7 @@ void Tima::setTac(const uint32_t data, const uint32_t cycleCounter, const TimaIn
 	tac_ = data;
 }
 
-void Tima::resTac(uint32_t const cycleCounter, TimaInterruptRequester timaIrq) {
+void Tima::resTac(unsigned long const cycleCounter, TimaInterruptRequester timaIrq) {
 	basetime_ = cycleCounter;
 	if (tac_ & 0x04) {
 		setTac(tac_ & ~0x04, cycleCounter, timaIrq, false);
@@ -166,7 +166,7 @@ void Tima::resTac(uint32_t const cycleCounter, TimaInterruptRequester timaIrq) {
 	}
 }
 
-uint8_t Tima::tima(uint32_t cycleCounter) {
+unsigned Tima::tima(unsigned long cycleCounter) {
 	if (tac_ & 0x04)
 		updateTima(cycleCounter);
 
