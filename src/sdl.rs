@@ -38,7 +38,7 @@ impl Sdl {
         amask: 0x0000_0000,
       }).unwrap();
       {
-        let pitch: usize = surface.pitch() as usize / ::std::mem::size_of::<u32>();
+        let pitch: usize = surface.pitch() as usize / std::mem::size_of::<u32>();
         let pointer: *mut u32 = unsafe {(*surface.raw()).pixels } as *mut u32;
         surface_base_ptr_tx.send((Unique::new(pointer).unwrap(), pitch)).unwrap(); // send base pointer back to main thread.
       }
@@ -51,8 +51,8 @@ impl Sdl {
             surface.blit_scaled(None, &mut window_surface, None).unwrap();
             window_surface.update_window().unwrap();
           },
-          Err(::std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
-          Err(::std::sync::mpsc::RecvTimeoutError::Timeout) => {},
+          Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+          Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {},
         };
       }
     });

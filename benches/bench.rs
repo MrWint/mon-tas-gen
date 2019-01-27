@@ -7,6 +7,7 @@ extern crate test;
 use gambatte::*;
 use gambatte::inputs::*;
 use montas::gb::*;
+use montas::gbexecutor::*;
 use montas::rom::*;
 use montas::segment::*;
 use test::{Bencher, black_box};
@@ -41,12 +42,11 @@ fn new_game_step(b: &mut Bencher) {
 
 #[bench]
 fn new_game_movesegment(b: &mut Bencher) {
-  let mut gb = Gb::<Crystal>::create(false /* equal length frames */, NoScreen {});
+  let mut gbe = SingleGb::<Crystal>::no_screen();
+  let states = vec![gbe.get_initial_state()];
 
   b.iter(|| {
-    gb.restore_initial_state();
-    let states = vec![gb.save()];
-    let sb = MoveSegment::new(A).execute(&mut gb, states);
+    let sb = MoveSegment::new(A).execute(&mut gbe, &states);
     black_box(sb);
   });
 }

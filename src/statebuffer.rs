@@ -168,7 +168,7 @@ impl FromIterator<State> for StateBuffer {
 impl IntoIterator for StateBuffer {
   type Item = State;
   #[allow(clippy::type_complexity)]
-  type IntoIter = ::std::iter::Map<::std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
+  type IntoIter = std::iter::Map<std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.states.into_iter().map(|(_, v)| v)
@@ -176,7 +176,7 @@ impl IntoIterator for StateBuffer {
 }
 impl<'a> IntoIterator for &'a StateBuffer {
   type Item = &'a State;
-  type IntoIter = ::std::collections::hash_map::Values<'a, u32, State>;
+  type IntoIter = std::collections::hash_map::Values<'a, u32, State>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.states.values()

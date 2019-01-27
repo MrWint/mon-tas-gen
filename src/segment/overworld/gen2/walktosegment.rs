@@ -108,7 +108,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
       for x in 0..map.width {
         for y in 0..map.height {
           if distances[map.width * y + x] == cur_dist {
-            let sb = ::std::mem::replace(&mut buffers[map.width * y + x], StateBuffer::new());
+            let sb = std::mem::replace(&mut buffers[map.width * y + x], StateBuffer::new());
             if sb.is_empty() { continue; }
             if self.debug_output { println!("processing states at ({},{}) with dist {}, statebuffer {}", x as isize-6, y as isize-6, cur_dist, sb); }
             for ((nx, ny), s) in gbe.execute(sb, |gb, s, tx| {

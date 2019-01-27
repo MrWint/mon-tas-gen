@@ -1,3 +1,4 @@
+use crate::constants::*;
 use crate::gb::*;
 use crate::rom::*;
 use crate::segment::*;
@@ -31,7 +32,7 @@ pub enum OverworldInteractionResult {
   Warped, // includes falling, edge warps
   MapCoordEvent,
   CountStepEvent, // includes hatching
-  RandomEncounter { species: u8, level: u8 },
+  RandomEncounter { species: Pokemon, level: u8 },
   ReentryScript,
   SceneScript,
   EndBugContest,
@@ -173,7 +174,7 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen2MapEventsAddres
   } else if hit == R::PLAYER_EVENTS_COUNT_STEP_EVENT_ADDRESS || hit == R::PLAYER_EVENTS_HATCH_ADDRESS {
     OverworldInteractionResult::CountStepEvent
   } else if hit == R::PLAYER_EVENTS_RANDOM_ENCOUNTER_ADDRESS {
-    let species = gb.gb.read_memory(R::PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS);
+    let species = Pokemon::from_gen2_index(gb.gb.read_memory(R::PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS)).unwrap();
     let level = gb.gb.read_memory(R::PLAYER_EVENTS_RANDOM_ENCOUNTER_LEVEL_MEM_ADDRESS);
     OverworldInteractionResult::RandomEncounter { species, level }
   } else if hit == R::PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS {

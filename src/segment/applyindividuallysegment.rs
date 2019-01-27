@@ -33,7 +33,7 @@ impl<R, S> WithOutputBufferSize for ApplyIndividuallySegment<R, S> {
 impl<R: Rom, S: Segment<R>> Segment<R> for ApplyIndividuallySegment<R, S> {
   type Key = S::Key;
 
-  fn execute_split<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<SR: StateRef, I: IntoIterator<Item=SR>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
     for s in iter {
       for (value, states) in self.segment.execute_split(gbe, vec![s]).into_iter() {

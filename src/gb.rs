@@ -12,10 +12,10 @@ impl StateRef for State {
   fn as_ref(&self) -> &State { self }
 }
 impl<'a, S: StateRef> StateRef for &'a S {
-  fn to_state(self) -> State { ::std::sync::Arc::clone(self.as_ref()) }
+  fn to_state(self) -> State { std::sync::Arc::clone(self.as_ref()) }
   fn as_ref(&self) -> &State { (*self).as_ref() }
 }
-pub type State = ::std::sync::Arc<RawState>;
+pub type State = std::sync::Arc<RawState>;
 /// Represents a saved state of a game execution.
 #[derive(Serialize, Deserialize)]
 pub struct RawState {
@@ -71,7 +71,7 @@ pub struct Gb<R> {
 impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
   /// Creates a new game execution using the given Gambatte instance.
   pub fn create<S: ScreenUpdateCallback + 'static>(equal_length_frames: bool, screen_update_callback: S) -> Self {
-    let gambatte = Gambatte::create("roms/gbc_bios.bin", R::ROM_NAME, equal_length_frames, screen_update_callback);
+    let gambatte = Gambatte::create("roms/gbc_bios.bin", R::ROM_FILE_NAME, equal_length_frames, screen_update_callback);
     let initial_gambatte_state = gambatte.save_state();
     let mut pgb = Gb {
       gb: gambatte,
@@ -92,7 +92,7 @@ impl <R: RngAddresses> Gb<R> {
   /// Saves the current execution state to a State object.
   pub fn save(&mut self) -> State {
     assert!(!self.skipped_relevant_inputs);
-    ::std::sync::Arc::new(RawState {
+    std::sync::Arc::new(RawState {
       // save inherent state
       gb_state: self.gb.save_state(),
       inputs: self.inputs.clone(),

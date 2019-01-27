@@ -1,3 +1,4 @@
+use crate::constants::*;
 use crate::gb::*;
 use crate::gbexecutor::StateKey;
 use crate::rom::*;
@@ -177,7 +178,7 @@ impl<R: JoypadAddresses + Gen2DetermineMoveOrderAddresses> Metric<R> for Gen2Mov
 }
 
 #[derive(Debug, Eq, Hash, PartialEq)]
-pub struct AIChosenMove(u8);
+pub struct AIChosenMove(Move);
 #[allow(dead_code)]
 pub struct Gen2AIChooseMoveMetric {}
 impl<R: JoypadAddresses + Gen2AIChooseMoveAddresses> Metric<R> for Gen2AIChooseMoveMetric {
@@ -185,6 +186,6 @@ impl<R: JoypadAddresses + Gen2AIChooseMoveAddresses> Metric<R> for Gen2AIChooseM
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     if gb.run_until_or_next_input_use(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
-    Some(AIChosenMove(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS)))
+    Some(AIChosenMove(Move::from_index(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS)).unwrap()))
   }
 }

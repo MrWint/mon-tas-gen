@@ -258,7 +258,7 @@ impl Gambatte {
     let mut gambatte_state = unsafe { // Avoid calling memset, Vec will be initialized with garbage.
       let mut data = Vec::with_capacity(save_state_size);
       let resized_data = Vec::from_raw_parts(data.as_mut_ptr(), save_state_size, save_state_size);
-      ::std::mem::forget(data);
+      std::mem::forget(data);
       resized_data
     };
     let success = unsafe { gambatte_newstatesave(self.gb, gambatte_state.as_mut_ptr(), save_state_size as i32) };

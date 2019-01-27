@@ -1,3 +1,4 @@
+use crate::constants::*;
 use crate::gb::*;
 use crate::rom::*;
 use crate::segment::metric::*;
@@ -9,7 +10,7 @@ pub enum OverworldInteractionResult {
   WarpTo { map: u8, entrance: u8 },
   FlyWarpOrDungeonWarp,
   DisplayText { id: u8 },
-  WildEncounter { species: u8, level: u8, dvs: DVs },
+  WildEncounter { species: Pokemon, level: u8, dvs: DVs },
   TrainerBattle { species: u8 },
   Turned { direction: Input },
   Collision,
@@ -54,7 +55,7 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen1OverworldAddres
     let species = gb.gb.read_memory(R::OVERWORLD_BATTLE_SPECIES_MEM_ADDRESS);
     if species < 200 {
       let dvs = Gen1DVMetric{}.evaluate(gb).unwrap();
-      OverworldInteractionResult::WildEncounter { species, level: gb.gb.read_memory(R::OVERWORLD_BATTLE_LEVEL_MEM_ADDRESS), dvs }
+      OverworldInteractionResult::WildEncounter { species: Pokemon::from_gen1_index(species).unwrap(), level: gb.gb.read_memory(R::OVERWORLD_BATTLE_LEVEL_MEM_ADDRESS), dvs }
     } else {
       OverworldInteractionResult::TrainerBattle { species }
     }

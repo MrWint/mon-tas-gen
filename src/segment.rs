@@ -16,7 +16,7 @@ pub trait SingleSegment<R: Rom> {
   fn execute<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer;
 }
 impl<R: Rom, S: Segment<R,Key=()>> SingleSegment<R> for S {
-  fn execute<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer {
+  fn execute<SR: StateRef, I: IntoIterator<Item=SR>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer {
     self.execute_split(gb, iter).into_state_buffer()
   }
 }
@@ -39,7 +39,7 @@ pub trait StateBufferHashMap {
   fn is_all_full(&self) -> bool;
   fn to_string(&self) -> String;
 }
-impl<K: StateKey, S: ::std::hash::BuildHasher> StateBufferHashMap for HashMap<K, StateBuffer, S> {
+impl<K: StateKey, S: std::hash::BuildHasher> StateBufferHashMap for HashMap<K, StateBuffer, S> {
   fn merge_state_buffers(self) -> StateBuffer {
     StateBuffer::from_iter(self.into_iter().flat_map(|(_, v)| v))
   }
@@ -59,14 +59,11 @@ impl<K: StateKey, S: ::std::hash::BuildHasher> StateBufferHashMap for HashMap<K,
 pub trait SingleStateBuffer {
   fn into_state_buffer(self) -> StateBuffer;
 }
-impl<S: ::std::hash::BuildHasher> SingleStateBuffer for HashMap<(), StateBuffer, S> {
+impl<S: std::hash::BuildHasher> SingleStateBuffer for HashMap<(), StateBuffer, S> {
   fn into_state_buffer(self) -> StateBuffer {
     self.into_iter().next().map_or_else(StateBuffer::new, |(_, v)| v)
   }
 }
-
-
-
 
 
 

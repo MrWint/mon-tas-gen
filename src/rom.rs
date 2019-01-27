@@ -5,7 +5,7 @@ pub trait Rom: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static {}
 impl<R: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static> Rom for R {} 
 
 pub trait BasicRomInfo {
-  const ROM_NAME: &'static str;
+  const ROM_FILE_NAME: &'static str;
   const GAME_NAME: &'static str;
   const SHA1: &'static str;
   const BOARD_NAME: &'static str;
@@ -136,7 +136,7 @@ pub trait Gen2AIChooseMoveAddresses {
 #[allow(dead_code)]
 pub enum Red {}
 impl BasicRomInfo for Red {
-  const ROM_NAME: &'static str = "roms/red.gb";
+  const ROM_FILE_NAME: &'static str = "roms/red.gb";
   const GAME_NAME: &'static str = "Pokemon - Red Version (USA, Europe)";
   const SHA1: &'static str = "EA9BCAE617FDF159B045185467AE58B2E4A48B9A";
   const BOARD_NAME: &'static str = "MBC3 ROM+RAM+BATTERY";
@@ -144,7 +144,7 @@ impl BasicRomInfo for Red {
 #[allow(dead_code)]
 pub enum Blue {}
 impl BasicRomInfo for Blue {
-  const ROM_NAME: &'static str = "roms/blue.gb";
+  const ROM_FILE_NAME: &'static str = "roms/blue.gb";
   const GAME_NAME: &'static str = "Pokemon - Blue Version (USA, Europe)";
   const SHA1: &'static str = "D7037C83E1AE5B39BDE3C30787637BA1D4C48CE2";
   const BOARD_NAME: &'static str = "MBC3 ROM+RAM+BATTERY";
@@ -242,7 +242,7 @@ impl_red_blue_common_addresses!(Red, Blue);
 #[allow(dead_code)]
 pub enum Yellow {}
 impl BasicRomInfo for Yellow {
-  const ROM_NAME: &'static str = "roms/yellow.gbc";
+  const ROM_FILE_NAME: &'static str = "roms/yellow.gbc";
   const GAME_NAME: &'static str = "Pokemon - Yellow Version (USA, Europe)";
   const SHA1: &'static str = "CC7D03262EBFAF2F06772C1A480C7D9D5F4A38E1";
   const BOARD_NAME: &'static str = "MBC5 ROM+RAM+BATTERY";
@@ -343,7 +343,7 @@ impl InputIdentificationAddresses for Yellow {
 #[allow(dead_code)]
 pub enum Gold {}
 impl BasicRomInfo for Gold {
-  const ROM_NAME: &'static str = "roms/gold.gbc";
+  const ROM_FILE_NAME: &'static str = "roms/gold.gbc";
   const GAME_NAME: &'static str = "Pokemon - Gold Version (USA, Europe)";
   const SHA1: &'static str = "D8B8A3600A465308C9953DFA04F0081C05BDCB94";
   const BOARD_NAME: &'static str = "MBC3 ROM+TIMER+RAM+BATTERY";
@@ -351,7 +351,7 @@ impl BasicRomInfo for Gold {
 #[allow(dead_code)]
 pub enum Silver {}
 impl BasicRomInfo for Silver {
-  const ROM_NAME: &'static str = "roms/silver.gbc";
+  const ROM_FILE_NAME: &'static str = "roms/silver.gbc";
   const GAME_NAME: &'static str = "Pokemon - Silver Version (USA, Europe)";
   const SHA1: &'static str = "49B163F7E57702BC939D642A18F591DE55D92DAE";
   const BOARD_NAME: &'static str = "MBC3 ROM+TIMER+RAM+BATTERY";
@@ -411,7 +411,7 @@ impl_gold_silver_common_addresses!(Gold, Silver);
 #[allow(dead_code)]
 pub enum Crystal {}
 impl BasicRomInfo for Crystal {
-  const ROM_NAME: &'static str = "roms/crystal.gbc";
+  const ROM_FILE_NAME: &'static str = "roms/crystal.gbc";
   const GAME_NAME: &'static str = "Pokemon - Crystal Version (USA, Europe)";
   const SHA1: &'static str = "F4CD194BDEE0D04CA4EAC29E09B8E4E9D818C133";
   const BOARD_NAME: &'static str = "MBC3 ROM+TIMER+RAM+BATTERY";

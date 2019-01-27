@@ -117,7 +117,7 @@ pub struct GbResults<T> {
 impl IntoIterator for GbResults<((), State)> {
   type Item = State;
   #[allow(clippy::type_complexity)]
-  type IntoIter = ::std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
+  type IntoIter = std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.rx.into_iter().map(|(_, v)| v)
@@ -149,7 +149,7 @@ impl<R: Rom> GbExecutor<R> for GbPool<R> {
     // Wrap functon in an Arc.
     let f: Arc<GbFn<'_, R, K>> = Arc::new(f);
     // Erase lifetime constraints: The resulting iterator must be fully consumed before the life time of F ends (ideally within the same statement) for this to be safe.
-    let f: Arc<GbFn<'static, R, K>> = unsafe { ::std::mem::transmute(f) };
+    let f: Arc<GbFn<'static, R, K>> = unsafe { std::mem::transmute(f) };
 
     let (tx, rx) = channel::<(K, State)>();
 

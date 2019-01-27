@@ -38,13 +38,13 @@ impl<R, S> WithOutputBufferSize for DelaySegment<R, S> {
 impl<R: Rom, S: Segment<R>> Segment<R> for DelaySegment<R, S> {
   type Key = S::Key;
 
-  fn execute_split<BS: StateRef, I: IntoIterator<Item=BS>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split<SR: StateRef, I: IntoIterator<Item=SR>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
 
     let mut active_states: Vec<State> = iter.into_iter().map(|s| s.to_state()).collect();
     let mut skips = 0;
-    let mut full_cycle_count = ::std::u64::MAX >> 1;
-    let mut nonempty_cycle_count = ::std::u64::MAX >> 1;
+    let mut full_cycle_count = std::u64::MAX >> 1;
+    let mut nonempty_cycle_count = std::u64::MAX >> 1;
     while !active_states.is_empty() {
       if self.debug_output { println!("DelaySegment processing {} active states at {} skips", active_states.len(), skips); }
       // Try segment on current active states.
