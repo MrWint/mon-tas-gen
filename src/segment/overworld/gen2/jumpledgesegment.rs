@@ -21,10 +21,10 @@ impl JumpLedgeSegment {
   }
 }
 impl WithOutputBufferSize for JumpLedgeSegment {
-  fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
+  fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 impl WithDebugOutput for JumpLedgeSegment {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for JumpLedgeSegment {

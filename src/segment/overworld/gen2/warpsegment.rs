@@ -22,10 +22,10 @@ impl WarpSegment {
   #[allow(dead_code)]
   pub fn new() -> Self { Default::default() }
   #[allow(dead_code)]
-  pub fn with_input(mut self, input: Input) -> Self { self.input = input; self }
+  pub fn with_input(self, input: Input) -> Self { Self { input, ..self } }
 }
 impl WithDebugOutput for WarpSegment {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for WarpSegment {

@@ -20,13 +20,13 @@ impl <M> MoveLoopSegment<M> {
     }
   }
   #[allow(dead_code)]
-  pub fn with_input(mut self, input: Input) -> Self { self.input = input; self }
+  pub fn with_input(self, input: Input) -> Self { Self { input, ..self } }
 }
 impl<M> WithDebugOutput for MoveLoopSegment<M> {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl<M> WithOutputBufferSize for MoveLoopSegment<M> {
-  fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
+  fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
 impl<R: Rom, M: Metric<R>> Segment<R> for MoveLoopSegment<M> {

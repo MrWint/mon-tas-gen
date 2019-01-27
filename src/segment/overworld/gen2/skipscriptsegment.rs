@@ -20,10 +20,10 @@ impl SkipScriptSegment {
   pub fn new() -> Self { Default::default() }
 }
 impl WithDebugOutput for SkipScriptSegment {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl WithOutputBufferSize for SkipScriptSegment {
-  fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
+  fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for SkipScriptSegment {

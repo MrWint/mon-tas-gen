@@ -10,7 +10,7 @@ pub struct SkipTextsSegment {
   buffer_size: usize,
 }
 impl WithOutputBufferSize for SkipTextsSegment {
-  fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
+  fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 impl SkipTextsSegment {
   pub fn new(num_texts: u32, confirm_input: Input) -> Self {

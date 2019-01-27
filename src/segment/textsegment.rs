@@ -13,10 +13,10 @@ pub struct TextSegment {
   ignore_conflicting_inputs: bool,
 }
 impl WithDebugOutput for TextSegment {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl WithOutputBufferSize for TextSegment {
-  fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
+  fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 impl TextSegment {
   pub fn new(skip_input: Input) -> Self {
@@ -29,9 +29,9 @@ impl TextSegment {
     }
   }
   // conflicting future inputs are expected, and the default behavior of dropping these states is employed without warning.
-  pub fn expect_conflicting_inputs(mut self) -> Self { self.expect_conflicting_inputs = true; self }
+  pub fn expect_conflicting_inputs(self) -> Self { Self { expect_conflicting_inputs: true, ..self } }
   // conflicting future inputs can be safely ignored. Setting this may cause the segment to run over into the next input, pressing no buttons once.
-  pub fn ignore_conflicting_inputs(mut self) -> Self { self.ignore_conflicting_inputs = true; self }
+  pub fn ignore_conflicting_inputs(self) -> Self { Self { ignore_conflicting_inputs: true, ..self } }
 
   fn is_print_letter_delay_frame<R: JoypadAddresses + RngAddresses + TextAddresses>(gb: &mut Gb<R>) -> bool {
     gb.input(Input::empty());

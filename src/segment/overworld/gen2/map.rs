@@ -13,11 +13,11 @@ pub struct Map {
 }
 
 impl crate::segment::WithDebugOutput for Map {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl Map {
   #[allow(dead_code)]
-  pub fn with_water_tiles(mut self) -> Self { self.allow_water_tiles = true; self }
+  pub fn with_water_tiles(self) -> Self { Self { allow_water_tiles: true, ..self } }
 
   #[allow(clippy::cyclomatic_complexity)]
   pub fn load_gen2_map<T: JoypadAddresses + RngAddresses + Gen2MapAddresses>(mut self, gb: &mut Gb<T>) -> Self {

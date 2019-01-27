@@ -27,13 +27,13 @@ impl WalkToSegment {
     }
   }
   #[allow(dead_code)]
-  pub fn into(mut self, into_result: OverworldInteractionResult) -> Self { self.into_result = into_result; self }
+  pub fn into(self, into_result: OverworldInteractionResult) -> Self { Self { into_result, ..self } }
 }
 impl WithOutputBufferSize for WalkToSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 impl WithDebugOutput for WalkToSegment {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 
 impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkToSegment {
@@ -131,7 +131,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
                     _ => panic!("got invalid direction"),
                   };
                   gb.input(input);
-                  if super::walkstepsegment::walk_step_check(gb, into_result) {
+                  if super::walkstepsegment::walk_step_check(gb, into_result, self.debug_output) {
                     gb.restore(&s);
                     gb.input(input);
                     gb.step();

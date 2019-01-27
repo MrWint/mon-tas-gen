@@ -30,7 +30,7 @@ impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> MoveSegment<R, M> {
       _rom: PhantomData,
     }
   }
-  pub fn with_max_skips(mut self, max_skips: u32) -> Self { self.max_skips = max_skips; self }
+  pub fn with_max_skips(self, max_skips: u32) -> Self { Self { max_skips, ..self } }
 }
 impl<R> MoveSegment<R, NullMetric> {
   pub fn new(input: Input) -> Self {
@@ -45,10 +45,10 @@ impl<R> MoveSegment<R, NullMetric> {
   }
 }
 impl<R, M> WithDebugOutput for MoveSegment<R, M> {
-  fn with_debug_output(mut self, debug_output: bool) -> Self { self.debug_output = debug_output; self }
+  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl<R, M> WithOutputBufferSize for MoveSegment<R, M> {
-  fn with_buffer_size(mut self, buffer_size: usize) -> Self { self.buffer_size = buffer_size; self }
+  fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
 impl<R: Rom, M: Metric<R>> Segment<R> for MoveSegment<R, M> {
