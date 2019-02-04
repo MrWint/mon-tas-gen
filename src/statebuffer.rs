@@ -16,19 +16,33 @@ pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 4096;
 /// The decision which states to prune is made based on the cycle_count and the RNG state of the ```State```,
 /// preferring a diverse collection of states with minimal cycles.
 #[derive(Serialize, Deserialize)]
-pub struct StateBuffer<S: StateMetric = DSumStateMetric> {
+pub struct StateBuffer<V = (), S: StateMetric = DSumStateMetric> {
   /// Maps RNG states to stored ```State```s. If two ```State```s have the same RNG state, they are assumed to exhibit identical future behavior.
-  states: HashMap<u32, State>,
+  states: HashMap<u32, State<V>>,
   metrics: HashMap<u32, (u64, u32)>,
   /// Maximum number of ```State```s which can be stored in this buffer.
   max_size: usize,
   phantom_data: PhantomData<S>,
 }
 
-impl<S: StateMetric> Default for StateBuffer<S> {
+impl<V, S: StateMetric> Default for StateBuffer<V, S> {
   fn default() -> Self { Self::with_max_size(STATE_BUFFER_DEFAULT_MAX_SIZE) }
 }
-impl<S: StateMetric> StateBuffer<S> {
+impl <V: serde::Serialize + serde::de::DeserializeOwned, S: StateMetric> StateBuffer<V, S> {
+  pub fn save(&self, file_name: &str) {
+    let file_path = format!("saves/{}.gz", file_name);
+    let f = File::create(file_path).unwrap();
+    let f = ::flate2::write::GzEncoder::new(f, ::flate2::Compression::best());
+    ::bincode::serialize_into(f, &self).expect("saving statebuffer failed")
+  }
+  pub fn load(file_name: &str) -> Self {
+    let file_path = format!("saves/{}.gz", file_name);
+    let f = File::open(file_path).expect("file not found");
+    let f = ::flate2::read::GzDecoder::new(f);
+    ::bincode::deserialize_from(f).expect("loading statebuffer failed")
+  }
+}
+impl<V, S: StateMetric> StateBuffer<V, S> {
   pub fn new() -> Self { Default::default() }
   pub fn unbounded() -> Self { Self::with_max_size(STATE_BUFFER_UNBOUNDED_MAX_SIZE) }
   pub fn with_max_size(max_size: usize) -> Self {
@@ -39,21 +53,20 @@ impl<S: StateMetric> StateBuffer<S> {
       phantom_data: PhantomData,
     }
   }
-  #[allow(dead_code)]
-  pub fn from_iter_unbounded<I: IntoIterator<Item=State>>(iter: I) -> Self {
+
+  pub fn from_iter_unbounded<I: IntoIterator<Item=State<V>>>(iter: I) -> Self {
     let mut sb = StateBuffer::unbounded();
     sb.add_all(iter);
     sb
   }
-  #[allow(dead_code)]
-  pub fn from_iter_sized<I: IntoIterator<Item=State>>(iter: I, max_size: usize) -> Self {
+  pub fn from_iter_sized<I: IntoIterator<Item=State<V>>>(iter: I, max_size: usize) -> Self {
     let mut sb = StateBuffer::with_max_size(max_size);
     sb.add_all(iter);
     sb
   }
 
   /// Adds a state to the buffer.
-  pub fn add_state(&mut self, s: State) {
+  pub fn add_state(&mut self, s: State<V>) {
     assert!(s.is_at_input, "Invalid state added to StateBuffer!");
     if self.states.capacity() == 0 {
       self.states.reserve(self.max_size + 1); // Reserve one additional element to hold excess before pruning.
@@ -96,7 +109,7 @@ impl<S: StateMetric> StateBuffer<S> {
   }
 
   /// Adds multiple states to the buffer.
-  pub fn add_all<I: IntoIterator<Item=State>>(&mut self, iter: I) {
+  pub fn add_all<I: IntoIterator<Item=State<V>>>(&mut self, iter: I) {
     for s in iter.into_iter() { self.add_state(s); }
   }
   /// Removes states until it doesn't exceed ```max_size``` anymore.
@@ -110,28 +123,6 @@ impl<S: StateMetric> StateBuffer<S> {
       self.metrics_remove(tbr_key);
     }
   }
-  #[allow(dead_code)]
-  fn get_dsum_metric(&self, s: &State) -> u32 {
-    let s_dsum = s.get_d_sum();
-    let mut dsum_difference_metric = 0;
-    for s2 in self.states.values() {
-      let s2_dsum = s2.get_d_sum();
-      let dsum_difference: u8 = min(s_dsum.wrapping_sub(s2_dsum), s2_dsum.wrapping_sub(s_dsum));
-      dsum_difference_metric += f64::from(u32::from(dsum_difference) << 24).sqrt() as u32;
-    }
-    dsum_difference_metric
-  }
-  #[allow(dead_code)]
-  fn get_div_state_metric(&self, s: &State) -> u32 {
-    let div_state = s.get_div_state();
-    let mut div_state_difference_metric = 0;
-    for s2 in self.states.values() {
-      let s2_div_state = s2.get_div_state();
-      let div_state_difference: u16 = min(div_state.wrapping_sub(s2_div_state) & 0x3fff, s2_div_state.wrapping_sub(div_state) & 0x3fff);
-      div_state_difference_metric += f64::from(u32::from(div_state_difference) << 18).sqrt() as u32;
-    }
-    div_state_difference_metric
-  }
 
   pub fn is_empty(&self) -> bool {
     self.states.is_empty()
@@ -142,48 +133,38 @@ impl<S: StateMetric> StateBuffer<S> {
   pub fn is_full(&self) -> bool {
     self.states.len() >= self.max_size
   }
-
-  pub fn save(&self, file_name: &str) {
-    let file_path = format!("saves/{}.gz", file_name);
-    let f = File::create(file_path).unwrap();
-    let f = ::flate2::write::GzEncoder::new(f, ::flate2::Compression::best());
-    ::bincode::serialize_into(f, &self).expect("saving statebuffer failed")
-  }
-  pub fn load(file_name: &str) -> Self {
-    let file_path = format!("saves/{}.gz", file_name);
-    let f = File::open(file_path).expect("file not found");
-    let f = ::flate2::read::GzDecoder::new(f);
-    ::bincode::deserialize_from(f).expect("loading statebuffer failed")
+  pub fn get_max_size(&self) -> usize {
+    self.max_size
   }
 }
 
-impl FromIterator<State> for StateBuffer {
-  fn from_iter<I: IntoIterator<Item=State>>(iter: I) -> Self {
+impl<V, S: StateMetric> FromIterator<State<V>> for StateBuffer<V, S> {
+  fn from_iter<I: IntoIterator<Item=State<V>>>(iter: I) -> Self {
     let mut sb = StateBuffer::new();
     sb.add_all(iter);
     sb
   }
 }
 
-impl IntoIterator for StateBuffer {
-  type Item = State;
+impl<V, S: StateMetric> IntoIterator for StateBuffer<V, S> {
+  type Item = State<V>;
   #[allow(clippy::type_complexity)]
-  type IntoIter = std::iter::Map<std::collections::hash_map::IntoIter<u32, State>, fn((u32, State)) -> State>;
+  type IntoIter = std::iter::Map<std::collections::hash_map::IntoIter<u32, State<V>>, fn((u32, State<V>)) -> State<V>>;
 
   fn into_iter(self) -> Self::IntoIter {
-    self.states.into_iter().map(|(_, v)| v)
+    self.states.into_iter().map(|(_, s)| s)
   }
 }
-impl<'a> IntoIterator for &'a StateBuffer {
-  type Item = &'a State;
-  type IntoIter = std::collections::hash_map::Values<'a, u32, State>;
+impl<'a, V, S: StateMetric> IntoIterator for &'a StateBuffer<V, S> {
+  type Item = &'a State<V>;
+  type IntoIter = std::collections::hash_map::Values<'a, u32, State<V>>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.states.values()
   }
 }
 
-impl fmt::Display for StateBuffer {
+impl<V, S: StateMetric> fmt::Display for StateBuffer<V, S> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let max_cycle_count = self.states.values().map(|s| s.cycle_count).max().unwrap_or(0);
     let min_cycle_count = self.states.values().map(|s| s.cycle_count).min().unwrap_or(0);

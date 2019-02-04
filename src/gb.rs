@@ -3,19 +3,39 @@ use gambatte::*;
 use serde_derive::{Serialize, Deserialize};
 use std::marker::PhantomData;
 
-pub trait StateRef {
-  fn to_state(self) -> State;
-  fn as_ref(&self) -> &State;
+pub trait StateRef<V = ()> {
+  fn to_state(self) -> State<V>;
+  fn as_ref(&self) -> &State<V>;
 }
-impl StateRef for State {
-  fn to_state(self) -> State { self }
-  fn as_ref(&self) -> &State { self }
+impl<V> StateRef<V> for State<V> {
+  fn to_state(self) -> State<V> { self }
+  fn as_ref(&self) -> &State<V> { self }
 }
-impl<'a, S: StateRef> StateRef for &'a S {
-  fn to_state(self) -> State { std::sync::Arc::clone(self.as_ref()) }
-  fn as_ref(&self) -> &State { (*self).as_ref() }
+impl<'a, V: Clone, S: StateRef<V>> StateRef<V> for &'a S {
+  fn to_state(self) -> State<V> { let s: &State<V> = self.as_ref(); let s: State<V> = s.clone(); s }
+  fn as_ref(&self) -> &State<V> { (*self).as_ref() }
 }
-pub type State = std::sync::Arc<RawState>;
+#[derive(Clone, Serialize, Deserialize)]
+pub struct State<V = ()> {
+  raw_state: std::sync::Arc<RawState>,
+  // Additional associated value
+  pub value: V,
+}
+impl<V> std::ops::Deref for State<V> {
+    type Target = RawState;
+
+    fn deref(&self) -> &RawState {
+        &self.raw_state
+    }
+}
+impl<V> State<V> {
+  pub fn replace_value<NV>(self, value: NV) -> State<NV> {
+    State {
+      raw_state: self.raw_state,
+      value,
+    }
+  }
+}
 /// Represents a saved state of a game execution.
 #[derive(Serialize, Deserialize)]
 pub struct RawState {
@@ -90,19 +110,24 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
 }
 impl <R: RngAddresses> Gb<R> {
   /// Saves the current execution state to a State object.
-  pub fn save(&mut self) -> State {
+  pub fn save(&mut self) -> State { self.save_valued(()) }
+  pub fn save_valued<V>(&mut self, value: V) -> State<V> {
     assert!(!self.skipped_relevant_inputs);
-    std::sync::Arc::new(RawState {
-      // save inherent state
-      gb_state: self.gb.save_state(),
-      inputs: self.inputs.clone(),
-      last_input_frame: self.last_input_frame,
-      is_at_input: self.is_at_input,
-      ignored_inputs: self.ignored_inputs,
-      // save derived state
-      cycle_count: self.gb.get_cycle_count(),
-      rng_state: if self.is_at_input { self.get_rng_state() } else { 0 },
-    })
+    State {
+      raw_state: std::sync::Arc::new(RawState {
+        // save inherent state
+        gb_state: self.gb.save_state(),
+        inputs: self.inputs.clone(),
+        last_input_frame: self.last_input_frame,
+        is_at_input: self.is_at_input,
+        ignored_inputs: self.ignored_inputs,
+        // save derived state
+        cycle_count: self.gb.get_cycle_count(),
+        rng_state: if self.is_at_input { self.get_rng_state() } else { 0 },
+      }),
+      // save associated value
+      value,
+    }
   }
   /// Determines the RNG state at the current point of the execution, represented as a number in [0x0, 0x3fffffff].
   fn get_rng_state(&self) -> u32 {
@@ -111,7 +136,7 @@ impl <R: RngAddresses> Gb<R> {
 }
 impl <R> Gb<R> {
   // Restores a saved execution state object.
-  pub fn restore(&mut self, s: &State) {
+  pub fn restore<V>(&mut self, s: &State<V>) {
     // load inherent state
     self.gb.load_state(&s.gb_state);
     self.skipped_relevant_inputs = false;
@@ -159,17 +184,13 @@ impl <R: JoypadAddresses> Gb<R> {
     self.is_at_input = false;
   }
 
-  /// Resumes the execution until the next decision point is reached.
-  pub fn step(&mut self) {
-    self.step_until_or_any_vblank(&[]); // slightly more performant than step_until
-  }
   /// Executes until any of the given addresses are about to be executed, or until the execution is about to read its next usable input.
   /// Returns the address which was hit (and stops the execution at this address), or a saved internal Gambatte state at the next usable input
   /// and the frames at which the two halves of the input were read (the running execution is stopped at reading the second half of the input).
   fn run_to_next_vblank_until(&mut self, addresses: &[i32]) -> RunToNextVBlankResult {
     loop {
       let hit = self.gb.run_until(&[&[R::JOYPAD_READ_FIRST_ADDRESS], addresses].concat());
-      if hit != R::JOYPAD_READ_FIRST_ADDRESS { return RunToNextVBlankResult::HitAddress(hit); }
+      if addresses.contains(&hit) { return RunToNextVBlankResult::HitAddress(hit); }
       let input_first_address_frame = self.gb.frame();
       if input_first_address_frame == self.last_input_frame[0] {
           println!("found multiple first inputs in frame {}, skipping possible input", self.last_input_frame[0]);
@@ -250,20 +271,21 @@ impl <R: JoypadAddresses> Gb<R> {
       input_frame[1] = self.gb.frame();
     }
   }
+
+  /// Resumes the execution until the next decision point is reached.
+  pub fn step(&mut self) {
+    assert!(!self.is_at_input);
+    match self.run_to_next_vblank_until(&[]) {
+      RunToNextVBlankResult::HitAddress(hit) => hit,
+      RunToNextVBlankResult::AtNextVBlank(s, input_frame) => self.skip_irrelevant_vblanks_until(&[], s, input_frame, /* allow_hit_after_relevant_input_read = */ false),
+    };
+  }
   /// Runs until any of the given addresses is hit, or the next decision point is reached.
   pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
     assert!(!self.is_at_input);
     match self.run_to_next_vblank_until(addresses) {
       RunToNextVBlankResult::HitAddress(hit) => hit,
       RunToNextVBlankResult::AtNextVBlank(s, input_frame) => self.skip_irrelevant_vblanks_until(addresses, s, input_frame, /* allow_hit_after_relevant_input_read = */ false),
-    }
-  }
-  /// Runs until any of the given addresses is hit, or any new input is read (whether or not it is a relevant input) and forwards to relevant input.
-  pub fn step_until_or_any_vblank(&mut self, addresses: &[i32]) -> i32 {
-    assert!(!self.is_at_input);
-    match self.run_to_next_vblank_until(addresses) {
-      RunToNextVBlankResult::HitAddress(hit) => hit,
-      RunToNextVBlankResult::AtNextVBlank(s, input_frame) => self.skip_irrelevant_vblanks_until(&[], s, input_frame, /* allow_hit_after_relevant_input_read = */ false),
     }
   }
   /// Runs until any of the given addresses is hit, or the next relevant input is being used.

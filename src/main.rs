@@ -66,9 +66,10 @@ fn test_gambatte() {
 }
 
 fn test_segment_end<R: Rom, E: GbExecutor<R>>(gbe: &mut E, sb: &StateBuffer, file_name: &str) {
+  let chosen_state = sb.into_iter().next().unwrap().clone();
   {
     println!("Creating sample input file...");
-    let inputs = gbe.execute(sb, move |gb, s, tx| {
+    let inputs = gbe.execute(&[&chosen_state], move |gb, s, tx| {
       gb.restore(&s);
       tx.send((gb.create_inputs(), s)).unwrap();
     }).into_map_iter().map(|(i, _)| i).min_by_key(Vec::len).unwrap();
@@ -77,7 +78,12 @@ fn test_segment_end<R: Rom, E: GbExecutor<R>>(gbe: &mut E, sb: &StateBuffer, fil
   println!("Rendering end states of {}", sb);
   gbe.execute(sb, move |gb, s, tx| {
     gb.restore(&s);
-    for _ in 0..10000 {
+    for _ in 0..10 {
+      gb.input(Input::empty());
+      gb.step();
+      std::thread::sleep(std::time::Duration::from_millis(1000));
+    }
+    for _ in 0..1000 {
       gb.input(Input::empty());
       gb.step();
     }
@@ -125,7 +131,7 @@ impl Segment<Blue> for BlueTestSegment {
 //     let sb = TextSegment::new(A).execute(gbe, sb); // ...awaits, let's go
 //     println!("{}", sb);
 //     sb.save("blue_test");
-    let sb = StateBuffer::load("blue_test");
+    let sb = StateBuffer::<()>::load("blue_test");
     let sb = MoveSegment::with_metric(R, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gbe, sb); println!("{}", sb);
     let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gbe, sb); println!("{}", sb);
     let sb = MoveSegment::with_metric(U, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gbe, sb); println!("{}", sb);
@@ -311,7 +317,7 @@ impl Segment<Yellow> for YellowTestSegment {
   //   let sb = MoveSegment::with_metric(NIL, FnMetric::new(|gb| {println!("{:?}", overworld::gen1::get_overworld_interaction_result(gb)); Some(())})).execute(gbe, sb); println!("{}", sb);
   //   let sb = SkipTextsSegment::new(4, B).execute(gbe, sb); // get Pikachu
   //   sb.save("yellow_before_collect_pikachu_2_256_wait1_");
-    let sb = StateBuffer::load("yellow_before_collect_pikachu_2_256_wait1_");
+    let sb: StateBuffer = StateBuffer::load("yellow_before_collect_pikachu_2_256_wait1_");
     let sb = SkipTextsSegment::new(2, B).with_buffer_size(4096).execute(gbe, sb); // get Pikachu
     let sb = TextSegment::new(A).with_buffer_size(4096).execute(gbe, sb); // Nickname?
     let sb = DelaySegment::new(MoveSegment::with_metric(B, Gen1DVMetric {}.filter(|v| {
@@ -330,7 +336,7 @@ impl Segment<Yellow> for YellowTestSegment {
       println!("Chosen DVs: {:?}", v); true
     }).into_unit())).with_debug_output(true).execute(gbe, sb);// println!("{}", sb);
     sb.save("yellow_after_collect_pikachu_256_div");
-    let sb = StateBuffer::load("yellow_after_collect_pikachu_256_div");
+    let sb = StateBuffer::<()>::load("yellow_after_collect_pikachu_256_div");
     let sb = IdentifyInputSegment::new().execute(gbe, sb);
     sleep(Duration::from_millis(1000));
 
@@ -398,20 +404,19 @@ impl Segment<Crystal> for CrystalTestSegment {
   type Key = ();
 
   fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<Crystal>>(&self, gbe: &mut E, _iter: I) -> HashMap<Self::Key, StateBuffer> {
-    // let sb = DelaySegment::new(MoveSegment::with_metric(A, NullMetric {})).with_debug_output(true).execute(gbe, _iter);
-    // println!("{}", sb);
-    // let sb = MoveSegment::new(START).with_max_skips(10).execute(gbe, sb);
-    // println!("{}", sb);
+    // let sb = MoveSegment::new(A).execute(gbe, _iter);
+    // let sb = MoveSegment::new(START).execute(gbe, sb);
     // let sb = MoveSegment::new(D).execute(gbe, sb); // options
     // let sb = MoveSegment::new(L|A).execute(gbe, sb); // fast options
     // let sb = MoveSegment::new(B).execute(gbe, sb); // back
     // let sb = MoveSegment::new(A).execute(gbe, sb); // new game
-    // println!("{}", sb);
     // let sb = SkipTextsSegment::new(1, A).execute(gbe, sb); // choose Boy
     // let sb = SkipTextsSegment::new(3, B).execute(gbe, sb);
-    // let sb = SkipTextsSegment::new(4, A).execute(gbe, sb); // time: 10:..
-    // let sb = TextSegment::new(A).expect_conflicting_inputs().execute(gbe, sb); // overslept
-    // let sb = MoveSegment::new(B).execute(gbe, sb); // overslept
+    // let sb = SkipTextsSegment::new(1, A).execute(gbe, sb); // time: 10:..
+    // let sb = SkipTextsSegment::new(1, A).with_skip_ends(2).execute(gbe, sb); // what // 10 oclock // ?
+    // let sb = SkipTextsSegment::new(1, A).execute(gbe, sb); // ? // How many minutes?
+    // let sb = SkipTextsSegment::new(1, A).with_skip_ends(2).execute(gbe, sb); // whoa // 00 min // ?
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(1).execute(gbe, sb); // day // overslept
     // let sb = SkipTextsSegment::new(17, B).execute(gbe, sb); // oak speech
     // let sb = MoveSegment::new(D).execute(gbe, sb); // Name: Chris
     // let sb = MoveSegment::new(A).execute(gbe, sb); // Name: Chris
@@ -419,17 +424,20 @@ impl Segment<Crystal> for CrystalTestSegment {
     // let sb = TextSegment::new(A).execute(gbe, sb); // ... seeing you later
     // println!("{}", sb);
     // sb.save("crystal_test");
-    // let sb = StateBuffer::load("crystal_test");
+    // let sb: StateBuffer = StateBuffer::load("crystal_test");
     // let sb = gen2::TurnSegment::new(R).execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = gen2::WalkToSegment::new(7, 0).into(gen2::OverworldInteractionResult::Warped).with_debug_output(true).execute(gbe, sb);
     // let sb = gen2::WarpSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = gen2::WalkToSegment::new(7, 2).with_debug_output(true).execute(gbe, sb);
     // let sb = gen2::WalkStepSegment::new(D).execute(gbe, sb); println!("{}", sb);
     // let sb = MoveSegment::with_metric(A, gen2::OverworldInteractionMetric {}.filter(|v| {println!("{:?}", v); if let gen2::OverworldInteractionResult::Interact(_) = v { true } else { false }}).into_unit()).execute(gbe, sb); println!("{}", sb);
-    // let sb = SkipTextsSegment::new(12, B).execute(gbe, sb); // mom speech
-    // let sb = SkipTextsSegment::new(2, A).execute(gbe, sb); // choose Sunday
+    // let sb = SkipTextsSegment::new(7, B).execute(gbe, sb); // mom speech
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(3).execute(gbe, sb); // received // PokeGear // . // Pokemon Gear
+    // let sb = SkipTextsSegment::new(4, B).execute(gbe, sb); // mom speech
+    // let sb = SkipTextsSegment::new(1, A).execute(gbe, sb); // choose Sunday
+    // let sb = SkipTextsSegment::new(1, A).with_skip_ends(1).execute(gbe, sb); // Sunday // is it?
     // let sb = SkipTextsSegment::new(1, B).execute(gbe, sb); // no DST
-    // let sb = SkipTextsSegment::new(1, A).execute(gbe, sb); // confirm time
+    // let sb = SkipTextsSegment::new(1, A).with_skip_ends(1).execute(gbe, sb); // 10:00 AM // confirm time
     // let sb = SkipTextsSegment::new(3, B).execute(gbe, sb); // mom speech
     // let sb = SkipTextsSegment::new(1, A).execute(gbe, sb); // know phone
     // let sb = SkipTextsSegment::new(5, B).execute(gbe, sb); // mom speech
@@ -437,8 +445,7 @@ impl Segment<Crystal> for CrystalTestSegment {
     // let sb = gen2::WalkToSegment::new(7, 7).with_debug_output(true).execute(gbe, sb);
     // let sb = gen2::WarpSegment::new().with_input(D).execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // sb.save("crystal_left_house");
-    // let sb = StateBuffer::load("crystal_left_house");
-    // // let sb = gen2::TurnSegment::new(L).execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
+    // let sb: StateBuffer = StateBuffer::load("crystal_left_house");
     // let sb = gen2::WalkToSegment::new(6, 3).into(gen2::OverworldInteractionResult::Warped).with_debug_output(true).execute(gbe, sb);
     // let sb = gen2::WarpSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
@@ -456,28 +463,33 @@ impl Segment<Crystal> for CrystalTestSegment {
     // let sb = MoveSegment::new(B).execute(gbe, sb); // close picture
     // let sb = SkipTextsSegment::new(2, A).execute(gbe, sb); // choose Totodile
     // sb.save("crystal_choose_starter");
-    // let sb = StateBuffer::load("crystal_choose_starter");
+    // let sb: StateBuffer = StateBuffer::load("crystal_choose_starter");
     // let sb = SkipTextsSegment::new(2, B).with_buffer_size(4096).execute(gbe, sb); println!("{}", sb); // elm speech
-    // let sb = TextSegment::new(A).with_buffer_size(4096).execute(gbe, sb); println!("{}", sb); // elm speech
+    // let sb = TextSegment::new(A).with_skip_ends(2).with_buffer_size(4096).execute(gbe, sb); println!("{}", sb); // Player received // Totodile // !
     // sb.save("crystal_choose_starter_unbounded");
-    // let sb = StateBuffer::load("crystal_choose_starter_unbounded");
+    // let sb: StateBuffer = StateBuffer::load("crystal_choose_starter_unbounded");
     // let sb = DelaySegment::new(MoveSegment::with_metric(B, Gen2DVMetric {}.filter(|v| {
     //   if v.atk < 15 || v.spc < 15 || v.spd < 15 { return false; }
     //   println!("Chosen DVs: {:?}", v); true
     // }).into_unit())).with_debug_output(true).execute(gbe, sb); println!("{}", sb);
-    // let sb = SkipTextsSegment::new(2, B).execute(gbe, sb); println!("{}", sb); // no nickname
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(2).execute(gbe, sb); println!("{}", sb); // nickname to // Totodile // you
+    // let sb = SkipTextsSegment::new(1, B).execute(gbe, sb); println!("{}", sb); // no nickname
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = SkipTextsSegment::new(11, B).execute(gbe, sb); // elm speech
     // let sb = gen2::TurnSegment::new(D).execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = gen2::WalkToSegment::new(4, 7).with_debug_output(true).execute(gbe, sb);
     // let sb = gen2::WalkStepSegment::new(D).into(gen2::OverworldInteractionResult::MapCoordEvent).execute(gbe, sb); println!("{}", sb);
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
-    // let sb = SkipTextsSegment::new(7, B).execute(gbe, sb); // aide speech
+    // let sb = SkipTextsSegment::new(2, B).execute(gbe, sb); // aide speech
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(2).execute(gbe, sb); // player received // potion // .
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(2).execute(gbe, sb); // player put // potion // in
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(2).execute(gbe, sb); // the // item pocket // .
+    // let sb = SkipTextsSegment::new(2, B).execute(gbe, sb); // aide speech
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = gen2::WalkToSegment::new(4, 11).with_debug_output(true).execute(gbe, sb);
     // let sb = gen2::WarpSegment::new().with_input(D).execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // sb.save("crystal_test_after_elm");
-    // let sb = StateBuffer::load("crystal_test_after_elm");
+    // let sb: StateBuffer = StateBuffer::load("crystal_test_after_elm");
     // let sb = gen2::WalkToSegment::new(-1, 8).into(gen2::OverworldInteractionResult::MapConnection).with_debug_output(true).execute(gbe, sb);
     // let sb = MoveSegment::new(NIL).execute(gbe, sb); println!("{}", sb); // MapConnection
     // let sb = gen2::WalkToSegment::new(9, 6).with_debug_output(true).execute(gbe, sb);
@@ -489,32 +501,40 @@ impl Segment<Crystal> for CrystalTestSegment {
     // let sb = gen2::WalkToSegment::new(17, 5).into(gen2::OverworldInteractionResult::Warped).with_debug_output(true).execute(gbe, sb);
     // let sb = gen2::WarpSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // sb.save("crystal_test_entered_mr_pokemon_house");
-    // let sb = StateBuffer::load("crystal_test_entered_mr_pokemon_house");
+    // let sb: StateBuffer = StateBuffer::load("crystal_test_entered_mr_pokemon_house");
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = SkipTextsSegment::new(2, B).execute(gbe, sb); // Mr.Pokemon speech
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
-    // let sb = SkipTextsSegment::new(14, B).execute(gbe, sb); // Mr.Pokemon speech
+    // let sb = SkipTextsSegment::new(2, B).execute(gbe, sb); // Mr.Pokemon speech
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(4).execute(gbe, sb); // // // put // mystery egg // in
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(2).execute(gbe, sb); // key poket // .
+    // let sb = SkipTextsSegment::new(10, B).execute(gbe, sb); // Mr.Pokemon speech
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
-    // let sb = SkipTextsSegment::new(29, B).execute(gbe, sb); // Oak speech
+    // let sb = SkipTextsSegment::new(23, B).execute(gbe, sb); // Oak speech
+    // let sb = SkipTextsSegment::new(1, B).with_skip_ends(1).execute(gbe, sb); // got pokedex // speech
+    // let sb = SkipTextsSegment::new(5, B).execute(gbe, sb); // Oak speech
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = SkipTextsSegment::new(4, B).execute(gbe, sb); // Mr.Pokemon speech
     // let sb = gen2::TurnSegment::new(D).execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // let sb = gen2::WalkStepSegment::new(D).execute(gbe, sb); println!("{}", sb);
     // let sb = gen2::WarpSegment::new().with_input(D).execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // sb.save("crystal_test_after_mr_pokemon_house");
-    let sb = StateBuffer::load("crystal_test_after_mr_pokemon_house");
-    let sb = MoveLoopSegment::new(gen2::OverworldInteractionMetric {}.filter(|v| {println!("{:?}", v); v != &gen2::OverworldInteractionResult::CountStepEvent}).into_unit()).execute(gbe, sb); println!("{}", sb);
-    let sb = SkipTextsSegment::new(4, B).execute(gbe, sb); // Elm phone call
-    let sb = TextSegment::new(A).execute(gbe, sb); // Elm phone call ends
-    let sb = gen2::WalkToSegment::new(7, 54).into(gen2::OverworldInteractionResult::MapConnection).with_debug_output(true).execute(gbe, sb);
-    let sb = MoveSegment::new(NIL).execute(gbe, sb); println!("{}", sb); // MapConnection
-    let sb = gen2::WalkToSegment::new(33, 7).into(gen2::OverworldInteractionResult::MapCoordEvent).with_debug_output(true).execute(gbe, sb);
-    let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
-    sb.save("crystal_test_before_rival1");
-    let sb = StateBuffer::load("crystal_test_before_rival1");
+    // let sb: StateBuffer = StateBuffer::load("crystal_test_after_mr_pokemon_house");
+    // let sb = MoveLoopSegment::new(gen2::OverworldInteractionMetric {}.filter(|v| {println!("{:?}", v); v != &gen2::OverworldInteractionResult::CountStepEvent}).into_unit()).execute(gbe, sb); println!("{}", sb);
+    // let sb = SkipTextsSegment::new(4, B).execute(gbe, sb); // Elm phone call
+    // let sb = TextSegment::new(A).with_skip_ends(6).with_debug_output(true).execute(gbe, sb); // Click // ... // ... // ...
+    // let sb = gen2::WalkToSegment::new(7, 54).into(gen2::OverworldInteractionResult::MapConnection).with_debug_output(true).execute(gbe, sb);
+    // let sb = MoveSegment::new(NIL).execute(gbe, sb); println!("{}", sb); // MapConnection
+    // let sb = gen2::WalkToSegment::new(33, 7).into(gen2::OverworldInteractionResult::MapCoordEvent).with_debug_output(true).execute(gbe, sb);
+    // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
+    // sb.save("crystal_test_before_rival1");
+    let sb: StateBuffer = StateBuffer::load("crystal_test_before_rival1");
     let sb = SkipTextsSegment::new(7, B).execute(gbe, sb); // pre-battle texts
-    let sb = SkipTextsSegment::new(1, B).execute(gbe, sb); // trainer wants to battle
-    let sb = SkipTextsSegment::new(1, B).execute(gbe, sb); // trainer sent out ...
+    let sb = SkipTextsSegment::new(2, B).execute(gbe, sb); // trainer wants to battle // trainer sent out
+    let sb = TextSegment::new(A).with_skip_ends(1).execute(gbe, sb); // chikorita // !
+    let sb = TextSegment::with_metric(A, Gen2AIChooseMoveMetric {}).with_skip_ends(2).with_debug_output(true).execute_split(gbe, sb).merge_state_buffers(); // Go // Totodile // !
+      // let sb = TextSegment::new(A).with_skip_ends(2).with_debug_output(true).execute(gbe, sb); // Go // Totodile // !
+    // let sb = SkipTextsSegment::new(1, B).execute(gbe, sb); // trainer sent out
     // let sb = TextSegment::new(A).execute(gbe, sb); // mon! / Go! mon!
 
     let sb = IdentifyInputSegment::new().execute(gbe, sb);

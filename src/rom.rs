@@ -28,6 +28,8 @@ pub trait TextAddresses {
   const TEXT_JOYPAD_ADDRESS: i32; // the element of JOYPAD_USE_ADDRESSES which is used in PrintLetterDelay
   const TEXT_AFTER_JOYPAD_ADDRESS: i32; // in PrintLetterDelay, after call to Joypad happened
   const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32; // in PrintLetterDelay, after wait loop is done
+  const TEXT_END_NOINPUT_ADDRESSES: &'static [i32]; // List of addresses signifying that the text output has ended without user interaction. Must include any address that leads to a different input use, and happen before any metric is supposed to be collected.
+  const TEXT_END_WITHINPUT_ADDRESSES: &'static [i32]; // List of addresses signifying that the text output has ended and the user is expected to press a button to continue.
   const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16; // variable which is checked in the busy-wait loop in PrintLetterDelay
   const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32]; // addresses of usages of joypad inputs which are safe for PrintLetterDelay to spill into. Should generally be idempotent to neutral inputs without losing additional frames.
 }
@@ -172,6 +174,15 @@ macro_rules! impl_red_blue_common_addresses {
       const TEXT_JOYPAD_ADDRESS: i32 = 0x3_4000; // _Joypad
       const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_38F9;
       const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_390F;
+      const TEXT_END_NOINPUT_ADDRESSES: &'static [i32] = &[
+        // 0x0_1AAD, // Char57; Address of the character $57 handler, used to end the text without any input required
+        0x0_1B55, // NextTextCommand; called when the next text command is being processed.
+      ];
+      const TEXT_END_WITHINPUT_ADDRESSES: &'static [i32] = &[
+        0x0_1AF8, // Char4B; Address of the character $4B handler, used to scroll text up after a button press
+        0x0_1AB4, // Char51; Address of the character $51 handler, used start a new paragraph of text
+        0x0_1A95, // Char58; Address of the character $58 handler, used to wait for a button press before ending the text
+      ];
       const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5;
       const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[
         0x0_3883, // WaitForTextScrollButtonPress
@@ -267,6 +278,15 @@ impl TextAddresses for Yellow {
   const TEXT_JOYPAD_ADDRESS: i32 = 0x3_402D; // _Joypad
   const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_38EE;
   const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_3904;
+  const TEXT_END_NOINPUT_ADDRESSES: &'static [i32] = &[
+    // 0x0_187B, // Char57; Address of the character $57 handler, used to end the text without any input required
+    0x0_192E, // NextTextCommand; called when the next text command is being processed.
+  ];
+  const TEXT_END_WITHINPUT_ADDRESSES: &'static [i32] = &[
+    0x0_18D1, // Char4B; Address of the character $4B handler, used to scroll text up after a button press
+    0x0_1882, // Char51; Address of the character $51 handler, used start a new paragraph of text
+    0x0_1863, // Char58; Address of the character $58 handler, used to wait for a button press before ending the text
+  ];
   const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5;
   const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[
     0x0_3879, // WaitForTextScrollButtonPress
@@ -379,6 +399,15 @@ macro_rules! impl_gold_silver_common_addresses {
       const TEXT_JOYPAD_ADDRESS: i32 = 0x0_0940; // in GetJoypad
       const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_320D;
       const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_322A;
+      const TEXT_END_NOINPUT_ADDRESSES: &'static [i32] = &[
+        // 0x0_1205, // DoneText; Address of the character $57 handler, used to end the text without any input required
+        0x0_1283, // DoTextUntilTerminator; called when the next text command is being processed.
+      ];
+      const TEXT_END_WITHINPUT_ADDRESSES: &'static [i32] = &[
+        0x0_11B0, // Char4B; Address of the character $4B handler, used to scroll text up after a button press
+        0x0_1187, // Paragraph; Address of the character $51 handler, used start a new paragraph of text
+        0x0_11EB, // PromptText; Address of the character $58 handler, used to wait for a button press before ending the text
+      ];
       const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xCEE9;
       const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[];
     }
@@ -444,6 +473,15 @@ impl TextAddresses for Crystal {
   const TEXT_JOYPAD_ADDRESS: i32 = 0x0_098F; // in GetJoypad
   const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_3168;
   const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_3185;
+  const TEXT_END_NOINPUT_ADDRESSES: &'static [i32] = &[
+    // 0x0_137C, // DoneText; Address of the character $57 handler, used to end the text without any input required
+    0x0_13F6, // DoTextUntilTerminator; called when the next text command is being processed.
+  ];
+  const TEXT_END_WITHINPUT_ADDRESSES: &'static [i32] = &[
+    0x0_131F, // _ContText; Address of the character $4B handler, used to scroll text up after a button press
+    0x0_12F2, // Paragraph; Address of the character $51 handler, used start a new paragraph of text
+    0x0_135A, // PromptText; Address of the character $58 handler, used to wait for a button press before ending the text
+  ];
   const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xCFB2;
   const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[];
 }

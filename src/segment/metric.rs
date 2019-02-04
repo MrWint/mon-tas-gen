@@ -8,6 +8,17 @@ pub trait Metric<R>: Sync {
   type ValueType: StateKey;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType>;
+  // evaluates the metric and if it returns Some(_), finish the current step.
+  fn evaluate_and_step<V>(&self, gb: &mut Gb<R>, s: State<V>, input: gambatte::Input) -> Option<Self::ValueType> where R: JoypadAddresses {
+    if let Some(value) = self.evaluate(gb) {
+      if gb.skipped_relevant_inputs { // restore state if metric overran next input
+        gb.restore(&s);
+        gb.input(input);
+      }
+      if !gb.is_at_input { gb.step(); }
+      Some(value)
+    } else { None }
+  }
 
   fn filter<F>(self, f: F) -> Filter<R, Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
     Filter { metric: self, f, _rom: PhantomData, }
@@ -177,15 +188,13 @@ impl<R: JoypadAddresses + Gen2DetermineMoveOrderAddresses> Metric<R> for Gen2Mov
   }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
-pub struct AIChosenMove(Move);
 #[allow(dead_code)]
 pub struct Gen2AIChooseMoveMetric {}
 impl<R: JoypadAddresses + Gen2AIChooseMoveAddresses> Metric<R> for Gen2AIChooseMoveMetric {
-  type ValueType = AIChosenMove;
+  type ValueType = Move;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     if gb.run_until_or_next_input_use(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
-    Some(AIChosenMove(Move::from_index(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS)).unwrap()))
+    Some(Move::from_index(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS)).unwrap())
   }
 }
