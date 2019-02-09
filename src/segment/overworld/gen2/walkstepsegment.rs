@@ -51,7 +51,7 @@ impl<R: Rom + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkStepSeg
           gb.restore(&s);
           gb.input(self.input);
           gb.step();
-          tx.send(((), gb.save())).unwrap();
+          tx.send(gb.save()).unwrap();
         }
         if skips >= self.max_skips || facing_dir != self.input { break; }
         gb.restore(&s);

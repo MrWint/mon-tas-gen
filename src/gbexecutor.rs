@@ -10,22 +10,28 @@ use std::sync::mpsc::{channel, IntoIter, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-pub trait StateKey: Eq + Hash + Debug + Send + 'static {}
-impl<T: Eq + Hash + Debug + Send + 'static> StateKey for T {}
-pub trait StateValue: Send + Sync + 'static {}
-impl<T: Send + Sync + 'static> StateValue for T {}
+pub trait StateValue: Send + 'static {}
+impl<T: Send + 'static> StateValue for T {}
+pub trait StateKey: Eq + Hash + Debug + StateValue {}
+impl<T: Eq + Hash + Debug + StateValue> StateKey for T {}
 
 pub trait GbExecutor<R: Rom> {
-  fn execute<V: StateValue, S: StateRef<V>, K: StateKey, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<V>, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<(K, State)>;
+  fn execute<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>>;
   fn get_initial_state(&mut self) -> State;
+  fn execute_state_fn<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>) -> OV + Send + Sync>(&mut self, states: I, f: F) -> std::iter::Map<std::sync::mpsc::IntoIter<State<OV>>, fn(State<OV>) -> (State, OV)> {
+    self.execute(states, |gb, s, tx| {
+      gb.restore(&s);
+      tx.send(s.replace_value(f(gb))).unwrap();
+    }).into_split_iter()
+  }
 }
 
 pub struct SingleGb<R> {
   gb: Gb<R>,
 }
 impl<R: Rom> GbExecutor<R> for SingleGb<R> {
-  fn execute<V: StateValue, S: StateRef<V>, K: StateKey, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<V>, Sender<(K, State)>) + Send + Sync>(&mut self, sb: I, f: F) -> GbResults<(K, State)> {
-    let (tx, rx) = channel::<(K, State)>();
+  fn execute<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, sb: I, f: F) -> GbResults<State<OV>> {
+    let (tx, rx) = channel::<State<OV>>();
     for s in sb {
       f(&mut self.gb, s.to_state(), tx.clone());
     }
@@ -116,42 +122,41 @@ impl<R: Rom> GbPool<R> {
 pub struct GbResults<T> {
     rx: Receiver<T>,
 }
-impl IntoIterator for GbResults<((), State)> {
-  type Item = State;
-  #[allow(clippy::type_complexity)]
-  type IntoIter = std::iter::Map<IntoIter<((), State)>, fn(((), State)) -> State>;
+impl<K> IntoIterator for GbResults<State<K>> {
+  type Item = State<K>;
+  type IntoIter = IntoIter<State<K>>;
 
   fn into_iter(self) -> Self::IntoIter {
-    self.rx.into_iter().map(|(_, v)| v)
+    self.rx.into_iter()
   }
 }
-impl<K: StateKey> GbResults<(K, State)> {
-  #[allow(dead_code)]
+impl<K> GbResults<State<K>> {
+  pub fn into_split_iter(self) -> std::iter::Map<std::sync::mpsc::IntoIter<State<K>>, fn(State<K>) -> (State, K)> {
+    self.rx.into_iter().map(State::split_state_and_value)
+  }
+  pub fn into_state_buffer(self, buffer_size: usize) -> StateBuffer<K> {
+    StateBuffer::from_iter_sized(self, buffer_size)
+  }
+}
+impl<K: Eq + Hash> GbResults<State<K>> {
   pub fn into_state_buffer_map(self, buffer_size: usize) -> HashMap<K, StateBuffer> {
     let mut result: HashMap<K, StateBuffer> = HashMap::new();
-    for (value, s) in self.into_map_iter() {
+    for (s, value) in self.into_split_iter() {
       result.entry(value).or_insert_with(|| StateBuffer::with_max_size(buffer_size)).add_state(s);
     }
     result
   }
-  pub fn into_map_iter(self) -> IntoIter<(K, State)> {
-      self.rx.into_iter()
-  }
-  #[allow(dead_code)]
-  pub fn into_state_buffer(self, buffer_size: usize) -> StateBuffer<K> {
-    StateBuffer::from_iter_sized(self.into_map_iter().map(|(v, s)| s.replace_value(v)), buffer_size)
-  }
 }
 
-type GbFn<'a, R, V, K> = dyn Fn(&mut Gb<R>, State<V>, Sender<(K, State)>) + Send + Sync + 'a;
+type GbFn<'a, R, IV, OV> = dyn Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync + 'a;
 impl<R: Rom> GbExecutor<R> for GbPool<R> {
-  fn execute<V: StateValue, S: StateRef<V>, K: StateKey, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<V>, Sender<(K, State)>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<(K, State)> {
+  fn execute<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>> {
     // Wrap functon in an Arc.
-    let f: Arc<GbFn<'_, R, V, K>> = Arc::new(f);
+    let f: Arc<GbFn<'_, R, IV, OV>> = Arc::new(f);
     // Erase lifetime constraints: The resulting iterator must be fully consumed before the life time of F ends (ideally within the same statement) for this to be safe.
-    let f: Arc<GbFn<'static, R, V, K>> = unsafe { std::mem::transmute(f) };
+    let f: Arc<GbFn<'static, R, IV, OV>> = unsafe { std::mem::transmute(f) };
 
-    let (tx, rx) = channel::<(K, State)>();
+    let (tx, rx) = channel::<State<OV>>();
 
     for s in states.into_iter() {
       let tx = tx.clone();

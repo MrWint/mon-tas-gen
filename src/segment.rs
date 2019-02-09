@@ -11,7 +11,7 @@ pub trait Segment<R: Rom> {
   type Key: StateKey;
 
   fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
-  fn execute<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer<Self::Key> where Self: Segment<R, Key=()> {
+  fn execute<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer<Self::Key> where Self::Key: Clone {
     self.execute_split(gb, iter).into_state_buffer()
   }
 }
@@ -53,7 +53,7 @@ pub trait SingleStateBuffer<K> {
 }
 impl<K: StateKey + Clone, S: std::hash::BuildHasher> SingleStateBuffer<K> for HashMap<K, StateBuffer, S> {
   fn into_state_buffer(self) -> StateBuffer<K> {
-    let max_size = self.iter().next().map_or(0, |(_, v)| v.get_max_size());
+    let max_size = self.iter().map(|(_, v)| v.get_max_size()).max().unwrap_or(0);
     StateBuffer::from_iter_sized(self.into_iter().flat_map(|(k, v)| v.into_iter().map(move |s| s.replace_value(k.clone()))), max_size)
   }
 }

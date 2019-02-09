@@ -35,6 +35,12 @@ impl<V> State<V> {
       value,
     }
   }
+  pub fn split_state_and_value(self) -> (State, V) {
+    (State {
+      raw_state: self.raw_state,
+      value: (),
+    }, self.value)
+  }
 }
 /// Represents a saved state of a game execution.
 #[derive(Serialize, Deserialize)]
@@ -110,8 +116,8 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
 }
 impl <R: RngAddresses> Gb<R> {
   /// Saves the current execution state to a State object.
-  pub fn save(&mut self) -> State { self.save_valued(()) }
-  pub fn save_valued<V>(&mut self, value: V) -> State<V> {
+  pub fn save(&mut self) -> State { self.save_with_value(()) }
+  pub fn save_with_value<V>(&mut self, value: V) -> State<V> {
     assert!(!self.skipped_relevant_inputs);
     State {
       raw_state: std::sync::Arc::new(RawState {

@@ -35,7 +35,7 @@ impl<R: Rom, M: Metric<R>> Segment<R> for MoveLoopSegment<M> {
       loop {
         gb.input(self.input);
         if let Some(value) = self.metric.evaluate(gb) {
-          tx.send((value, s)).unwrap();
+          tx.send(s.replace_value(value)).unwrap();
           debug!("MoveLoopSegment left after {} skips", skips);
           break;
         }

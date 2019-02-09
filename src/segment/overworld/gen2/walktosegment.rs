@@ -39,10 +39,9 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
   fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let initial_states: Vec<_> = iter.into_iter().collect();
     assert!(!initial_states.is_empty());
-    let map = gbe.execute(vec![&initial_states[0]], |gb, s, tx| {
-      gb.restore(&s);
-      tx.send((super::map::Map::default().load_gen2_map(gb), s)).unwrap();
-    }).into_map_iter().next().unwrap().0;
+    let map = gbe.execute_state_fn(vec![&initial_states[0]], |gb| {
+      super::map::Map::default().load_gen2_map(gb)
+    }).next().unwrap().1;
 
     debug!("WalkToSegment navigate to ({}, {})", self.dest_x as isize-6, self.dest_y as isize-6);
     if log_enabled!(log::Level::Debug) { debug!("tile collisions:\n{}", map.tile_collision_string()); }
@@ -86,12 +85,11 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
     let mut buffers = Vec::<StateBuffer>::new();
     for _ in 0..map.width * map.height { buffers.push(StateBuffer::with_max_size(self.buffer_size)); }
     let mut max_dist = -1;
-    for ((x, y), s) in gbe.execute(initial_states, |gb, s, tx| {
-      gb.restore(&s);
+    for (s, (x, y)) in gbe.execute_state_fn(initial_states, |gb| {
       let x = gb.gb.read_memory(R::PLAYER_X_MEM_ADDRESS) as usize + 2;
       let y = gb.gb.read_memory(R::PLAYER_Y_MEM_ADDRESS) as usize + 2;
-      tx.send(((x, y), s)).unwrap();
-    }).into_map_iter() {
+      (x, y)
+    }) {
       buffers[map.width * y + x].add_state(s);
       if max_dist < distances[map.width * y + x] { max_dist = distances[map.width * y + x]; }
     }
@@ -106,7 +104,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
             let sb = std::mem::replace(&mut buffers[map.width * y + x], StateBuffer::new());
             if sb.is_empty() { continue; }
             debug!("processing states at ({},{}) with dist {}, statebuffer {}", x as isize-6, y as isize-6, cur_dist, sb);
-            for ((nx, ny), s) in gbe.execute(sb, |gb, s, tx| {
+            for (s, (nx, ny)) in gbe.execute(sb, |gb, s, tx| {
               for &(dx, dy, input) in &[(0, 1, Input::DOWN), (0, -1, Input::UP), (1, 0, Input::RIGHT), (-1, 0, Input::LEFT)] {
                 if !map.tile_allowed_movements[map.width * y + x].contains(input) { continue; } // step not allowed
                 if y as isize + dy < 0 || y as isize + dy >= map.height as isize { continue; } // out of bounds
@@ -130,7 +128,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
                     gb.restore(&s);
                     gb.input(input);
                     gb.step();
-                    tx.send(((nx, ny), gb.save())).unwrap();
+                    tx.send(gb.save_with_value((nx, ny))).unwrap();
                   }
                   if facing_dir != input { break; }
                   gb.restore(&s);
@@ -139,7 +137,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
                   s = gb.save();
                 }
               }
-            }).into_map_iter() {
+            }).into_split_iter() {
               buffers[map.width * ny + nx].add_state(s);
             }
           }

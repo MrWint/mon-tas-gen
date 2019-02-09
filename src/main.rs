@@ -50,8 +50,8 @@ fn test_segment_end<R: Rom, E: GbExecutor<R>>(gbe: &mut E, sb: &StateBuffer, fil
     log::info!("Creating sample input file...");
     let inputs = gbe.execute(&[&chosen_state], move |gb, s, tx| {
       gb.restore(&s);
-      tx.send((gb.create_inputs(), s)).unwrap();
-    }).into_map_iter().map(|(i, _)| i).min_by_key(Vec::len).unwrap();
+      tx.send(s.replace_value(gb.create_inputs())).unwrap();
+    }).into_iter().map(|s| s.value).min_by_key(Vec::len).unwrap();
     Bk2Writer::new::<R>().write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
   }
   log::info!("Rendering end states of {}", sb);
@@ -67,7 +67,7 @@ fn test_segment_end<R: Rom, E: GbExecutor<R>>(gbe: &mut E, sb: &StateBuffer, fil
       gb.step();
     }
     std::thread::sleep(std::time::Duration::from_millis(100));
-    tx.send(((), s)).unwrap();
+    tx.send(s).unwrap();
   }).into_state_buffer_map(0);
 }
 

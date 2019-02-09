@@ -64,7 +64,7 @@ impl<R: Rom, M: Metric<R>> Segment<R> for MoveSegment<R, M> {
             gb.input(self.input);
           }
           if !gb.is_at_input { gb.step(); }
-          tx.send((value, gb.save())).unwrap();
+          tx.send(gb.save_with_value(value)).unwrap();
         }
         if skips >= self.max_skips { break; }
         gb.restore(&s);

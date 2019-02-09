@@ -75,7 +75,7 @@ impl<R: Rom, S: Segment<R>> Segment<R> for DelaySegment<R, S> {
         gb.restore(&s);
         gb.input(::gambatte::Input::empty());
         gb.step();
-        tx.send(((), gb.save())).unwrap();
+        tx.send(gb.save()).unwrap();
       }).into_iter().collect();
 
       skips += 1;
