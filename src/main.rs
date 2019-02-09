@@ -3,6 +3,7 @@ mod bk2;
 use crate::bk2::{Bk2Writer, read_bk2_inputs};
 use gambatte::*;
 use gambatte::inputs::*;
+use log::{LevelFilter::*};
 use montas::ftii;
 use montas::gb::*;
 #[allow(unused_imports)] use montas::gbexecutor::*;
@@ -12,14 +13,13 @@ use montas::segment::*;
 #[allow(unused_imports)] use montas::util::*;
 use montas::sdl::*;
 use montas::statebuffer::StateBuffer;
+use montas::util::with_log_level;
 use std::collections::HashMap;
 use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
-  // test_gambattesdl();
-  // test_gambattedll();
-  // if true {return;}
+  simple_logger::init_with_level(log::Level::Info).unwrap();
 
   // let mut gbe = SingleGb::<Crystal>::with_screen();
   // // let mut gbe = GbPool::<Crystal>::no_screen();
@@ -44,44 +44,23 @@ fn main() {
   CrystalTestSegment::run();
 }
 
-#[allow(dead_code)]
-fn test_gambatte() {
-  let sdl = Sdl::init_sdl(2, 3);
-  let mut gambatte1 = Gambatte::create("roms/gbc_bios.bin", "roms/yellow.gbc", false, SdlScreen::new(sdl.clone(), 0));
-  let mut gambatte2 = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false, SdlScreen::new(sdl, 1));
-  for _ in 0..5000 {
-    gambatte1.step();
-    gambatte2.step();
-    sleep(Duration::from_millis(0));
-  }
-  let state1 = gambatte1.save_state();
-  // let state2 = gambatte2.save_state();
-  gambatte1.load_state(&state1);
-  // gambatte2.load_state(&state2);
-  for _ in 0..5000 {
-    gambatte1.step();
-    gambatte2.step();
-    sleep(Duration::from_millis(0));
-  }
-}
-
 fn test_segment_end<R: Rom, E: GbExecutor<R>>(gbe: &mut E, sb: &StateBuffer, file_name: &str) {
   let chosen_state = sb.into_iter().next().unwrap().clone();
   {
-    println!("Creating sample input file...");
+    log::info!("Creating sample input file...");
     let inputs = gbe.execute(&[&chosen_state], move |gb, s, tx| {
       gb.restore(&s);
       tx.send((gb.create_inputs(), s)).unwrap();
     }).into_map_iter().map(|(i, _)| i).min_by_key(Vec::len).unwrap();
     Bk2Writer::new::<R>().write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
   }
-  println!("Rendering end states of {}", sb);
+  log::info!("Rendering end states of {}", sb);
   gbe.execute(sb, move |gb, s, tx| {
     gb.restore(&s);
     for _ in 0..10 {
       gb.input(Input::empty());
       gb.step();
-      std::thread::sleep(std::time::Duration::from_millis(1000));
+      std::thread::sleep(std::time::Duration::from_millis(500));
     }
     for _ in 0..1000 {
       gb.input(Input::empty());
@@ -320,7 +299,7 @@ impl Segment<Yellow> for YellowTestSegment {
     let sb: StateBuffer = StateBuffer::load("yellow_before_collect_pikachu_2_256_wait1_");
     let sb = SkipTextsSegment::new(2, B).with_buffer_size(4096).execute(gbe, sb); // get Pikachu
     let sb = TextSegment::new(A).with_buffer_size(4096).execute(gbe, sb); // Nickname?
-    let sb = DelaySegment::new(MoveSegment::with_metric(B, Gen1DVMetric {}.filter(|v| {
+    let sb = with_log_level(Debug, || { DelaySegment::new(MoveSegment::with_metric(B, Gen1DVMetric {}.filter(|v| {
       let dvs = u16::from(v.atk) << 12 | u16::from(v.def) << 8 | u16::from(v.spd) << 4 | u16::from(v.spc);
       let div = ((dvs >> 8) as u8).wrapping_sub(dvs as u8);
       if ::rand::random::<u8>() < 0x04 {
@@ -334,7 +313,7 @@ impl Segment<Yellow> for YellowTestSegment {
       if v.def != 0 && v.def != 1 { return false; }
       if v.spd != 12 && v.spd != 13 { return false; }
       println!("Chosen DVs: {:?}", v); true
-    }).into_unit())).with_debug_output(true).execute(gbe, sb);// println!("{}", sb);
+    }).into_unit())).execute(gbe, sb) });
     sb.save("yellow_after_collect_pikachu_256_div");
     let sb = StateBuffer::<()>::load("yellow_after_collect_pikachu_256_div");
     let sb = IdentifyInputSegment::new().execute(gbe, sb);
@@ -532,7 +511,7 @@ impl Segment<Crystal> for CrystalTestSegment {
     let sb = SkipTextsSegment::new(7, B).execute(gbe, sb); // pre-battle texts
     let sb = SkipTextsSegment::new(2, B).execute(gbe, sb); // trainer wants to battle // trainer sent out
     let sb = TextSegment::new(A).with_skip_ends(1).execute(gbe, sb); // chikorita // !
-    let sb = TextSegment::with_metric(A, Gen2AIChooseMoveMetric {}).with_skip_ends(2).with_debug_output(true).execute_split(gbe, sb).merge_state_buffers(); // Go // Totodile // !
+    let sb = with_log_level(Debug, || { TextSegment::with_metric(A, Gen2AIChooseMoveMetric {}).with_skip_ends(2).execute_split(gbe, sb).merge_state_buffers() }); // Go // Totodile // !
       // let sb = TextSegment::new(A).with_skip_ends(2).with_debug_output(true).execute(gbe, sb); // Go // Totodile // !
     // let sb = SkipTextsSegment::new(1, B).execute(gbe, sb); // trainer sent out
     // let sb = TextSegment::new(A).execute(gbe, sb); // mon! / Go! mon!

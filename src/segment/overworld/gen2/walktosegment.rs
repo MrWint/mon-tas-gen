@@ -3,7 +3,9 @@ use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
+use log::{debug, log_enabled};
 use std::collections::VecDeque;
+use std::fmt::Write;
 use super::OverworldInteractionResult;
 
 const MAX_WALK_STEP_SKIPS: u32 = 1;
@@ -13,7 +15,6 @@ pub struct WalkToSegment {
   dest_y: usize,
   into_result: OverworldInteractionResult,
   buffer_size: usize,
-  debug_output: bool,
 }
 impl WalkToSegment {
   #[allow(dead_code)]
@@ -23,7 +24,6 @@ impl WalkToSegment {
       dest_y: (dest_y + 6) as usize,
       into_result: OverworldInteractionResult::NoEvents,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
-      debug_output: false,
     }
   }
   #[allow(dead_code)]
@@ -31,9 +31,6 @@ impl WalkToSegment {
 }
 impl WithOutputBufferSize for WalkToSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
-}
-impl WithDebugOutput for WalkToSegment {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 
 impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkToSegment {
@@ -46,13 +43,10 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
       gb.restore(&s);
       tx.send((super::map::Map::default().load_gen2_map(gb), s)).unwrap();
     }).into_map_iter().next().unwrap().0;
-    if self.debug_output {
-      println!("WalkToSegment navigate to ({}, {})", self.dest_x as isize-6, self.dest_y as isize-6);
-      println!("tile collisions:");
-      map.print_tile_collision();
-      println!("allowed movements:");
-      map.print_tile_allowed_movements();
-    }    
+
+    debug!("WalkToSegment navigate to ({}, {})", self.dest_x as isize-6, self.dest_y as isize-6);
+    if log_enabled!(log::Level::Debug) { debug!("tile collisions:\n{}", map.tile_collision_string()); }
+    if log_enabled!(log::Level::Debug) { debug!("allowed movements:\n{}", map.tile_allowed_movements_string()); }
 
     // calculate distances
     let distances = {
@@ -77,14 +71,15 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
       distances
     };
 
-    if self.debug_output {
-      println!("distance map:");
+    if log_enabled!(log::Level::Debug) {
+      let mut buf = String::new();
       for y in 0..map.height {
         for x in 0..map.width {
-          print!(" {:2}", distances[map.width * y + x]);
+          write!(&mut buf, " {:2}", distances[map.width * y + x]).unwrap();
         }
-        println!();
+        write!(&mut buf, "\n").unwrap();
       }
+      debug!("distance map:\n{}", buf);
     }
 
     // initialize intermediate buffers
@@ -110,7 +105,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
           if distances[map.width * y + x] == cur_dist {
             let sb = std::mem::replace(&mut buffers[map.width * y + x], StateBuffer::new());
             if sb.is_empty() { continue; }
-            if self.debug_output { println!("processing states at ({},{}) with dist {}, statebuffer {}", x as isize-6, y as isize-6, cur_dist, sb); }
+            debug!("processing states at ({},{}) with dist {}, statebuffer {}", x as isize-6, y as isize-6, cur_dist, sb);
             for ((nx, ny), s) in gbe.execute(sb, |gb, s, tx| {
               for &(dx, dy, input) in &[(0, 1, Input::DOWN), (0, -1, Input::UP), (1, 0, Input::RIGHT), (-1, 0, Input::LEFT)] {
                 if !map.tile_allowed_movements[map.width * y + x].contains(input) { continue; } // step not allowed
@@ -131,7 +126,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
                     _ => panic!("got invalid direction"),
                   };
                   gb.input(input);
-                  if super::walkstepsegment::walk_step_check(gb, into_result, self.debug_output) {
+                  if super::walkstepsegment::walk_step_check(gb, into_result) {
                     gb.restore(&s);
                     gb.input(input);
                     gb.step();

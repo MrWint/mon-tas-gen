@@ -8,7 +8,6 @@ use std::marker::PhantomData;
 #[allow(dead_code)]
 pub struct ApplyIndividuallySegment<R, S> {
   segment: S,
-  debug_output: bool,
   buffer_size: usize,
   _rom: PhantomData<R>,
 }
@@ -17,14 +16,10 @@ impl<R, S> ApplyIndividuallySegment<R, S> {
   pub fn new(segment: S) -> Self {
     Self {
       segment,
-      debug_output: false,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       _rom: PhantomData,
     }
   }
-}
-impl<R, S> WithDebugOutput for ApplyIndividuallySegment<R, S> {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl<R, S> WithOutputBufferSize for ApplyIndividuallySegment<R, S> {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }

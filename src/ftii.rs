@@ -62,7 +62,7 @@ pub fn from_ftii<R: JoypadAddresses>(mut gb: Gambatte, hi_inputs: Vec<i32>, lo_i
     } else { panic!("Illegal return from step_until: {:#x}", hit); }
   }
   while inputs.last().unwrap_or(&Input::A).is_empty() { inputs.pop(); }
-  println!("conversion done: inputs: {}", inputs.len());
+  log::info!("conversion done: inputs: {}", inputs.len());
   inputs
 }
 
@@ -80,7 +80,7 @@ pub fn to_ftii<R: JoypadAddresses>(mut gb: Gambatte, inputs: Vec<Input>) -> (Vec
   let mut frame_read_count = 0;
   let mut multiple_reads_frames = vec![];
   let mut usage_without_read_frame_count = 0;
-  println!("converting input size {} ", inputs.len());
+  log::info!("converting input size {} ", inputs.len());
   loop {
     if hit == 0 {
       if frame_read_count > 1 { multiple_reads_frames.push(cur_frame); }
@@ -118,9 +118,9 @@ pub fn to_ftii<R: JoypadAddresses>(mut gb: Gambatte, inputs: Vec<Input>) -> (Vec
   while *lo_inputs.last().unwrap_or(&1) <= 0 { lo_inputs.pop(); }
   while *hi_inputs.last().unwrap_or(&1) <= 0 { hi_inputs.pop(); }
 
-  println!("conversion done: hi: {} lo: {}", hi_inputs.len(), lo_inputs.len());
-  println!("#frames which used a value not read in their frame: {}", usage_without_read_frame_count);
-  println!("frames which more than 1 read in their frame: {} ({:?})", multiple_reads_frames.len(), multiple_reads_frames);
-  println!("relevant inputs: hi: {} lo: {}", hi_inputs.len() - hi_inputs.iter().filter(|&n| *n == -1).count(), lo_inputs.len() - lo_inputs.iter().filter(|&n| *n == -1).count());
+  log::info!("conversion done: hi: {} lo: {}", hi_inputs.len(), lo_inputs.len());
+  log::info!("#frames which used a value not read in their frame: {}", usage_without_read_frame_count);
+  log::info!("frames which more than 1 read in their frame: {} ({:?})", multiple_reads_frames.len(), multiple_reads_frames);
+  log::info!("relevant inputs: hi: {} lo: {}", hi_inputs.len() - hi_inputs.iter().filter(|&n| *n == -1).count(), lo_inputs.len() - lo_inputs.iter().filter(|&n| *n == -1).count());
   (hi_inputs, lo_inputs)
 }

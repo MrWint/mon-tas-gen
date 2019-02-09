@@ -25,11 +25,11 @@ impl IdentifyInputSegment {
       gb.restore(s);
       gb.input(Input::empty());
       if super::is_correct_input_use(gb, pre, input, post) {
-        println!("Identified input as {}", name);
+        log::info!("IdentifyInputSegment: Identified input as {}", name);
         return;
       }
     }
-    println!("Input not identified");
+    log::info!("IdentifyInputSegment: Input not identified");
   }
 }
 

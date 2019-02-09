@@ -1,10 +1,10 @@
 use crate::gb::*;
 use crate::rom::*;
 use gambatte::Input;
+use std::fmt::Write;
 
 #[derive(Debug, Default, Hash, Eq, PartialEq)]
 pub struct Map {
-  debug_output: bool,
   allow_water_tiles: bool,
   pub width: usize,
   pub height: usize,
@@ -12,9 +12,6 @@ pub struct Map {
   pub tile_allowed_movements: Vec<Input>,
 }
 
-impl crate::segment::WithDebugOutput for Map {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
-}
 impl Map {
   #[allow(dead_code)]
   pub fn with_water_tiles(self) -> Self { Self { allow_water_tiles: true, ..self } }
@@ -118,20 +115,24 @@ impl Map {
     self
   }
 
-  pub fn print_tile_collision(&self) {
+  pub fn tile_collision_string(&self) -> String {
+    let mut buf = String::new();
     for y in 0..self.height {
       for x in 0..self.width {
-        print!(" {:02x}", self.tile_collision[self.width * y + x]);
+        write!(&mut buf, " {:02x}", self.tile_collision[self.width * y + x]).unwrap();
       }
-      println!();
+      write!(&mut buf, "\n").unwrap();
     }
+    buf
   }
-  pub fn print_tile_allowed_movements(&self) {
+  pub fn tile_allowed_movements_string(&self) -> String {
+    let mut buf = String::new();
     for y in 0..self.height {
       for x in 0..self.width {
-        print!(" {:02x}", self.tile_allowed_movements[self.width * y + x].bits());
+        write!(&mut buf, " {:02x}", self.tile_allowed_movements[self.width * y + x].bits()).unwrap();
       }
-      println!();
+      write!(&mut buf, "\n").unwrap();
     }
+    buf
   }
 }

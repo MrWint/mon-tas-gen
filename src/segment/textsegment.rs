@@ -3,6 +3,7 @@ use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
+use log::debug;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
@@ -13,15 +14,11 @@ pub struct TextSegment<R: Rom + TextAddresses, M> {
   letter_advance_input: Input,
   /// Metric evaluated at the end of this segment.
   metric: M,
-  debug_output: bool,
   buffer_size: usize,
   expect_conflicting_inputs: bool,
   ignore_conflicting_inputs: bool,
   ends_to_be_skipped: u32,
   _rom: PhantomData<R>,
-}
-impl<R: Rom + TextAddresses, M: Metric<R>> WithDebugOutput for TextSegment<R, M> {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl<R: Rom + TextAddresses, M: Metric<R>> WithOutputBufferSize for TextSegment<R, M> {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
@@ -31,7 +28,6 @@ impl<R: Rom + TextAddresses> TextSegment<R, NullMetric> {
     TextSegment {
       letter_advance_input,
       metric: NullMetric {},
-      debug_output: false,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       expect_conflicting_inputs: false,
       ignore_conflicting_inputs: false,
@@ -45,7 +41,6 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
     TextSegment {
       letter_advance_input,
       metric,
-      debug_output: false,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       expect_conflicting_inputs: false,
       ignore_conflicting_inputs: false,
@@ -170,7 +165,7 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
             if R::TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES.contains(&hit) || self.ignore_conflicting_inputs {
               gb.step(); /* finish overrunning into safe conflicting input */
               return Some((PrintLetterProgressResult::Finished(TextSegmentResult { printed_characters, end, metric_value }), gb.save()));
-            } else if !self.expect_conflicting_inputs { println!("WARNING: TextSegment found state with conflicting inputs between PrintLetterDelay and future inputs [{}].", gb.get_stack_trace_string()); }
+            } else if !self.expect_conflicting_inputs { log::warn!("TextSegment found state with conflicting inputs between PrintLetterDelay and future inputs [{}].", gb.get_stack_trace_string()); }
             return None;
           } else { return None; }
         }
@@ -203,7 +198,7 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
     let initial_state_buffer = gbe.execute(iter, move |gb, s, tx| {
       gb.restore(&s);
       if !Self::is_print_letter_delay_frame(gb) {
-        println!("WARNING: found State not at PrintLetterDelay initially, maybe there's another input before. Dropping state.");
+        log::warn!("found State not at PrintLetterDelay initially, maybe there's another input before. Dropping state.");
       } else {
         tx.send((PrintLetterState::BeforeFirstInputUse, s)).unwrap();
       }
@@ -216,7 +211,7 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
       let min_cycles: u32 = *active_states.keys().next().unwrap();
       let max_cycles: u32 = *active_states.keys().next_back().unwrap();
       let sb = active_states.remove(&min_cycles).unwrap();
-      if self.debug_output { println!("TextSegment loop cycles {}-{}, min cycle size {}, goal_buffer size {}", min_cycles, max_cycles, sb.len(), goal_buffer.len()); }
+      debug!("TextSegment loop cycles {}-{}, min cycle size {}, goal_buffer size {}", min_cycles, max_cycles, sb.len(), goal_buffer.len());
 
       for (result, s) in gbe.execute(sb, move |gb, s, tx| {
         if let Some(result) = self.progress_print_letter_delay_letter_advance_input(gb, s.clone()) {
@@ -228,7 +223,7 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
       }).into_map_iter() {
         match result {
           PrintLetterProgressResult::Finished(result) => {
-            if self.debug_output { println!("Add Goal state with result {:?}", result); }
+            debug!("Add Goal state with result {:?}", result);
             goal_buffer.entry(result.metric_value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_state(s)
           },
           PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped } => {

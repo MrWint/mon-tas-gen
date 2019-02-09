@@ -8,7 +8,6 @@ use super::OverworldInteractionResult;
 pub struct JumpLedgeSegment {
   input: Input,
   buffer_size: usize,
-  debug_output: bool,
 }
 impl JumpLedgeSegment {
   #[allow(dead_code)]
@@ -16,22 +15,18 @@ impl JumpLedgeSegment {
     Self {
       input,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
-      debug_output: false,
     }
   }
 }
 impl WithOutputBufferSize for JumpLedgeSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
-impl WithDebugOutput for JumpLedgeSegment {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
-}
 
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for JumpLedgeSegment {
   type Key = ();
 
   fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_split(gbe, iter)
+    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).execute_split(gbe, iter)
   }
 }
 
@@ -42,7 +37,7 @@ impl<R: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Metric<R> for J
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     let result = super::get_overworld_interaction_result(gb);
     if result != OverworldInteractionResult::JumpedLedge {
-      println!("JumpLedgeSegment jumping failed: {:?}", result); None
+      log::warn!("JumpLedgeSegment jumping failed: {:?}", result); None
     } else { Some(()) }
   }
 }

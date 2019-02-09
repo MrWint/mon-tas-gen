@@ -3,6 +3,7 @@ use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
+use log::debug;
 use super::OverworldInteractionResult;
 
 pub struct WalkStepSegment {
@@ -10,7 +11,6 @@ pub struct WalkStepSegment {
   into_result: OverworldInteractionResult,
   max_skips: u32,
   buffer_size: usize,
-  debug_output: bool,
 }
 impl WalkStepSegment {
   #[allow(dead_code)]
@@ -20,7 +20,6 @@ impl WalkStepSegment {
       into_result: OverworldInteractionResult::NoEvents,
       max_skips: 0,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
-      debug_output: false,
     }
   }
   #[allow(dead_code)]
@@ -30,9 +29,6 @@ impl WalkStepSegment {
 }
 impl WithOutputBufferSize for WalkStepSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
-}
-impl WithDebugOutput for WalkStepSegment {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 
 impl<R: Rom + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkStepSegment {
@@ -51,7 +47,7 @@ impl<R: Rom + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkStepSeg
           _ => panic!("got invalid direction"),
         };
         gb.input(self.input);
-        if walk_step_check(gb, &self.into_result, self.debug_output) {
+        if walk_step_check(gb, &self.into_result) {
           gb.restore(&s);
           gb.input(self.input);
           gb.step();
@@ -68,20 +64,20 @@ impl<R: Rom + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkStepSeg
   }
 }
 
-pub fn walk_step_check<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses>(gb: &mut Gb<T>, into_result: &OverworldInteractionResult, debug_output: bool) -> bool {
+pub fn walk_step_check<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses>(gb: &mut Gb<T>, into_result: &OverworldInteractionResult) -> bool {
   let result = super::get_overworld_interaction_result(gb);
   if let OverworldInteractionResult::Walked(_, _) = result {
     gb.step();
     gb.input(Input::empty());
     let result = super::get_overworld_interaction_result(gb);
     if result != *into_result {
-      if debug_output { println!("WalkStepSegment into_result failed: {:?}", result); }
+      debug!("WalkStepSegment into_result failed: {:?}", result);
       false
     } else {
       true
     }
   } else {
-    if debug_output { println!("WalkStepSegment walking failed: {:?}", result); }
+    debug!("WalkStepSegment walking failed: {:?}", result);
     false
   }
 }

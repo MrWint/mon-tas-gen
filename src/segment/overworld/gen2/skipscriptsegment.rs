@@ -4,13 +4,11 @@ use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 
 pub struct SkipScriptSegment {
-  debug_output: bool,
   buffer_size: usize,
 }
 impl Default for SkipScriptSegment {
   fn default() -> Self {
     Self {
-      debug_output: false,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
@@ -18,9 +16,6 @@ impl Default for SkipScriptSegment {
 impl SkipScriptSegment {
   #[allow(dead_code)]
   pub fn new() -> Self { Default::default() }
-}
-impl WithDebugOutput for SkipScriptSegment {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl WithOutputBufferSize for SkipScriptSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
@@ -34,6 +29,6 @@ impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for SkipScriptSegment {
         v != &super::OverworldInteractionResult::MapCoordEvent &&
         v != &super::OverworldInteractionResult::SceneScript &&
         v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::MapScript)
-    )).with_buffer_size(self.buffer_size).with_debug_output(self.debug_output).execute_split(gbe, iter)
+    )).with_buffer_size(self.buffer_size).execute_split(gbe, iter)
   }
 }

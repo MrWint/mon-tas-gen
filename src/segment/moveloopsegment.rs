@@ -3,11 +3,11 @@ use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
+use log::debug;
 
 pub struct MoveLoopSegment<M> {
   input: Input,
   metric: M,
-  debug_output: bool,
   buffer_size: usize,
 }
 impl <M> MoveLoopSegment<M> {
@@ -15,15 +15,11 @@ impl <M> MoveLoopSegment<M> {
     Self {
       input: Input::empty(),
       metric,
-      debug_output: false,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
   #[allow(dead_code)]
   pub fn with_input(self, input: Input) -> Self { Self { input, ..self } }
-}
-impl<M> WithDebugOutput for MoveLoopSegment<M> {
-  fn with_debug_output(self, debug_output: bool) -> Self { Self { debug_output, ..self } }
 }
 impl<M> WithOutputBufferSize for MoveLoopSegment<M> {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
@@ -40,7 +36,7 @@ impl<R: Rom, M: Metric<R>> Segment<R> for MoveLoopSegment<M> {
         gb.input(self.input);
         if let Some(value) = self.metric.evaluate(gb) {
           tx.send((value, s)).unwrap();
-          if self.debug_output { println!("MoveLoopSegment left after {} skips", skips); }
+          debug!("MoveLoopSegment left after {} skips", skips);
           break;
         }
         if gb.skipped_relevant_inputs { // restore state if metric overran next input

@@ -176,7 +176,7 @@ impl <R: JoypadAddresses> Gb<R> {
   pub fn input(&mut self, input: Input) {
     assert!(self.is_at_input);
     if input.intersects(self.ignored_inputs) {
-      println!("WARNING: part of inputs {:?} are ignored by mask {:?}", input, self.ignored_inputs);
+      log::warn!("Part of inputs {:?} are ignored by mask {:?}", input, self.ignored_inputs);
     }
     self.gb.set_input(input);
     self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
@@ -193,7 +193,7 @@ impl <R: JoypadAddresses> Gb<R> {
       if addresses.contains(&hit) { return RunToNextVBlankResult::HitAddress(hit); }
       let input_first_address_frame = self.gb.frame();
       if input_first_address_frame == self.last_input_frame[0] {
-          println!("found multiple first inputs in frame {}, skipping possible input", self.last_input_frame[0]);
+          log::warn!("found multiple first inputs in frame {}, skipping possible input", self.last_input_frame[0]);
           self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
           continue;
       }
@@ -201,7 +201,7 @@ impl <R: JoypadAddresses> Gb<R> {
       self.gb.run_until(&[R::JOYPAD_READ_LAST_ADDRESS]);
       let input_last_address_frame = self.gb.frame();
       if input_last_address_frame == self.last_input_frame[1] {
-          println!("found multiple last inputs in frame {}, skipping possible input", self.last_input_frame[1]);
+          log::warn!("found multiple last inputs in frame {}, skipping possible input", self.last_input_frame[1]);
           self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
           continue;
       }
@@ -323,7 +323,7 @@ impl <R: JoypadAddresses + RngAddresses> Gb<R> {
 
     self.restore(&tmp);
     while result.last().unwrap_or(&Input::A).is_empty() { result.pop(); }
-    println!("creating inputs done: #inputs: {}", result.len());
+    log::info!("creating inputs done: #inputs: {}", result.len());
     result
   }
 }

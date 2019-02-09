@@ -16,9 +16,6 @@ pub trait Segment<R: Rom> {
   }
 }
 
-pub trait WithDebugOutput {
-  fn with_debug_output(self, debug_output: bool) -> Self;
-}
 pub trait WithOutputBufferSize {
   fn with_buffer_size(self, buffer_size: usize) -> Self;
   fn with_unbounded_buffer(self) -> Self where Self: Sized {
