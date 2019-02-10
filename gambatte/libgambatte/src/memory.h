@@ -226,7 +226,7 @@ public:
 		return (((div << 8) + cc - divLastUpdate) >> 2) & 0x3FFF;
 	}
 
-	inline bool isInterrupt(uint32_t romAddress) { return cart.isInterrupt(romAddress); }
+	inline bool isInterrupt(uint32_t romAddress) { if (biosMode) return false; else return cart.isInterrupt(romAddress); }
 	inline void setInterrupt(uint32_t romAddress) { cart.setInterrupt(romAddress); }
 	inline void clearInterrupt(uint32_t romAddress) { cart.clearInterrupt(romAddress); }
 

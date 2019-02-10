@@ -8,7 +8,7 @@ use std::fs::File;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
 
-pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 256;
+pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
 pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 4096;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
@@ -173,7 +173,11 @@ impl<V, S: StateMetric> fmt::Display for StateBuffer<V, S> {
     let max_div = self.states.values().map(|s| s.get_div_state()).max().unwrap_or(0);
     let min_div = self.states.values().map(|s| s.get_div_state()).min().unwrap_or(0);
 
-    write!(f, "StateBuffer len {}, times {}-{}, dsums {:#x}-{:#x}, divs {:#x}-{:#x}", self.states.len(), to_human_readable_time(min_cycle_count), to_human_readable_time(max_cycle_count), min_dsum, max_dsum, min_div, max_div)
+    write!(f, "StateBuffer len {}, times {}-{}, dsums {:#x}-{:#x}, divs {:#x}-{:#x}, dsum graph: ", self.states.len(), to_human_readable_time(min_cycle_count), to_human_readable_time(max_cycle_count), min_dsum, max_dsum, min_div, max_div)?;
+    for i in 0..=255 {
+      write!(f, "{}", if self.states.values().map(|s| s.get_d_sum()).any(|v| v == i) { '|' } else { '.' })?;
+    }
+    Ok(())
   }
 }
 

@@ -124,15 +124,21 @@ pub trait TrainerIDAddresses {
   const TRAINER_ID_AFTER_GENERATION_ADDRESS: i32; // after trainer ID is determined
   const TRAINER_ID_MEM_ADDRESS: u16; // wPlayerID
 }
-pub trait Gen2DetermineMoveOrderAddresses {
-  const DETERMINE_MOVE_ORDER_START_ADDRESS: i32; // DetermineMoveOrder
-  const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32; // DetermineMoveOrder.player_first
-  const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32; // DetermineMoveOrder.enemy_first
+pub trait BattleDetermineMoveOrderAddresses {
+  const DETERMINE_MOVE_ORDER_START_ADDRESS: i32; // Before the move order check starts
+  const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32; // player goes first
+  const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32; // enemy goes first
 }
 pub trait Gen2AIChooseMoveAddresses {
   const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32; // BattleTurn.not_disconnected
   const CUR_ENEMY_MOVE_MEM_ADDRESS: u16; // wCurEnemyMove
 }
+pub trait BattleObedienceAddresses {
+  const CHECK_OBEDIENCE_START_ADDRESS: i32; // Before the obedience check starts
+  const CHECK_OBEDIENCE_OBEY_ADDRESS: i32; // Address reached when obeying
+  const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32; // Address reached when disobeying
+}
+
 
 // Gen 1
 #[allow(dead_code)]
@@ -243,6 +249,16 @@ macro_rules! impl_red_blue_common_addresses {
         (0x1_574A, 0x3_4000, 0x1_574D, "TradeCenter_SelectMon"),
         (0x0_3883, 0x3_4000, 0x0_3886, "WaitForTextScrollButtonPress"),
       ];
+    }
+    impl BattleDetermineMoveOrderAddresses for $t {
+      const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_42E5; // MainInBattleLoop.noLinkBattle
+      const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_437D; // MainInBattleLoop.playerMovesFirst
+      const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_433D; // MainInBattleLoop.enemyMovesFirst
+    }
+    impl BattleObedienceAddresses for $t {
+      const CHECK_OBEDIENCE_START_ADDRESS: i32 = 0x0F_5C88; // CheckForDisobedience
+      const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0F_569A; // CheckIfPlayerNeedsToChargeUp
+      const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0F_5CEB; // CheckForDisobedience.loop2
     }
     )+
   }
@@ -358,6 +374,16 @@ impl InputIdentificationAddresses for Yellow {
     (0x3E_523F, 0x3_402D, 0x3E_5242, "SurfingPikachu_GetJoypad_3FrameBuffer"),
   ];
 }
+impl BattleDetermineMoveOrderAddresses for Yellow {
+  const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_42FB; // MainInBattleLoop.noLinkBattle
+  const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_4393; // MainInBattleLoop.playerMovesFirst
+  const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_4353; // MainInBattleLoop.enemyMovesFirst
+}
+impl BattleObedienceAddresses for Yellow {
+  const CHECK_OBEDIENCE_START_ADDRESS: i32 = 0x0F_5DFA; // CheckForDisobedience
+  const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0F_580C; // CheckIfPlayerNeedsToChargeUp
+  const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0F_5E5D; // CheckForDisobedience.loop2
+}
 
 // Gen 2
 #[allow(dead_code)]
@@ -415,22 +441,95 @@ macro_rules! impl_gold_silver_common_addresses {
       const II_ADDRESSES: &'static [(i32, i32, i32, &'static str)] = &[
         // GetJoypad
         (0x0_320A, 0x0_0940, 0x0_320D, "PrintLetterDelay"),
-        (0x0_09EA, 0x0_098F, 0x0_09ED, "JoyWaitAorB"),
-        (0x0_136F, 0x0_098F, 0x0_1372, "Text_TX_EXIT"),
-        (0x0_13CC, 0x0_098F, 0x0_13CF, "Text_TX_DOTS"),
-        (0x1_6442, 0x0_098F, 0x1_6445, "TitleScreenMain_Function6434"),
-        (0x1_5E5E, 0x0_098F, 0x1_5E61, "ConfirmContinue"),
+        (0x0_09EA, 0x0_0940, 0x0_09ED, "JoyWaitAorB"),
+        (0x0_136F, 0x0_0940, 0x0_1372, "Text_TX_EXIT"),
+        (0x0_13CC, 0x0_0940, 0x0_13CF, "Text_TX_DOTS"),
+        (0x1_6442, 0x0_0940, 0x1_6445, "TitleScreenMain_Function6434"),
+        (0x1_5E5E, 0x0_0940, 0x1_5E61, "ConfirmContinue"),
         // JoyTextDelay
-        (0x00_0A8D, 0x0_098F, 0x00_0A90, "JoyWaitInput"),
-        (0x00_379A, 0x0_098F, 0x00_379D, "ScrollingMenuJoyTextDelay"),
-        (0x00_0A46, 0x0_098F, 0x00_0A49, "WaitPressAorB_BlinkCursor"),
-        (0x00_0A56, 0x0_098F, 0x00_0A59, "SimpleWaitPressAorB"),
-        (0x00_09D0, 0x0_098F, 0x00_09D3, "JoyTitleScreenInput"),
-        (0x04_4438, 0x0_098F, 0x04_443B, "Pack"),
-        (0x04_48CB, 0x0_098F, 0x04_48CE, "BattlePack"),
-        (0x04_5CD4, 0x0_098F, 0x04_5CD7, "NamingScreenJoypadLoop"),
-        (0x04_638D, 0x0_098F, 0x04_6390, "_ComposeMailMessage"),
+        (0x00_0A8D, 0x0_0940, 0x00_0A90, "JoyWaitInput"),
+        (0x00_379A, 0x0_0940, 0x00_379D, "ScrollingMenuJoyTextDelay"),
+        (0x00_0A46, 0x0_0940, 0x00_0A49, "WaitPressAorB_BlinkCursor"),
+        (0x00_0A56, 0x0_0940, 0x00_0A59, "SimpleWaitPressAorB"),
+        (0x00_09D0, 0x0_0940, 0x00_09D3, "JoyTitleScreenInput"),
+        (0x04_4438, 0x0_0940, 0x04_443B, "Pack"),
+        (0x04_48CB, 0x0_0940, 0x04_48CE, "BattlePack"),
+        (0x04_5CD4, 0x0_0940, 0x04_5CD7, "NamingScreenJoypadLoop"),
+        (0x04_638D, 0x0_0940, 0x04_6390, "_ComposeMailMessage"),
       ];
+    }
+    impl Gen2MapEventsAddresses for $t {
+      const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32 = 0x25_670f; // in HandleMapTimeAndJoypad
+      const OVERWORLD_JOYPAD_ADDRESS: i32 = 0x0_0940;
+      const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32 = 0x25_6712; // in HandleMapTimeAndJoypad
+      const PLAYER_EVENTS_ADDRESS: i32 = 0x25_675e; // PlayerEvents
+      const PLAYER_SCRIPT_RUNNING_MEM_ADDRESS: u16 = 0xd15f; // wScriptRunning
+      const PLAYER_EVENTS_SEEN_BY_TRAINER_ADDRESS: i32 = 0x25_679e; // in CheckTrainerBattle_GetPlayerEvent
+      const PLAYER_EVENTS_MAP_CONNECTION_ADDRESS: i32 = 0x25_67d3; // CheckTileEvent.map_connection
+      const PLAYER_EVENTS_WARP_ADDRESS: i32 = 0x25_67e3; // CheckTileEvent.not_pit
+      const PLAYER_EVENTS_FALL_ADDRESS: i32 = 0x25_67df; // CheckTileEvent.pit
+      const PLAYER_EVENTS_MAP_COORD_EVENT_ADDRESS: i32 = 0x25_67e7; // CheckTileEvent.coord_event
+      const PLAYER_EVENTS_COUNT_STEP_EVENT_ADDRESS: i32 = 0x25_6afe; // CountStep.doscript
+      const PLAYER_EVENTS_HATCH_ADDRESS: i32 = 0x25_6b02; // CountStep.hatch
+      const PLAYER_EVENTS_RANDOM_ENCOUNTER_ADDRESS: i32 = 0x25_7b25; // RandomEncounter.done
+      const PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS: u16 = 0xd117; // wTempWildMonSpecies
+      const PLAYER_EVENTS_RANDOM_ENCOUNTER_LEVEL_MEM_ADDRESS: u16 = 0xD040; // wCurPartyLevel
+      const PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS: i32 = 0x25_7a61+5; // in RunMemScript
+      const PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS: i32 = 0x25_6857; // in RunSceneScript
+      const PLAYER_EVENTS_END_BUG_CONTEST_ADDRESS: i32 = 0x25_6899; // CheckTimeEvents.end_bug_contest
+      const PLAYER_EVENTS_PHONE_CALL_ADDRESS: i32 = 0x24_40A2; // CheckPhoneCall.call
+      const PLAYER_EVENTS_WHIRLPOOL_FORCED_MOVEMENT_ADDRESS: i32 = 0x4_40C2; // DoPlayerMovement.CheckTile_whirlpool
+      const PLAYER_EVENTS_FORCED_MOVEMENT_ADDRESS: i32 = 0x04_413e; // DoPlayerMovement.continue_walk
+      const PLAYER_EVENTS_TURNING_ADDRESS: i32 = 0x04_4167; // DoPlayerMovement.CheckTurning_turning
+      const PLAYER_EVENTS_WALKING_DIRECTION_MEM_ADDRESS: u16 = 0xcf2e; // wWalkingDirection
+      const PLAYER_EVENTS_STEP_WALK_ADDRESS: i32 = 0x04_41AE; // DoPlayerMovement.walk
+      const PLAYER_EVENTS_STEP_BIKE_ADDRESS: i32 = 0x04_41A7; // DoPlayerMovement.fast
+      const PLAYER_EVENTS_STEP_BIKE_UPHILL_ADDRESS: i32 = 0x04_41A0; // DoPlayerMovement.bike_uphill
+      const PLAYER_EVENTS_STEP_ICE_ADDRESS: i32 = 0x04_41B5; // DoPlayerMovement.ice
+      const PLAYER_EVENTS_STEP_SURF_ADDRESS: i32 = 0x04_41DB; // DoPlayerMovement.surf_step
+      const PLAYER_EVENTS_STEP_OUT_OF_WATER_ADDRESS: i32 = 0x04_41E2; // DoPlayerMovement.ExitWater
+      const PLAYER_EVENTS_JUMP_LEDGE_ADDRESS: i32 = 0x04_421A; // DoPlayerMovement.TryJump_jump
+      const PLAYER_EVENTS_EDGE_WARP_ADDRESS: i32 = 0x04_4255; // DoPlayerMovement.CheckWarp_warp
+      const PLAYER_EVENTS_INTERACT_OBJECT_SCRIPT_ADDRESS: i32 = 0x25_6937; // TryObjectEvent.script
+      const PLAYER_EVENTS_INTERACT_OBJECT_ITEMBALL_ADDRESS: i32 = 0x25_6945; // TryObjectEvent.itemball
+      const PLAYER_EVENTS_INTERACT_OBJECT_TRAINER_ADDRESS: i32 = 0x25_695c; // TryObjectEvent.trainer
+      const PLAYER_EVENTS_INTERACT_BG_READ_ADDRESS: i32 = 0x25_69a5; // TryBGEvent.read
+      const PLAYER_EVENTS_INTERACT_BG_HIDDEN_ITEM_ADDRESS: i32 = 0x25_69d3; // TryBGEvent.hiddenItem
+      const PLAYER_EVENTS_INTERACT_BG_THENREAD_ADDRESS: i32 = 0x25_69f4; // TryBGEvent.thenread
+      const PLAYER_EVENTS_INTERACT_TILE_COLLISION_ADDRESS: i32 = 0x25_7aea; // TryTileCollisionEvent.done
+      const PLAYER_EVENTS_START_MENU_ADDRESS: i32 = 0x25_6a7a; // CheckMenuOW.Start
+      const PLAYER_EVENTS_SELECT_MENU_ADDRESS: i32 = 0x25_6a7e; // CheckMenuOW.Select
+      const PLAYER_EVENTS_NO_EVENTS_ADDRESS: i32 = 0x25_6785; // PlayerEvents.noEvents
+      const PLAYER_DIRECTION_MEM_ADDRESS: u16 = 0xD205; // wPlayerDirection
+    }
+    impl Gen2MapAddresses for $t {
+      const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc700; // wOverworldMap
+      const MAP_WIDTH_MEM_ADDRESS: u16 = 0xD088; // wMapWidth
+      const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd087; // wMapHeight
+      const TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd0c9; // wTilesetCollisionAddress
+      const TILESET_COLLISION_BANK_MEM_ADDRESS: u16 = 0xd0c8; // wTilesetCollisionBank
+      const TILE_COLLISION_TABLE_ADDRESS: i32 = 0x3e_74be; // TileCollisionTable
+      const MAP_OBJECTS_MEM_ADDRESS: u16 = 0xD445; // wMapObjects
+      const EVENT_FLAGS_MEM_ADDRESS: u16 = 0xd7b7; // wEventFlags
+      const PLAYER_X_MEM_ADDRESS: u16 = 0xd20d; // wPlayerStandingMapX
+      const PLAYER_Y_MEM_ADDRESS: u16 = 0xd20e; // wPlayerStandingMapY
+    }
+    impl Gen2DVAddresses for $t {
+      const AFTER_DV_GENERATION_ADDRESS: i32 = 0x03_59bb; // GeneratePartyMonStats.initializeDVs
+    }
+    impl BattleDetermineMoveOrderAddresses for $t {
+      const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_42cb; // DetermineMoveOrder
+      const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_43a8; // DetermineMoveOrder.player_first
+      const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_43aa; // DetermineMoveOrder.enemy_first
+    }
+    impl Gen2AIChooseMoveAddresses for $t {
+      const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0x0F_4148; // BattleTurn.not_disconnected
+      const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xCBC2; // wCurEnemyMove
+    }
+    impl BattleObedienceAddresses for $t {
+      const CHECK_OBEDIENCE_START_ADDRESS: i32 = 0x0D_43EA; // BattleCommand_CheckObedience
+      const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0D_4067; // DoMove.ReadMoveEffectCommand (for next command)
+      const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0D_4529; // IgnoreSleepOnly (at this point disobey is certain)
     }
     )+
   }
@@ -585,12 +684,12 @@ impl InputIdentificationAddresses for Crystal {
   ];
 }
 impl Gen2MapEventsAddresses for Crystal {
-  const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32 = 0x25_67CA;
+  const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32 = 0x25_67CA; // in HandleMapTimeAndJoypad
   const OVERWORLD_JOYPAD_ADDRESS: i32 = 0x0_098F;
-  const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32 = 0x25_67CD;
+  const OVERWORLD_AFTER_JOYPAD_ADDRESS: i32 = 0x25_67CD; // in HandleMapTimeAndJoypad
   const PLAYER_EVENTS_ADDRESS: i32 = 0x25_681F; // PlayerEvents
   const PLAYER_SCRIPT_RUNNING_MEM_ADDRESS: u16 = 0xd438; // wScriptRunning
-  const PLAYER_EVENTS_SEEN_BY_TRAINER_ADDRESS: i32 = 0x25_6870; // in CheckTrainerBattle3
+  const PLAYER_EVENTS_SEEN_BY_TRAINER_ADDRESS: i32 = 0x25_686E; // in CheckTrainerBattle_GetPlayerEvent
   const PLAYER_EVENTS_MAP_CONNECTION_ADDRESS: i32 = 0x25_68A6; // CheckTileEvent.map_connection
   const PLAYER_EVENTS_WARP_ADDRESS: i32 = 0x25_68B6; // CheckTileEvent.not_pit
   const PLAYER_EVENTS_FALL_ADDRESS: i32 = 0x25_68B2; // CheckTileEvent.pit
@@ -600,8 +699,8 @@ impl Gen2MapEventsAddresses for Crystal {
   const PLAYER_EVENTS_RANDOM_ENCOUNTER_ADDRESS: i32 = 0x25_7CF4; // RandomEncounter.done
   const PLAYER_EVENTS_RANDOM_ENCOUNTER_SPECIES_MEM_ADDRESS: u16 = 0xD22E; // wTempWildMonSpecies
   const PLAYER_EVENTS_RANDOM_ENCOUNTER_LEVEL_MEM_ADDRESS: u16 = 0xD143; // wCurPartyLevel
-  const PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS: i32 = 0x25_7C41; // RunMemScript.runScript
-  const PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS: i32 = 0x25_6936; // RunSceneScript.runScript
+  const PLAYER_EVENTS_REENTRY_SCRIPT_ADDRESS: i32 = 0x25_7C35; // in RunMemScript
+  const PLAYER_EVENTS_SCENE_SCRIPT_ADDRESS: i32 = 0x25_692a; // in RunSceneScript
   const PLAYER_EVENTS_END_BUG_CONTEST_ADDRESS: i32 = 0x25_6966; // CheckTimeEvents.end_bug_contest
   const PLAYER_EVENTS_PHONE_CALL_ADDRESS: i32 = 0x24_40A2; // CheckPhoneCall.call
   const PLAYER_EVENTS_WHIRLPOOL_FORCED_MOVEMENT_ADDRESS: i32 = 0x20_40C2; // DoPlayerMovement.CheckTile_whirlpool
@@ -643,7 +742,7 @@ impl Gen2MapAddresses for Crystal {
 impl Gen2DVAddresses for Crystal {
   const AFTER_DV_GENERATION_ADDRESS: i32 = 0x03_59B5; // GeneratePartyMonStats.initializeDVs
 }
-impl Gen2DetermineMoveOrderAddresses for Crystal {
+impl BattleDetermineMoveOrderAddresses for Crystal {
   const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_4314; // DetermineMoveOrder
   const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_43F1; // DetermineMoveOrder.player_first
   const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_43F3; // DetermineMoveOrder.enemy_first
@@ -651,4 +750,9 @@ impl Gen2DetermineMoveOrderAddresses for Crystal {
 impl Gen2AIChooseMoveAddresses for Crystal {
   const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0x0F_4174; // BattleTurn.not_disconnected
   const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xC6E4; // wCurEnemyMove
+}
+impl BattleObedienceAddresses for Crystal {
+  const CHECK_OBEDIENCE_START_ADDRESS: i32 = 0x0D_43DB; // BattleCommand_CheckObedience
+  const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0D_4058; // DoMove.ReadMoveEffectCommand (for next command)
+  const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0D_451F; // IgnoreSleepOnly (at this point disobey is certain)
 }

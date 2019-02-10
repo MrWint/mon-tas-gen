@@ -10,8 +10,8 @@ use std::marker::PhantomData;
 /// Segment for skipping past text which is written out character by character.
 /// Metrics are evaluated after the text finishes.
 pub struct TextSegment<R: Rom + TextAddresses, M> {
-  /// Input used to manually advance to the next letter.
-  letter_advance_input: Input,
+  /// Input can be pressed on the last decision point before the end of the segment. Useful so inputs can be newly pressed immediately.
+  allowed_end_inputs: Input,
   /// Metric evaluated at the end of this segment.
   metric: M,
   buffer_size: usize,
@@ -24,9 +24,9 @@ impl<R: Rom + TextAddresses, M: Metric<R>> WithOutputBufferSize for TextSegment<
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 impl<R: Rom + TextAddresses> TextSegment<R, NullMetric> {
-  pub fn new(letter_advance_input: Input) -> Self {
+  pub fn new() -> Self {
     TextSegment {
-      letter_advance_input,
+      allowed_end_inputs: Input::all(),
       metric: NullMetric {},
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       expect_conflicting_inputs: false,
@@ -37,9 +37,9 @@ impl<R: Rom + TextAddresses> TextSegment<R, NullMetric> {
   }
 }
 impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
-  pub fn with_metric(letter_advance_input: Input, metric: M) -> Self {
+  pub fn with_metric(metric: M) -> Self {
     TextSegment {
-      letter_advance_input,
+      allowed_end_inputs: Input::all(),
       metric,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       expect_conflicting_inputs: false,
@@ -54,6 +54,8 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
   pub fn ignore_conflicting_inputs(self) -> Self { Self { ignore_conflicting_inputs: true, ..self } }
   /// How often is an "end" of the text expected (can happen when special characters are printed). This avoid inputs conflicting with the next text's inputs.
   pub fn with_skip_ends(self, ends_to_be_skipped: u32) -> Self { Self { ends_to_be_skipped, ..self } }
+  /// Input can be pressed on the last decision point before the end of the segment. Useful so inputs can be newly pressed immediately.
+  pub fn with_allowed_end_inputs(self, allowed_end_inputs: Input) -> Self { Self { allowed_end_inputs, ..self } }
 
   /// Checks whether the current decision point is a PrintLetterDelay input.
   /// Expected to be called when at a decision point.
@@ -73,15 +75,16 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
     loop {
       assert!(gb.step_until(&[R::TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS, R::JOYPAD_READ_FIRST_ADDRESS]) == R::JOYPAD_READ_FIRST_ADDRESS); // this should never leave the function before the next vblank
       if gb.step_until(&[R::TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS]) == 0 {
-        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped }));
+        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input: input }));
       }
       printed_characters += 1;
       let hit = gb.step_until(&[R::TEXT_END_NOINPUT_ADDRESSES, R::TEXT_END_WITHINPUT_ADDRESSES].concat());
       if hit == 0 {
-        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped }));
+        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input: input }));
       }
       let end = Self::hit_address_to_text_segment_end(hit).unwrap();
       if ends_to_be_skipped == 0 {
+        if !self.allowed_end_inputs.contains(input) { return None; }
         if let Some(metric_value) = self.metric.evaluate_and_step(gb, s, input) {
           return Some(gb.save_with_value(PrintLetterProgressResult::Finished(TextSegmentResult { printed_characters, end, metric_value })));
         } else { return None; }
@@ -97,9 +100,9 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
     match s.value {
       PrintLetterState::BeforeFirstInputUse => {
         assert!(gb.step_until(&[R::TEXT_JOYPAD_ADDRESS]) != 0); // This is guaranteed to hit by is_print_letter_delay_frame
-        Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters: 0, ends_to_be_skipped: self.ends_to_be_skipped })
+        Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters: 0, ends_to_be_skipped: self.ends_to_be_skipped, last_input: Input::all() })
       },
-      PrintLetterState::InProgress { mut printed_characters, mut ends_to_be_skipped } => {
+      PrintLetterState::InProgress { mut printed_characters, mut ends_to_be_skipped, last_input } => {
         let mut hit = gb.step_until(&[&[R::TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS], R::TEXT_END_NOINPUT_ADDRESSES, R::TEXT_END_WITHINPUT_ADDRESSES, &[R::TEXT_BEFORE_JOYPAD_ADDRESS, R::TEXT_JOYPAD_ADDRESS], R::JOYPAD_USE_ADDRESSES].concat());
         if hit == R::TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS {
           printed_characters += 1;
@@ -107,6 +110,7 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
         } 
         if let Some(end) = Self::hit_address_to_text_segment_end(hit) {
           if ends_to_be_skipped == 0 {
+            if !self.allowed_end_inputs.contains(last_input) { return None; }
             if let Some(metric_value) = self.metric.evaluate(gb) {
               return Some(PrintLetterProgressResult::Finished(TextSegmentResult { printed_characters, end, metric_value }));
             } else { return None; }
@@ -123,22 +127,22 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
           let hit = gb.step_until(&[R::TEXT_AFTER_JOYPAD_ADDRESS, R::TEXT_BEFORE_JOYPAD_ADDRESS]);
           assert!(hit == R::TEXT_AFTER_JOYPAD_ADDRESS, "hit unexpected decision point[2] at {:x}, stack [{}]", hit, gb.get_stack_trace_string());
         }
-        Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped })
+        Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input })
       },
     }
   }
-  fn progress_print_letter_delay_letter_advance_input(&self, gb: &mut Gb<R>, s: State<PrintLetterState>) -> Option<State<PrintLetterProgressResult<M::ValueType>>> {
-    let (printed_characters, ends_to_be_skipped) = match self.progress_print_letter_delay_run_until_input_processed(gb, &s, self.letter_advance_input) {
-      Some(PrintLetterProgressResult::Finished(result)) => return Some(s.replace_value(PrintLetterProgressResult::Finished(result))),
-      Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped }) => (printed_characters, ends_to_be_skipped),
+  fn progress_print_letter_delay_letter_advance_input(&self, gb: &mut Gb<R>, s: State<PrintLetterState>, input: Input) -> Option<State<PrintLetterProgressResult<M::ValueType>>> {
+    let (printed_characters, ends_to_be_skipped) = match self.progress_print_letter_delay_run_until_input_processed(gb, &s, input) {
+      Some(PrintLetterProgressResult::Finished(_)) => return None, // already submitted by the no_input case
+      Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input: _ }) => (printed_characters, ends_to_be_skipped),
       None => return None,
     };
-    self.progress_print_letter_delay_end_no_conflicts(gb, s, self.letter_advance_input, printed_characters, ends_to_be_skipped)
+    self.progress_print_letter_delay_end_no_conflicts(gb, s, input, printed_characters, ends_to_be_skipped)
   }
   fn progress_print_letter_delay_no_input(&self, gb: &mut Gb<R>, s: State<PrintLetterState>) -> Option<State<PrintLetterProgressResult<M::ValueType>>> {
     let (mut printed_characters, mut ends_to_be_skipped) = match self.progress_print_letter_delay_run_until_input_processed(gb, &s, Input::empty()) {
-      Some(PrintLetterProgressResult::Finished(_)) =>return None, // already submitted by the letter_advance_input case
-      Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped }) => (printed_characters, ends_to_be_skipped),
+      Some(PrintLetterProgressResult::Finished(result)) => return Some(s.replace_value(PrintLetterProgressResult::Finished(result))),
+      Some(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input: _ }) => (printed_characters, ends_to_be_skipped),
       None => return None,
     };
     loop {
@@ -146,7 +150,7 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
         return self.progress_print_letter_delay_end_no_conflicts(gb, s, Input::empty(), printed_characters, ends_to_be_skipped);
       }
       if gb.step_until(&[R::TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS]) == 0 {
-        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped }));
+        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input: Input::empty() }));
       }
       printed_characters += 1;
       let mut hit = gb.step_until(&[R::TEXT_END_NOINPUT_ADDRESSES, R::TEXT_END_WITHINPUT_ADDRESSES, &[R::TEXT_BEFORE_JOYPAD_ADDRESS], R::TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES, R::JOYPAD_USE_ADDRESSES].concat());
@@ -174,13 +178,13 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
         hit = gb.step_until(&[&[R::TEXT_BEFORE_JOYPAD_ADDRESS], R::TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES, R::JOYPAD_USE_ADDRESSES].concat());
       }
       if hit == 0 {
-        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped }));
+        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input: Input::empty() }));
       }
       if hit != R::TEXT_BEFORE_JOYPAD_ADDRESS {
         panic!("unexpected conflicting input detected at {:x} stack [{}]", hit, gb.get_stack_trace_string());
       }
       if gb.step_until(&[R::TEXT_JOYPAD_ADDRESS]) == 0 {
-        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped }));
+        return Some(gb.save_with_value(PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input: Input::empty() }));
       }
     }
   }
@@ -214,10 +218,13 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
       debug!("TextSegment loop cycles {}-{}, min cycle size {}, goal_buffer size {}", min_cycles, max_cycles, sb.len(), goal_buffer.len());
 
       for s in gbe.execute(sb, move |gb, s, tx| {
-        if let Some(result) = self.progress_print_letter_delay_letter_advance_input(gb, s.clone()) {
+        if let Some(result) = self.progress_print_letter_delay_no_input(gb, s.clone()) {
           tx.send(result).unwrap();
         }
-        if let Some(result) = self.progress_print_letter_delay_no_input(gb, s) {
+        if let Some(result) = self.progress_print_letter_delay_letter_advance_input(gb, s.clone(), Input::B) {
+          tx.send(result).unwrap();
+        }
+        if let Some(result) = self.progress_print_letter_delay_letter_advance_input(gb, s.clone(), Input::A) {
           tx.send(result).unwrap();
         }
       }) {
@@ -227,8 +234,8 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
             debug!("Add Goal state with result {:?}", result);
             goal_buffer.entry(result.metric_value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_state(s)
           },
-          PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped } => {
-            active_states.entry(printed_characters).or_insert_with(|| StateBuffer::with_max_size(intermediate_buffer_size)).add_state(s.replace_value(PrintLetterState::InProgress { printed_characters, ends_to_be_skipped }))
+          PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input } => {
+            active_states.entry(printed_characters).or_insert_with(|| StateBuffer::with_max_size(intermediate_buffer_size)).add_state(s.replace_value(PrintLetterState::InProgress { printed_characters, ends_to_be_skipped, last_input }))
           },
         }
       }
@@ -240,7 +247,7 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 enum PrintLetterState {
   BeforeFirstInputUse,
-  InProgress { printed_characters: u32, ends_to_be_skipped: u32 },
+  InProgress { printed_characters: u32, ends_to_be_skipped: u32, last_input: Input },
 }
 
 #[derive(Debug, Eq, Hash, PartialEq)]
@@ -259,5 +266,5 @@ enum TextSegmentEnd {
 #[derive(Debug, Eq, Hash, PartialEq)]
 enum PrintLetterProgressResult<V> {
   Finished(TextSegmentResult<V>),
-  ContinueAtLetter { printed_characters: u32, ends_to_be_skipped: u32 },
+  ContinueAtLetter { printed_characters: u32, ends_to_be_skipped: u32, last_input: Input },
 }

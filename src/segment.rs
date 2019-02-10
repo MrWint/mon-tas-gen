@@ -77,6 +77,7 @@ fn is_correct_input_use<R: JoypadAddresses>(gb: &mut Gb<R>, pre_address: i32, us
   }
 }
 
+pub mod battle;
 pub mod overworld;
 
 mod metric;

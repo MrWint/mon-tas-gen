@@ -33,16 +33,26 @@ MemPtrs::MemPtrs()
 MemPtrs::~MemPtrs() {
 	delete []memchunk_;
 	delete []interruptmemchunk_;
+#ifdef TRACE_LOGGING_ENABLED
+	delete []codetracememchunk_;
+#endif
 }
 
 void MemPtrs::reset(const unsigned rombanks, const unsigned rambanks, const unsigned wrambanks) {
 	delete []memchunk_;
 	delete []interruptmemchunk_;
+#ifdef TRACE_LOGGING_ENABLED
+	delete []codetracememchunk_;
+#endif
 	memchunk_len = 0x4000 + rombanks * 0x4000ul + 0x4000 + rambanks * 0x2000ul + wrambanks * 0x1000ul + 0x4000;
 	memchunk_ = new unsigned char[memchunk_len];
 
 	interruptmemchunk_ = new bool[rombanks * 0x4000ul];
 	std::memset(interruptmemchunk_, 0, rombanks * 0x4000ul);
+#ifdef TRACE_LOGGING_ENABLED
+	codetracememchunk_ = new bool[rombanks * 0x4000ul];
+	std::memset(codetracememchunk_, 0, rombanks * 0x4000ul);
+#endif
 
 	romdata_[0] = romdata();
 	rambankdata_ = romdata_[0] + rombanks * 0x4000ul + 0x4000;

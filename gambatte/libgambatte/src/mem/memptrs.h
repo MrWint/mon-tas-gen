@@ -19,7 +19,14 @@
 #ifndef MEMPTRS_H
 #define MEMPTRS_H
 
+// #define TRACE_LOGGING_ENABLED
+
 #include "newstate.h"
+
+#ifdef TRACE_LOGGING_ENABLED
+#include <fstream>
+#endif
+
 
 namespace gambatte {
 
@@ -39,6 +46,10 @@ class MemPtrs {
 	unsigned char *rambankdata_;
 	unsigned char *wramdataend_;
 	bool *interruptmemchunk_; // Somewhat wasteful but allows faster lookups
+#ifdef TRACE_LOGGING_ENABLED
+	bool *codetracememchunk_;
+	std::ofstream logout;
+#endif
 	
 	OamDmaSrc oamDmaSrc_;
 
@@ -85,7 +96,17 @@ public:
 	void setWrambank(unsigned bank);
 	void setOamDmaSrc(OamDmaSrc oamDmaSrc);
 
-	inline bool isInterrupt(uint32_t romAddress) { return interruptmemchunk_[romAddress]; }
+	inline bool isInterrupt(uint32_t romAddress) {
+#ifdef TRACE_LOGGING_ENABLED
+		if (!codetracememchunk_[romAddress]) {
+			if (!logout.is_open()) logout.open("codeTrace.bin", std::ios::binary);
+			logout.write((char*)&romAddress, 4);
+			logout.flush();
+			codetracememchunk_[romAddress] = true;
+		}
+#endif
+		return interruptmemchunk_[romAddress];
+	}
 	inline void setInterrupt(uint32_t romAddress) { interruptmemchunk_[romAddress] = true; }
 	inline void clearInterrupt(uint32_t romAddress) { interruptmemchunk_[romAddress] = false; }
 
