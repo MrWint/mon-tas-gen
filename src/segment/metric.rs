@@ -153,8 +153,16 @@ pub struct DVs {
   pub def: u8,
   pub spd: u8,
   pub spc: u8,
-  pub div_state: u16,
-  pub cycle_count: u64,
+}
+impl DVs {
+  pub fn from_u16_be(dvs: u16) -> DVs {
+    DVs {
+      atk: ((dvs >> 12) & 0xF) as u8,
+      def: ((dvs >> 8) & 0xF) as u8,
+      spd: ((dvs >> 4) & 0xF) as u8,
+      spc: ((dvs >> 0) & 0xF) as u8,
+    }
+  }
 }
 #[allow(dead_code)]
 pub struct Gen1DVMetric {}
@@ -165,19 +173,7 @@ impl<R: JoypadAddresses + Gen1DVAddresses> Metric<R> for Gen1DVMetric {
     if gb.run_until_or_next_input_use(R::AFTER_DV_GENERATION_ADDRESSES) == 0 { return None; }
     let registers = gb.gb.read_registers();
 
-    let atk = ((registers.a >> 4) & 0xF) as u8;
-    let def = ((registers.a) & 0xF) as u8;
-    let spd = ((registers.b >> 4) & 0xF) as u8;
-    let spc = ((registers.b) & 0xF) as u8;
-
-    Some(DVs {
-      atk,
-      def,
-      spd,
-      spc,
-      div_state: gb.gb.read_div_state(),
-      cycle_count: gb.gb.get_cycle_count(),
-    })
+    Some(DVs::from_u16_be((registers.a as u16) << 8 | (registers.b as u16)))
   }
 }
 #[allow(dead_code)]
@@ -189,19 +185,7 @@ impl<R: JoypadAddresses + Gen2DVAddresses> Metric<R> for Gen2DVMetric {
     if gb.run_until_or_next_input_use(&[R::AFTER_DV_GENERATION_ADDRESS]) == 0 { return None; }
     let registers = gb.gb.read_registers();
 
-    let atk = ((registers.b >> 4) & 0xF) as u8;
-    let def = ((registers.b) & 0xF) as u8;
-    let spd = ((registers.c >> 4) & 0xF) as u8;
-    let spc = ((registers.c) & 0xF) as u8;
-
-    Some(DVs {
-      atk,
-      def,
-      spd,
-      spc,
-      div_state: gb.gb.read_div_state(),
-      cycle_count: gb.gb.get_cycle_count(),
-    })
+    Some(DVs::from_u16_be((registers.b as u16) << 8 | (registers.c as u16)))
   }
 }
 #[allow(dead_code)]

@@ -41,7 +41,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
     assert!(!initial_states.is_empty());
     let map = gbe.execute_state_fn(vec![&initial_states[0]], |gb| {
       super::map::Map::default().load_gen2_map(gb)
-    }).next().unwrap().1;
+    }).into_split_iter().next().unwrap().1;
 
     debug!("WalkToSegment navigate to ({}, {})", self.dest_x as isize-6, self.dest_y as isize-6);
     if log_enabled!(log::Level::Debug) { debug!("tile collisions:\n{}", map.tile_collision_string()); }
@@ -89,7 +89,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
       let x = gb.gb.read_memory(R::PLAYER_X_MEM_ADDRESS) as usize + 2;
       let y = gb.gb.read_memory(R::PLAYER_Y_MEM_ADDRESS) as usize + 2;
       (x, y)
-    }) {
+    }).into_split_iter() {
       buffers[map.width * y + x].add_state(s);
       if max_dist < distances[map.width * y + x] { max_dist = distances[map.width * y + x]; }
     }

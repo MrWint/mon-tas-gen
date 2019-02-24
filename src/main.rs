@@ -5,6 +5,7 @@ use crate::bk2::{Bk2Writer, read_bk2_inputs};
 use gambatte::*;
 use gambatte::inputs::*;
 use log::{LevelFilter::*};
+use montas::constants::*;
 use montas::ftii;
 use montas::gb::*;
 #[allow(unused_imports)] use montas::gbexecutor::*;
@@ -37,6 +38,7 @@ fn main() {
   // if true {return;}
 
 
+  // playback_test();
   // playback_demos();
   // convert_efl();
 
@@ -463,17 +465,76 @@ impl Segment<Silver> for SilverTestSegment {
     // let sb = gen2::WalkToSegment::new(33, 7).into(gen2::OverworldInteractionResult::MapCoordEvent).execute(gbe, sb);
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // sb.save("silver_test_before_rival1");
-    let sb: StateBuffer = StateBuffer::load("silver_test_before_rival1");
-    let sb = SkipTextsSegment::new(7).execute(gbe, sb); // pre-battle texts
-    let sb = SkipTextsSegment::new(2).execute(gbe, sb); // trainer wants to battle // trainer sent out
-    let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2AIChooseMoveMetric {}).with_allowed_end_inputs(Input::all() - A).with_skip_ends(5).execute_split(gbe, sb).merge_state_buffers() }); // chikorita // ! // Go // Totodile // !
-    let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
-    let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
-    let sb = with_log_level(Debug, || { MoveSegment::with_metric(A, montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
-        .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey))).execute(gbe, sb) }); // Scratch
-    let sb = with_log_level(Debug, || { TextSegment::new().with_skip_ends(3).execute(gbe, sb) }); // mon // used // move // !
-      // let sb = TextSegment::new().execute(gbe, sb); // elm speech
+    // let sb: StateBuffer = StateBuffer::load("silver_test_before_rival1");
+    // let sb = SkipTextsSegment::new(7).execute(gbe, sb); // pre-battle texts
+    // let sb = SkipTextsSegment::new(2).execute(gbe, sb); // trainer wants to battle // trainer sent out
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2AIChooseMoveMetric {}.debug_print().expect(Move::Growl)).with_allowed_end_inputs(Input::all() - A).with_skip_ends(5).execute(gbe, sb) }); // chikorita // ! // Go // Totodile // !
+    // println!("Player: {:?}", gbe.execute_state(&sb, montas::segment::battle::MoveInfosFn::new(montas::segment::battle::Who::Player)).get_value_assert_all_equal());
+    // println!("Player: {:#?}", gbe.execute_state(&sb, montas::segment::battle::BattleMonInfoFn::new(montas::segment::battle::Who::Player)).get_value_assert_all_equal());
+    // println!("Enemy: {:?}", gbe.execute_state(&sb, montas::segment::battle::MoveInfosFn::new(montas::segment::battle::Who::Enemy)).get_value_assert_all_equal());
+    // println!("Enemy: {:#?}", gbe.execute_state(&sb, montas::segment::battle::BattleMonInfoFn::new(montas::segment::battle::Who::Enemy)).get_value_assert_all_equal());
+    // // Turn 1
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
+    // let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
+    // let sb = with_log_level(Debug, || {
+    //   DelaySegment::new(
+    //     MoveSegment::with_metric(A,
+    //         montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
+    //         .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey)))
+    //     .seq(TextSegment::with_metric(
+    //         montas::segment::battle::gen2::Gen2NormalHitMetric::with_expected_max_damage(5, 8).debug_print().expect(montas::segment::battle::gen2::FightTurnResult::CriticalHit { damage: 8, }))
+    //         .with_skip_ends(3).with_unbounded_buffer())
+    //     ).execute(gbe, sb) }); // Scratch //// mon // used // move // !
+    // let sb = TextSegment::new().execute(gbe, sb); // critical hit!
+    // let sb = MoveSegment::with_metric(A|B, montas::segment::battle::BattleObedienceMetric {}.expect(montas::segment::battle::BattleObedience::Obey)).execute(gbe, sb); // confirm
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2StatUpDownMetric {}.debug_print().expect(montas::segment::battle::gen2::FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer().execute(gbe, sb) }); // mon // used // move // !
+    // let sb = TextSegment::new().with_allowed_end_inputs(A).execute(gbe, sb); // but it failed!
+    // let sb = DelaySegment::new(MoveSegment::with_metric(B, montas::segment::battle::gen2::Gen2AIChooseMoveMetric {}.debug_print().expect(Move::Growl))).execute(gbe, sb); // confirm
+    // // Turn 2
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
+    // let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
+    // let sb = with_log_level(Debug, || {
+    //   DelaySegment::new(
+    //     MoveSegment::with_metric(A,
+    //         montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
+    //         .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey)))
+    //     .seq(TextSegment::with_metric(
+    //         montas::segment::battle::gen2::Gen2NormalHitMetric::with_expected_max_damage(5, 8).debug_print().expect(montas::segment::battle::gen2::FightTurnResult::CriticalHit { damage: 8, }))
+    //         .with_skip_ends(3).with_unbounded_buffer())
+    //     ).execute(gbe, sb) }); // Scratch //// mon // used // move // !
+    // let sb = TextSegment::new().execute(gbe, sb); // critical hit!
+    // let sb = with_log_level(Debug, || {
+    //   DelaySegment::new(
+    //     MoveSegment::with_metric(A|B,
+    //         montas::segment::battle::BattleObedienceMetric {}.expect(montas::segment::battle::BattleObedience::Obey))
+    //     .seq(TextSegment::with_metric(
+    //         montas::segment::battle::gen2::Gen2StatUpDownMetric {}.debug_print().expect(montas::segment::battle::gen2::FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer())
+    //     ).execute(gbe, sb) }); // confirm //// mon // used // move // !
+    // let sb = SkipTextsSegment::new(1).with_confirm_input(B).execute(gbe, sb); // but it failed!
+    // // Turn 3
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
+    // let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
+    // let sb = with_log_level(Debug, || { MoveSegment::with_metric(A, montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
+    //     .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey))).execute(gbe, sb) }); // Scratch
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2NormalHitMetric::with_expected_max_damage(5, 8).debug_print().expect(montas::segment::battle::gen2::FightTurnResult::Hit { damage: 5, })).with_skip_ends(3).with_unbounded_buffer().execute(gbe, sb) }); // mon // used // move // !
 
+    // sb.save("silver_test_rival1_defeated");
+    let sb: StateBuffer = StateBuffer::load("silver_test_rival1_defeated");
+
+    let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // enemy // mon // fainted
+    let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // mon // gained // num XP
+    let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // mon // grew to level // X
+    let sb = SkipTextsSegment::new(1).execute(gbe, sb); // ??? was defeated
+    let sb = SkipTextsSegment::new(1).execute(gbe, sb); // defeat text
+    let sb = SkipTextsSegment::new(1).with_skip_ends(1).execute(gbe, sb); // player got // X for winning
+
+    let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    let sb = SkipTextsSegment::new(5).execute(gbe, sb); // ... ... ... // name is ??? // world's greatest // mon // trainer
+    let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    let sb = gen2::TurnSegment::new(U).execute(gbe, sb);
+    let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(40, 7).into(gen2::OverworldInteractionResult::MapConnection).execute(gbe, sb) });
+
+    // let sb = with_log_level(Debug, || { TextSegment::new().with_skip_ends(0).execute(gbe, sb) }); // 
     // let sb = with_log_level(Debug, || { MoveSegment::with_metric(NIL, gen2::OverworldInteractionMetric {}.debug_print().into_unit()).execute(gbe, sb) }); println!("{}", sb);
     let sb = IdentifyInputSegment::new().execute(gbe, sb);
     println!("{}", sb);
@@ -565,7 +626,7 @@ impl Segment<Crystal> for CrystalTestSegment {
     // sb.save("crystal_choose_starter_unbounded");
     // let sb: StateBuffer = StateBuffer::load("crystal_choose_starter_unbounded");
     // let sb = with_log_level(Debug, || { DelaySegment::new(MoveSegment::with_metric(A | B, Gen2DVMetric {}.filter(|v| {
-    //   if v.atk < 15 || /*v.spc < 15 ||*/ v.spd < 15 { return false; }
+    //   if v.atk < 15 || v.def < 15 || v.spc < 15 || v.spd < 15 { return false; }
     //   log::debug!("Chosen DVs: {:?}", v); true
     // }).into_unit())).execute(gbe, sb) }); println!("{}", sb);
     // let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); println!("{}", sb); // nickname to // Totodile // you
@@ -624,17 +685,108 @@ impl Segment<Crystal> for CrystalTestSegment {
     // let sb = gen2::WalkToSegment::new(33, 7).into(gen2::OverworldInteractionResult::MapCoordEvent).execute(gbe, sb);
     // let sb = gen2::SkipScriptSegment::new().execute_split(gbe, sb).merge_state_buffers(); println!("{}", sb);
     // sb.save("crystal_test_before_rival1");
-    let sb: StateBuffer = StateBuffer::load("crystal_test_before_rival1");
-    let sb = SkipTextsSegment::new(7).execute(gbe, sb); // pre-battle texts
-    let sb = SkipTextsSegment::new(2).execute(gbe, sb); // trainer wants to battle // trainer sent out
-    let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2AIChooseMoveMetric {}).with_allowed_end_inputs(Input::all() - A).with_skip_ends(5).execute_split(gbe, sb).merge_state_buffers() }); // chikorita // ! // Go // Totodile // !
-    let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
-    let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
-    let sb = with_log_level(Debug, || { MoveSegment::with_metric(A, montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
-        .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey))).execute(gbe, sb) }); // Scratch
-    let sb = with_log_level(Debug, || { TextSegment::new().with_skip_ends(3).execute(gbe, sb) }); // mon // used // move // !
+    // let sb: StateBuffer = StateBuffer::load("crystal_test_before_rival1");
+    // let sb = SkipTextsSegment::new(7).execute(gbe, sb); // pre-battle texts
+    // let sb = SkipTextsSegment::new(2).execute(gbe, sb); // trainer wants to battle // trainer sent out
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2AIChooseMoveMetric {}.debug_print().expect(Move::Growl)).with_allowed_end_inputs(Input::all() - A).with_skip_ends(5).execute(gbe, sb) }); // chikorita // ! // Go // Totodile // !
+    // println!("Player: {:?}", gbe.execute_state(&sb, montas::segment::battle::MoveInfosFn::new(montas::segment::battle::Who::Player)).get_value_assert_all_equal());
+    // println!("Player: {:#?}", gbe.execute_state(&sb, montas::segment::battle::BattleMonInfoFn::new(montas::segment::battle::Who::Player)).get_value_assert_all_equal());
+    // println!("Enemy: {:?}", gbe.execute_state(&sb, montas::segment::battle::MoveInfosFn::new(montas::segment::battle::Who::Enemy)).get_value_assert_all_equal());
+    // println!("Enemy: {:#?}", gbe.execute_state(&sb, montas::segment::battle::BattleMonInfoFn::new(montas::segment::battle::Who::Enemy)).get_value_assert_all_equal());
+    // // Turn 1
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
+    // let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
+    // let sb = with_log_level(Debug, || { MoveSegment::with_metric(A, montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
+    //     .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey))).execute(gbe, sb) }); // Scratch
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2NormalHitMetric::with_expected_max_damage(5, 8).debug_print().expect(montas::segment::battle::gen2::FightTurnResult::CriticalHit { damage: 8, })).with_skip_ends(3).with_unbounded_buffer().execute(gbe, sb) }); // mon // used // move // !
+    // let sb = TextSegment::new().execute(gbe, sb); // critical hit!
+    // let sb = MoveSegment::with_metric(A|B, montas::segment::battle::BattleObedienceMetric {}.expect(montas::segment::battle::BattleObedience::Obey)).execute(gbe, sb); // confirm
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2StatUpDownMetric {}.debug_print().expect(montas::segment::battle::gen2::FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer().execute(gbe, sb) }); // mon // used // move // !
+    // let sb = SkipTextsSegment::new(1).with_confirm_input(B).execute(gbe, sb); // but it failed!
+    // // Turn 2
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
+    // let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
+    // let sb = with_log_level(Debug, || {
+    //   DelaySegment::new(
+    //     MoveSegment::with_metric(A,
+    //         montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
+    //         .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey)))
+    //     .seq(TextSegment::with_metric(
+    //         montas::segment::battle::gen2::Gen2NormalHitMetric::with_expected_max_damage(5, 8).debug_print().expect(montas::segment::battle::gen2::FightTurnResult::CriticalHit { damage: 8, }))
+    //         .with_skip_ends(3).with_unbounded_buffer())
+    //     ).execute(gbe, sb) }); // Scratch //// mon // used // move // !
+    // let sb = TextSegment::new().execute(gbe, sb); // critical hit!
+    // let sb = MoveSegment::with_metric(A|B, montas::segment::battle::BattleObedienceMetric {}.expect(montas::segment::battle::BattleObedience::Obey)).execute(gbe, sb); // confirm
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2StatUpDownMetric {}.debug_print().expect(montas::segment::battle::gen2::FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer().execute(gbe, sb) }); // mon // used // move // !
+    // let sb = SkipTextsSegment::new(1).with_confirm_input(B).execute(gbe, sb); // but it failed!
+    // // Turn 3
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // Fight
+    // let sb = MoveSegment::new(NIL).execute(gbe, sb); // neutral
+    // let sb = with_log_level(Debug, || { MoveSegment::with_metric(A, montas::segment::battle::BattleMoveOrderMetric {}.debug_print().expect(montas::segment::battle::MoveOrder::PlayerFirst)
+    //     .and_then(montas::segment::battle::BattleObedienceMetric {}.debug_print().expect(montas::segment::battle::BattleObedience::Obey))).execute(gbe, sb) }); // Scratch
+    // let sb = with_log_level(Debug, || { TextSegment::with_metric(montas::segment::battle::gen2::Gen2NormalHitMetric::with_expected_max_damage(5, 8).debug_print().expect(montas::segment::battle::gen2::FightTurnResult::Hit { damage: 5, })).with_skip_ends(3).with_unbounded_buffer().execute(gbe, sb) }); // mon // used // move // !
 
+    // sb.save("crystal_test_rival1_defeated");
+    // let sb: StateBuffer = StateBuffer::load("crystal_test_rival1_defeated");
 
+    // let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // enemy // mon // fainted
+    // let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // mon // gained // num XP
+    // let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // mon // grew to level // X
+    // let sb = SkipTextsSegment::new(1).execute(gbe, sb); // ??? was defeated
+    // let sb = SkipTextsSegment::new(1).execute(gbe, sb); // defeat text
+    // let sb = SkipTextsSegment::new(1).with_skip_ends(1).execute(gbe, sb); // player got // X for winning
+
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = SkipTextsSegment::new(5).execute(gbe, sb); // ... ... ... // name is ??? // world's greatest // mon // trainer
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = gen2::TurnSegment::new(U).execute(gbe, sb);
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(40, 7).into(gen2::OverworldInteractionResult::MapConnection).execute(gbe, sb) });
+    // let sb = MoveSegment::with_metric(NIL, gen2::OverworldInteractionMetric {}.expect(gen2::OverworldInteractionResult::MapConnection)).execute(gbe, sb); println!("{}", sb); // MapConnection
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(14, 12).execute(gbe, sb) });
+    // let sb = gen2::JumpLedgeSegment::new(D).execute(gbe, sb); println!("{}", sb);
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(42, 9).execute(gbe, sb) });
+    // let sb = gen2::JumpLedgeSegment::new(R).execute(gbe, sb); println!("{}", sb);
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(60, 9).into(gen2::OverworldInteractionResult::MapConnection).execute(gbe, sb) });
+    // let sb = MoveSegment::with_metric(NIL, gen2::OverworldInteractionMetric {}.expect(gen2::OverworldInteractionResult::MapConnection)).execute(gbe, sb); println!("{}", sb); // MapConnection
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(6, 3).into(gen2::OverworldInteractionResult::Warped).execute(gbe, sb) });
+    // let sb = gen2::WarpSegment::new().execute(gbe, sb); println!("{}", sb);
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(4, 5).into(gen2::OverworldInteractionResult::MapCoordEvent).execute(gbe, sb) });
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = SkipTextsSegment::new(7).execute(gbe, sb); // mon stolen
+    // let sb = SkipTextsSegment::new(1).with_confirm_input(B).execute(gbe, sb); // mon stolen
+    // let sb = MoveSegment::new(R).execute(gbe, sb); // B
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // B
+    // let sb = MoveSegment::new(START).execute(gbe, sb); // confirm
+    // let sb = MoveSegment::new(A).execute(gbe, sb); // confirm
+    // let sb = MoveSegment::new(B).execute(gbe, sb); // ?
+    // let sb = SkipTextsSegment::new(2).execute(gbe, sb); // so B was his name // thanks
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = gen2::WalkStepSegment::new(R).execute(gbe, sb);
+    // let sb = MoveSegment::with_metric(NIL, gen2::OverworldInteractionMetric {}.filter(|v| {println!("{:?}", v); v == &gen2::OverworldInteractionResult::NoEvents}).into_unit()).execute(gbe, sb); println!("{}", sb);
+    // let sb = gen2::TurnSegment::new(U).execute(gbe, sb); println!("{}", sb);
+    // let sb = MoveSegment::with_metric(A, gen2::OverworldInteractionMetric {}.expect(gen2::OverworldInteractionResult::Interact(gen2::InteractType::ObjectScript))).execute(gbe, sb); println!("{}", sb);
+    // let sb = SkipTextsSegment::new(5).execute(gbe, sb); // terrible // discovery // give egg
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = SkipTextsSegment::new(1).execute(gbe, sb); // this?
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = SkipTextsSegment::new(21).execute(gbe, sb); // egg // great discovery // what // incredible // potential
+    // let sb = gen2::TurnSegment::new(D).execute(gbe, sb); println!("{}", sb);
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(4, 7).execute(gbe, sb) });
+    // let sb = with_log_level(Debug, || { gen2::WalkToSegment::new(4, 8).into(gen2::OverworldInteractionResult::MapCoordEvent).execute(gbe, sb) });
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = SkipTextsSegment::new(2).execute(gbe, sb); // take balls
+    // let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // received // balls // !
+    // let sb = SkipTextsSegment::new(4).execute(gbe, sb); // take balls
+    // let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // player put // ball // in
+    // let sb = SkipTextsSegment::new(1).with_skip_ends(2).execute(gbe, sb); // the // ball pocket // .
+    // let sb = gen2::SkipScriptSegment::new().execute(gbe, sb);
+    // let sb = gen2::WalkToSegment::new(4, 11).execute(gbe, sb);
+    // let sb = gen2::WarpSegment::new().with_input(D).execute(gbe, sb); println!("{}", sb);
+    // sb.save("crystal_test_after_elm2");
+    let sb: StateBuffer = StateBuffer::load("crystal_test_after_elm2");
+
+    // let sb = with_log_level(Debug, || { TextSegment::new().with_skip_ends(0).execute(gbe, sb) }); // 
+    let sb = with_log_level(Debug, || { MoveSegment::with_metric(NIL, gen2::OverworldInteractionMetric {}.debug_print().into_unit()).execute(gbe, sb) }); println!("{}", sb);
     let sb = IdentifyInputSegment::new().execute(gbe, sb);
     sleep(Duration::from_millis(1000));
 
@@ -696,5 +848,16 @@ fn playback_demos() {
     if i == 8711 { gb1.write_memory(0xd179, 0x10); } // give XP
     if i == 11152 { gb3.write_memory(0xda32, 0x10); } // give XP
     if i == 47000 { gb4.write_memory(0xdce7, 0x20); } // give XP
+  }
+}
+
+#[allow(dead_code)]
+fn playback_test() {
+  let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/silver.gbc", false /* equal length frames */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  let inputs = read_bk2_inputs("temp/silver_test.bk2").unwrap();
+  for input in inputs {
+    gb.set_input(input); gb.step();
+    std::thread::sleep(std::time::Duration::from_millis(1));
   }
 }

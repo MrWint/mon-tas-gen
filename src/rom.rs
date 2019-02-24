@@ -4,11 +4,20 @@
 pub trait Rom: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static {}
 impl<R: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static> Rom for R {} 
 
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum Generation {
+  Gen1,
+  Gen2,
+}
+
 pub trait BasicRomInfo {
   const ROM_FILE_NAME: &'static str;
   const GAME_NAME: &'static str;
   const SHA1: &'static str;
   const BOARD_NAME: &'static str;
+  const GENERATION: Generation;
+  #[inline] fn is_gen1() -> bool { Self::GENERATION == Generation::Gen1 }
+  #[inline] fn is_gen2() -> bool { Self::GENERATION == Generation::Gen2 }
 }
 pub trait JoypadAddresses {
   const JOYPAD_READ_HI_ADDRESS: i32; // address in VBlank reading the joypad hi nybble
@@ -138,6 +147,32 @@ pub trait BattleObedienceAddresses {
   const CHECK_OBEDIENCE_OBEY_ADDRESS: i32; // Address reached when obeying
   const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32; // Address reached when disobeying
 }
+pub trait Gen2FightTurnAddresses {
+  const NEXT_BATTLE_COMMAND_ADDRESS: i32; // DoMove.ReadMoveEffectCommand (for next command)
+  const BATTLE_COMMAND_DOTURN_ADDRESS: i32; // BattleCommand_DoTurn
+  const OUT_OF_PP_ADDRESS: i32; // BattleCommand_DoTurn.out_of_pp
+  const BATTLE_COMMAND_DAMAGEVARIATION_ADDRESS: i32; // BattleCommand_DamageVariation
+  const CUR_DAMAGE_MEM_ADDRESS: u16; // wCurDamage
+  const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32; // BattleCommand_LowerSub
+  const ATTACK_MISSED_MEM_ADDRESS: u16; // wAttackMissed
+  const CRITICAL_HIT_MEM_ADDRESS: u16; // wCriticalHit
+}
+pub trait BattleMovesInfoAddresses {
+  const MOVES_ADDRESS: i32; // Moves
+  const MOVES_ENTRY_LENGTH: i32; // length of a single move
+
+  const GEN2_BADGES_MEM_ADDRESS: u16; // wJohtoBadges
+  const TYPE_MATCHUPS_ADDRESS: i32; // TypeMatchups
+}
+pub trait BattleMonInfoAddresses {
+  const BATTLE_MON_STRUCT_MEM_ADDRESS: u16; // wBattleMon
+  const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16; // wPlayerStatLevels
+  const BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16; // wPlayerStats
+
+  const ENEMY_MON_STRUCT_MEM_ADDRESS: u16; // wEnemyMon
+  const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16; // wEnemyStatLevels
+  const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16; // wEnemyStats
+}
 
 
 // Gen 1
@@ -148,6 +183,7 @@ impl BasicRomInfo for Red {
   const GAME_NAME: &'static str = "Pokemon - Red Version (USA, Europe)";
   const SHA1: &'static str = "EA9BCAE617FDF159B045185467AE58B2E4A48B9A";
   const BOARD_NAME: &'static str = "MBC3 ROM+RAM+BATTERY";
+  const GENERATION: Generation = Generation::Gen1;
 }
 #[allow(dead_code)]
 pub enum Blue {}
@@ -156,6 +192,7 @@ impl BasicRomInfo for Blue {
   const GAME_NAME: &'static str = "Pokemon - Blue Version (USA, Europe)";
   const SHA1: &'static str = "D7037C83E1AE5B39BDE3C30787637BA1D4C48CE2";
   const BOARD_NAME: &'static str = "MBC3 ROM+RAM+BATTERY";
+  const GENERATION: Generation = Generation::Gen1;
 }
 macro_rules! impl_red_blue_common_addresses {
   ($($t:ty),+) => {
@@ -273,6 +310,7 @@ impl BasicRomInfo for Yellow {
   const GAME_NAME: &'static str = "Pokemon - Yellow Version (USA, Europe)";
   const SHA1: &'static str = "CC7D03262EBFAF2F06772C1A480C7D9D5F4A38E1";
   const BOARD_NAME: &'static str = "MBC5 ROM+RAM+BATTERY";
+  const GENERATION: Generation = Generation::Gen1;
 }
 impl JoypadAddresses for Yellow {
   const JOYPAD_READ_HI_ADDRESS: i32 = 0x3_400A;
@@ -393,6 +431,7 @@ impl BasicRomInfo for Gold {
   const GAME_NAME: &'static str = "Pokemon - Gold Version (USA, Europe)";
   const SHA1: &'static str = "D8B8A3600A465308C9953DFA04F0081C05BDCB94";
   const BOARD_NAME: &'static str = "MBC3 ROM+TIMER+RAM+BATTERY";
+  const GENERATION: Generation = Generation::Gen2;
 }
 #[allow(dead_code)]
 pub enum Silver {}
@@ -401,6 +440,7 @@ impl BasicRomInfo for Silver {
   const GAME_NAME: &'static str = "Pokemon - Silver Version (USA, Europe)";
   const SHA1: &'static str = "49B163F7E57702BC939D642A18F591DE55D92DAE";
   const BOARD_NAME: &'static str = "MBC3 ROM+TIMER+RAM+BATTERY";
+  const GENERATION: Generation = Generation::Gen2;
 }
 macro_rules! impl_gold_silver_common_addresses {
   ($($t:ty),+) => {
@@ -531,6 +571,32 @@ macro_rules! impl_gold_silver_common_addresses {
       const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0D_4067; // DoMove.ReadMoveEffectCommand (for next command)
       const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0D_4529; // IgnoreSleepOnly (at this point disobey is certain)
     }
+    impl Gen2FightTurnAddresses for $t {
+      const NEXT_BATTLE_COMMAND_ADDRESS: i32 = 0x0D_4067; // DoMove.ReadMoveEffectCommand (for next command)
+      const BATTLE_COMMAND_DOTURN_ADDRESS: i32 = 0x0d_4699; // BattleCommand_DoTurn
+      const OUT_OF_PP_ADDRESS: i32 = 0x0D_4727; // BattleCommand_DoTurn.out_of_pp
+      const BATTLE_COMMAND_DAMAGEVARIATION_ADDRESS: i32 = 0x0D_4e4d; // BattleCommand_DamageVariation
+      const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xd141; // wCurDamage
+      const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32 = 0x0D_503e; // BattleCommand_LowerSub
+      const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xcb45; // wAttackMissed
+      const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xcb44; // wCriticalHit
+    }
+    impl BattleMovesInfoAddresses for $t {
+      const MOVES_ADDRESS: i32 = 0x10_5AFE; // Moves
+      const MOVES_ENTRY_LENGTH: i32 = 7; // length of a single move
+
+      const GEN2_BADGES_MEM_ADDRESS: u16 = 0xd57c; // wJohtoBadges
+      const TYPE_MATCHUPS_ADDRESS: i32 = 0x0D_4d01; // TypeMatchups
+    }
+    impl BattleMonInfoAddresses for $t {
+      const BATTLE_MON_STRUCT_MEM_ADDRESS: u16 = 0xCB0C; // wBattleMon
+      const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcbaa; // wPlayerStatLevels
+      const BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xcb94; // wPlayerStats
+
+      const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xD0EF; // wEnemyMon
+      const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcbb2; // wEnemyStatLevels
+      const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xcb9f; // wEnemyStats
+    }
     )+
   }
 }
@@ -543,6 +609,7 @@ impl BasicRomInfo for Crystal {
   const GAME_NAME: &'static str = "Pokemon - Crystal Version (USA, Europe)";
   const SHA1: &'static str = "F4CD194BDEE0D04CA4EAC29E09B8E4E9D818C133";
   const BOARD_NAME: &'static str = "MBC3 ROM+TIMER+RAM+BATTERY";
+  const GENERATION: Generation = Generation::Gen2;
 }
 impl JoypadAddresses for Crystal {
   const JOYPAD_READ_HI_ADDRESS: i32 = 0x0_0946;
@@ -755,4 +822,30 @@ impl BattleObedienceAddresses for Crystal {
   const CHECK_OBEDIENCE_START_ADDRESS: i32 = 0x0D_43DB; // BattleCommand_CheckObedience
   const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0D_4058; // DoMove.ReadMoveEffectCommand (for next command)
   const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0D_451F; // IgnoreSleepOnly (at this point disobey is certain)
+}
+impl Gen2FightTurnAddresses for Crystal {
+  const NEXT_BATTLE_COMMAND_ADDRESS: i32 = 0x0D_4058; // DoMove.ReadMoveEffectCommand (for next command)
+  const BATTLE_COMMAND_DOTURN_ADDRESS: i32 = 0x0D_4555; // BattleCommand_DoTurn
+  const OUT_OF_PP_ADDRESS: i32 = 0x0D_45E3; // BattleCommand_DoTurn.out_of_pp
+  const BATTLE_COMMAND_DAMAGEVARIATION_ADDRESS: i32 = 0x0D_4CFD; // BattleCommand_DamageVariation
+  const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xD256; // wCurDamage
+  const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32 = 0x0D_4EEE; // BattleCommand_LowerSub
+  const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xC667; // wAttackMissed
+  const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xC666; // wCriticalHit
+}
+impl BattleMovesInfoAddresses for Crystal {
+  const MOVES_ADDRESS: i32 = 0x10_5AFB; // Moves
+  const MOVES_ENTRY_LENGTH: i32 = 7; // length of a single move
+
+  const GEN2_BADGES_MEM_ADDRESS: u16 = 0xD857; // wJohtoBadges
+  const TYPE_MATCHUPS_ADDRESS: i32 = 0x0D_4BB1; // TypeMatchups
+}
+impl BattleMonInfoAddresses for Crystal {
+  const BATTLE_MON_STRUCT_MEM_ADDRESS: u16 = 0xC62C; // wBattleMon
+  const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xC6CC; // wPlayerStatLevels
+  const BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xC6B6; // wPlayerStats
+
+  const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xD206; // wEnemyMon
+  const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xC6D4; // wEnemyStatLevels
+  const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xC6C1; // wEnemyStats
 }

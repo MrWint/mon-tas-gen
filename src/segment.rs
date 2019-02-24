@@ -4,6 +4,7 @@ use crate::rom::*;
 use crate::statebuffer::StateBuffer;
 use std::collections::HashMap;
 use std::iter::FromIterator;
+use std::marker::PhantomData;
 
 
 /// Represents a transition from one decision point to another decision point.
@@ -13,6 +14,25 @@ pub trait Segment<R: Rom> {
   fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
   fn execute<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer<Self::Key> where Self::Key: Clone {
     self.execute_split(gb, iter).into_state_buffer()
+  }
+  fn seq<S2: Segment<R>>(self, s2: S2) -> SeqSegment<R, Self, S2> where Self: Sized + Segment<R, Key=()> {
+    SeqSegment {
+      s1: self,
+      s2,
+      _rom: PhantomData,
+    }
+  }
+}
+pub struct SeqSegment<R, S1, S2> {
+  s1: S1,
+  s2: S2,
+  _rom: PhantomData<R>,
+}
+impl <R: Rom, S1: Segment<R, Key=()>, S2: Segment<R>> Segment<R> for SeqSegment<R, S1, S2> {
+  type Key = S2::Key;
+  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+    let sb = self.s1.execute(gbe, iter);
+    self.s2.execute_split(gbe, sb)
   }
 }
 

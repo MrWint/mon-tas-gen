@@ -17,7 +17,7 @@ impl Map {
   pub fn with_water_tiles(self) -> Self { Self { allow_water_tiles: true, ..self } }
 
   #[allow(clippy::cyclomatic_complexity)]
-  pub fn load_gen2_map<T: JoypadAddresses + RngAddresses + Gen2MapAddresses>(mut self, gb: &mut Gb<T>) -> Self {
+  pub fn load_gen2_map<T: JoypadAddresses + RngAddresses + Gen2MapAddresses>(mut self, gb: &Gb<T>) -> Self {
     let map_block_width = gb.gb.read_memory(T::MAP_WIDTH_MEM_ADDRESS) as usize + 6;
     let map_block_height = gb.gb.read_memory(T::MAP_HEIGHT_MEM_ADDRESS) as usize + 6;
     self.width = map_block_width * 2;

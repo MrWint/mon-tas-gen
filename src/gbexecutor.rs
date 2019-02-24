@@ -15,14 +15,24 @@ impl<T: Send + 'static> StateValue for T {}
 pub trait StateKey: Eq + Hash + Debug + StateValue {}
 impl<T: Eq + Hash + Debug + StateValue> StateKey for T {}
 
+pub trait StateFn<R, OV> {
+  fn invoke(&self, gb: &Gb<R>) -> OV;
+}
+impl<R, OV, F: Fn(&Gb<R>) -> OV> StateFn<R, OV> for F {
+  fn invoke(&self, gb: &Gb<R>) -> OV { self(gb) }
+}
+
 pub trait GbExecutor<R: Rom> {
-  fn execute<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>>;
+  fn execute<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>>;
   fn get_initial_state(&mut self) -> State;
-  fn execute_state_fn<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>) -> OV + Send + Sync>(&mut self, states: I, f: F) -> std::iter::Map<std::sync::mpsc::IntoIter<State<OV>>, fn(State<OV>) -> (State, OV)> {
-    self.execute(states, |gb, s, tx| {
+  fn execute_state_fn<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&Gb<R>) -> OV + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
+    self.execute_state(states, f)
+  }
+  fn execute_state<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + StateFn<R, OV> + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
+    self.execute(states, move |gb, s, tx| {
       gb.restore(&s);
-      tx.send(s.replace_value(f(gb))).unwrap();
-    }).into_split_iter()
+      tx.send(s.replace_value(f.invoke(gb))).unwrap();
+    })
   }
 }
 
@@ -30,12 +40,12 @@ pub struct SingleGb<R> {
   gb: Gb<R>,
 }
 impl<R: Rom> GbExecutor<R> for SingleGb<R> {
-  fn execute<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, sb: I, f: F) -> GbResults<State<OV>> {
+  fn execute<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, sb: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
     let (tx, rx) = channel::<State<OV>>();
     for s in sb {
       f(&mut self.gb, s.to_state(), tx.clone());
     }
-    GbResults { rx }
+    GbResults { rx, _f: Arc::new(f) }
   }
 
   fn get_initial_state(&mut self) -> State {
@@ -119,10 +129,11 @@ impl<R: Rom> GbPool<R> {
   }
 }
 
-pub struct GbResults<T> {
+pub struct GbResults<T, F> {
     rx: Receiver<T>,
+    _f: F,
 }
-impl<K> IntoIterator for GbResults<State<K>> {
+impl<K, F> IntoIterator for GbResults<State<K>, F> {
   type Item = State<K>;
   type IntoIter = IntoIter<State<K>>;
 
@@ -130,7 +141,7 @@ impl<K> IntoIterator for GbResults<State<K>> {
     self.rx.into_iter()
   }
 }
-impl<K> GbResults<State<K>> {
+impl<K, F> GbResults<State<K>, F> {
   pub fn into_split_iter(self) -> std::iter::Map<std::sync::mpsc::IntoIter<State<K>>, fn(State<K>) -> (State, K)> {
     self.rx.into_iter().map(State::split_state_and_value)
   }
@@ -138,7 +149,15 @@ impl<K> GbResults<State<K>> {
     StateBuffer::from_iter_sized(self, buffer_size)
   }
 }
-impl<K: Eq + Hash> GbResults<State<K>> {
+impl<K: PartialEq + Debug, F> GbResults<State<K>, F> {
+  pub fn get_value_assert_all_equal(self) -> K {
+    self.into_split_iter().fold(None, |prev, (_, v)| {
+      prev.into_iter().for_each(|p| assert!(p == v, "found two different values {:#?} and {:#?}", p, v));
+      Some(v)
+    }).unwrap()
+  }
+}
+impl<K: Eq + Hash, F> GbResults<State<K>, F> {
   pub fn into_state_buffer_map(self, buffer_size: usize) -> HashMap<K, StateBuffer> {
     let mut result: HashMap<K, StateBuffer> = HashMap::new();
     for (s, value) in self.into_split_iter() {
@@ -150,9 +169,9 @@ impl<K: Eq + Hash> GbResults<State<K>> {
 
 type GbFn<'a, R, IV, OV> = dyn Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync + 'a;
 impl<R: Rom> GbExecutor<R> for GbPool<R> {
-  fn execute<IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>> {
+  fn execute<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
     // Wrap functon in an Arc.
-    let f: Arc<GbFn<'_, R, IV, OV>> = Arc::new(f);
+    let f: Arc<GbFn<'a, R, IV, OV>> = Arc::new(f);
     // Erase lifetime constraints: The resulting iterator must be fully consumed before the life time of F ends (ideally within the same statement) for this to be safe.
     let f: Arc<GbFn<'static, R, IV, OV>> = unsafe { std::mem::transmute(f) };
 
@@ -166,7 +185,10 @@ impl<R: Rom> GbExecutor<R> for GbPool<R> {
       self.jobs.send(job).unwrap();
     }
 
-    GbResults { rx }
+    // Reinstate lifetime constraints.
+    let f: Arc<GbFn<'a, R, IV, OV>> = unsafe { std::mem::transmute(f) };
+
+    GbResults { rx, _f: f }
   }
 
   fn get_initial_state(&mut self) -> State {
