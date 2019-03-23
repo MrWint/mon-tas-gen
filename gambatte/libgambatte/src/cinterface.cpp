@@ -48,10 +48,10 @@ GBEXPORT int gambatte_loaddmgbios(GB* g, const char* biosfiledata)
 	return ret;
 }
 
-GBEXPORT int gambatte_runfor(GB *g, unsigned *samples)
+GBEXPORT int gambatte_runfor(GB *g, unsigned *samples, bool startsOnFrameBoundaries)
 {
 	uint32_t sampv = *samples;
-	int32_t ret = g->runFor(sampv);
+	int32_t ret = g->runFor(sampv, startsOnFrameBoundaries);
 	*samples = sampv;
 	return ret;
 }

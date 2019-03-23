@@ -43,9 +43,9 @@ CPU::CPU()
 {
 }
 
-long CPU::runFor(const unsigned long cycles) {
+long CPU::runFor(const unsigned long cycles, bool startsOnFrameBoundaries) {
 	memory.setBasetime(cycleCounter_);
-	process(cycles/* << memory.isDoubleSpeed()*/);
+	process(cycles/* << memory.isDoubleSpeed()*/, startsOnFrameBoundaries);
 	
 	const long csb = memory.cyclesSinceBlit(cycleCounter_);
 	
@@ -489,10 +489,10 @@ void CPU::loadState(const SaveState &state) {
 	PC_MOD(ret_var_h << 8 | ret_var_l); \
 } while (0)
 
-void CPU::process(const unsigned long cycles) {
+void CPU::process(const unsigned long cycles, bool startsOnFrameBoundaries) {
 	memory.setEndtime(cycleCounter_, cycles);
 	hitInterruptAddress = 0;
-	memory.updateInput();
+	if (startsOnFrameBoundaries) memory.updateInput();
 
 	//unsigned char A = A_;
 	unsigned long cycleCounter = cycleCounter_;

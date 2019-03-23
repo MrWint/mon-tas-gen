@@ -3,7 +3,10 @@ extern crate byteorder;
 #[macro_use] extern crate serde_derive;
 
 const SAMPLES_PER_FRAME: u32 = 35112;
+const JOYPAD_REGISTER: u16 = 0xff00;
+const INTERRUPT_FLAG_REGISTER: u16 = 0xff0f;
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::os::raw::c_void;
@@ -65,7 +68,7 @@ extern {
   fn gambatte_setinputgetter(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
   fn gambatte_setrtccallback(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
 
-  fn gambatte_runfor(gb: *mut c_void, samples: *mut u32) -> i32;
+  fn gambatte_runfor(gb: *mut c_void, samples: *mut u32, starts_on_frame_boundaries: bool) -> i32;
   fn gambatte_reset(gb: *mut c_void, now: i64, div: u32);
 
   fn gambatte_setinterruptaddresses(gb: *mut c_void, interruptAddresses: *const i32, numInterruptAddresses: i32);
@@ -114,6 +117,13 @@ pub struct SaveState {
   is_on_frame_boundaries: bool,
   overflow_samples: u32,
   cycle_count: u64,
+  inputs: HashMap<u32, Input>,
+
+  frame_start_gambatte_state: Option<Vec<u8>>,
+  frame_start_overflow_samples: u32,
+  frame_start_cycle_count: u64,
+  frame_start_joypad_state: u8,
+  hit_addresses_since_frame_start: Vec<(i32, u64)>,
 }
 
 pub struct Gambatte {
@@ -127,7 +137,14 @@ pub struct Gambatte {
   is_on_frame_boundaries: bool,
   overflow_samples: u32,
   cycle_count: u64,
+  inputs: HashMap<u32, Input>,
   screen_update_callback: Box<ScreenUpdateCallback>, // trait object to avoid generics.
+
+  frame_start_gambatte_state: Option<Vec<u8>>,
+  frame_start_overflow_samples: u32,
+  frame_start_cycle_count: u64,
+  frame_start_joypad_state: u8,
+  hit_addresses_since_frame_start: Vec<(i32, u64)>,
 }
 
 impl Gambatte {
@@ -155,7 +172,7 @@ impl Gambatte {
         gambatte_setvideobuffer(gb, videobuf, pitch as i32);
       }
 
-      Gambatte {
+      let mut gambatte = Gambatte {
         gb,
         input_getter,
         frame,
@@ -164,30 +181,35 @@ impl Gambatte {
         is_on_frame_boundaries: true,
         overflow_samples: 0,
         cycle_count: 0,
+        inputs: HashMap::new(),
         screen_update_callback: Box::new(screen_update_callback),
-      }
+
+        frame_start_gambatte_state: None,
+        frame_start_overflow_samples: 0,
+        frame_start_cycle_count: 0,
+        frame_start_joypad_state: 0,
+        hit_addresses_since_frame_start: Vec::new(),
+      };
+      gambatte.init_frame_start_variables();
+      gambatte
     }
   }
 
-  /// Changes the input buttons pressed, indefinitely until it is changed again.
-  #[inline]
-  pub fn set_input(&mut self, input: Input) {
-    self.input_getter.input = input;
-  }
-  fn step_internal(&mut self) -> i32 {
+  fn step_internal(&mut self) -> Option<i32> {
     if self.is_on_frame_boundaries { *self.frame += 1 };
     let mut hit_interrupt_address: i32;
 
     loop {
       let mut emusamples: u32 = SAMPLES_PER_FRAME - self.overflow_samples;
       
-      if unsafe { gambatte_runfor(self.gb, (&mut emusamples) as *mut u32) } >= 0 { // check for new video frame
+      if unsafe { gambatte_runfor(self.gb, (&mut emusamples) as *mut u32, self.is_on_frame_boundaries) } >= 0 { // check for new video frame
         self.screen_update_callback.update_screen();
       }
 
       self.overflow_samples += emusamples;
       self.cycle_count += u64::from(emusamples);
       hit_interrupt_address = unsafe { gambatte_gethitinterruptaddress(self.gb) };
+      self.is_on_frame_boundaries = hit_interrupt_address == 0;
 
       if hit_interrupt_address != 0 { // go into frame
         break;
@@ -203,29 +225,94 @@ impl Gambatte {
         break;
       }
     }
-    self.is_on_frame_boundaries = hit_interrupt_address == 0;
-    hit_interrupt_address
+    if hit_interrupt_address == 0 {
+      self.init_frame_start_variables();
+      None
+    } else {
+      if self.frame_start_gambatte_state.is_some() {
+        self.hit_addresses_since_frame_start.push((hit_interrupt_address, self.cycle_count));
+      }
+      Some (hit_interrupt_address)
+    }
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing).
   pub fn step(&mut self) {
     self.step_internal();
   }
   /// Runs the emulation until the next frame (as defined by BizHawk's timing), or until the execution reaches one of the given addresses.
-  pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
+  pub fn step_until(&mut self, addresses: &[i32]) -> Option<i32> {
     unsafe { gambatte_setinterruptaddresses(self.gb, addresses.as_ptr(), addresses.len() as i32); }
     let hit_address = self.step_internal();
     unsafe { gambatte_clearinterruptaddresses(self.gb); }
     hit_address
   }
-  /// Runs the emulation until the execution reaches one of the given addresses.
+
+  fn causes_frame_start_interrupt(&self, input: Input) -> bool {
+    if self.frame_start_gambatte_state.is_none() { return false; } // no joypad interrupt at frame start
+		let input = input.bits();
+		let dpad_state = input >> 4;
+		let button_state = input & 0xf;
+		if self.frame_start_joypad_state & 0x10 == 0 && dpad_state != 0 { return true; }
+		if self.frame_start_joypad_state & 0x20 == 0 && button_state != 0 { return true; }
+    false
+  }
+
+  fn init_frame_start_variables(&mut self) {
+    self.hit_addresses_since_frame_start.clear();
+    let ifreg = self.read_memory(INTERRUPT_FLAG_REGISTER);
+    self.frame_start_joypad_state = self.read_memory(JOYPAD_REGISTER);
+    if self.frame_start_joypad_state & 0xf == 0xf // not already pressed
+        && self.frame_start_joypad_state & 0x30 != 0x30 // lines not disabled
+        && ifreg & 0x10 != 0x10 { // interrupt not already requested
+      log::log!(if *self.frame < 300 /* before first realistic input */ { log::Level::Debug } else { log::Level::Info }, "at frame {} with potential start-of-frame joypad interrupt ({:x})", *self.frame, self.frame_start_joypad_state);
+
+      self.frame_start_gambatte_state = Some(self.save_gambatte_state());
+      self.frame_start_cycle_count = self.cycle_count;
+      self.frame_start_overflow_samples = self.overflow_samples;
+    } else {
+      self.frame_start_gambatte_state = None;
+    }
+    self.input_getter.input = Input::empty(); // use preliminary input
+  }
+
   pub fn run_until(&mut self, addresses: &[i32]) -> i32 {
     unsafe { gambatte_setinterruptaddresses(self.gb, addresses.as_ptr(), addresses.len() as i32); }
     loop {
-      let hit_address = self.step_internal();
-      if hit_address != 0 {
-      unsafe { gambatte_clearinterruptaddresses(self.gb); }
-        return hit_address;
+      if let Some(hit) = self.step_internal() {
+        unsafe { gambatte_clearinterruptaddresses(self.gb); }
+        return hit;
       }
+    }
+  }
+
+  pub fn set_input(&mut self, input: Input) {
+    if self.is_on_frame_boundaries {
+      self.input_getter.input = input;
+      self.inputs.remove(&*self.frame);
+      if !input.is_empty() { self.inputs.insert(*self.frame, input); }
+    } else if self.causes_frame_start_interrupt(input) {
+      log::warn!("set_input ({:?}) at joypad interrupt frame, trying to replay frame", input);
+      {
+        let frame_start_gambatte_state = self.frame_start_gambatte_state.take().unwrap();
+        self.load_gambatte_state(&frame_start_gambatte_state);
+        self.frame_start_gambatte_state.replace(frame_start_gambatte_state);
+      }
+      self.cycle_count = self.frame_start_cycle_count;
+      self.overflow_samples = self.frame_start_overflow_samples;
+      *self.frame -= 1;
+      self.is_on_frame_boundaries = true;
+      self.input_getter.input = input;
+      self.inputs.remove(&*self.frame);
+      if !input.is_empty() { self.inputs.insert(*self.frame, input); }
+      for (hit, cycle_count) in self.hit_addresses_since_frame_start.clone().into_iter() {
+        let actual_hit = self.step_until(&[hit]);
+        assert!(actual_hit.is_some(), "failed to replay hit {:x} at {}", hit, cycle_count);
+        assert!(self.cycle_count == cycle_count, "replay hit {:x} happened at {} but was expected at {}", hit, self.cycle_count, cycle_count);
+      }
+    } else {
+      self.input_getter.input = input;
+      self.inputs.remove(&(*self.frame - 1));
+      if !input.is_empty() { self.inputs.insert(*self.frame - 1, input); }
     }
   }
 
@@ -241,19 +328,29 @@ impl Gambatte {
   }
 
   /// Restores a stored internal Gambatte state from the given byte data.
-  pub fn load_state(&mut self, s: &SaveState) {
-    let success = unsafe { gambatte_newstateload(self.gb, s.gambatte_state.as_ptr(), s.gambatte_state.len() as i32) };
+  pub fn load_gambatte_state(&mut self, gambatte_state: &[u8]) {
+    let success = unsafe { gambatte_newstateload(self.gb, gambatte_state.as_ptr(), gambatte_state.len() as i32) };
     assert!(success == 1);
+  }
 
+  /// Restores a stored internal Gambatte state from the given byte data.
+  pub fn load_state(&mut self, s: &SaveState) {
+    self.load_gambatte_state(&s.gambatte_state);
     self.input_getter.input = s.input;
     *self.frame = s.frame;
     self.is_on_frame_boundaries = s.is_on_frame_boundaries;
     self.overflow_samples = s.overflow_samples;
     self.cycle_count = s.cycle_count;
+    self.inputs = s.inputs.clone();
+
+    self.frame_start_gambatte_state = s.frame_start_gambatte_state.clone();
+    self.frame_start_overflow_samples = s.frame_start_overflow_samples;
+    self.frame_start_cycle_count = s.frame_start_cycle_count;
+    self.frame_start_joypad_state = s.frame_start_joypad_state;
+    self.hit_addresses_since_frame_start = s.hit_addresses_since_frame_start.clone();
   }
 
-  /// Stores the current internal Gambatte state to byte data.
-  pub fn save_state(&self) -> SaveState {
+  fn save_gambatte_state(&self) -> Vec<u8> {
     let save_state_size = unsafe { gambatte_newstatelen(self.gb) } as usize;
     let mut gambatte_state = unsafe { // Avoid calling memset, Vec will be initialized with garbage.
       let mut data = Vec::with_capacity(save_state_size);
@@ -263,30 +360,51 @@ impl Gambatte {
     };
     let success = unsafe { gambatte_newstatesave(self.gb, gambatte_state.as_mut_ptr(), save_state_size as i32) };
     assert!(success == 1);
+    gambatte_state
+  }
 
+  /// Stores the current internal Gambatte state to byte data.
+  pub fn save_state(&self) -> SaveState {
     SaveState {
-      gambatte_state,
+      gambatte_state: self.save_gambatte_state(),
       input: self.input_getter.input,
       frame: *self.frame,
       is_on_frame_boundaries: self.is_on_frame_boundaries,
       overflow_samples: self.overflow_samples,
       cycle_count: self.cycle_count,
+      inputs: self.inputs.clone(),
+
+      frame_start_gambatte_state: self.frame_start_gambatte_state.clone(),
+      frame_start_overflow_samples: self.frame_start_overflow_samples,
+      frame_start_cycle_count: self.frame_start_cycle_count,
+      frame_start_joypad_state: self.frame_start_joypad_state,
+      hit_addresses_since_frame_start: self.hit_addresses_since_frame_start.clone(),
     }
   }
 
   /// Number of frames (as defined by BizHawk's timing) that have been emulated so far, including the current frame if not on a frame boundary.
+  #[inline]
   pub fn frame(&self) -> u32 {
     *self.frame
   }
   /// Whether the emulation is currently stopped at the boundary between two frames (as defined by BizHawk's timing).
-  #[allow(dead_code)]
+  #[inline]
   pub fn is_on_frame_boundaries(&self) -> bool {
     self.is_on_frame_boundaries
   }
   /// Total number of sound samples that have been emitted so far (~35112 per frame, depending on the timing method).
-  #[allow(dead_code)]
+  #[inline]
   pub fn get_cycle_count(&self) -> u64 {
     self.cycle_count
+  }
+  #[allow(dead_code)]
+  pub fn get_inputs(&self) -> Vec<Input> {
+    let mut result = vec![];
+    for (&frame, &input) in self.inputs.iter() {
+      if result.len() < (frame + 1) as usize { result.resize((frame + 1) as usize, Input::empty()); }
+      result[frame as usize] = input;
+    }
+    result
   }
 
   /// Returns the byte at the given ROM address.

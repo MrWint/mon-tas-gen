@@ -47,14 +47,14 @@ GB::~GB() {
 	delete p_;
 }
 
-long GB::runFor(unsigned &samples) {
+long GB::runFor(unsigned &samples, bool startsOnFrameBoundaries) {
 	if (!p_->cpu.loaded()) {
 		samples = 0;
 		return -1;
 	}
 	
 	p_->cpu.setSoundBuffer();
-	const long cyclesSinceBlit = p_->cpu.runFor(samples * 2);
+	const long cyclesSinceBlit = p_->cpu.runFor(samples * 2, startsOnFrameBoundaries);
 	samples = p_->cpu.fillSoundBuffer();
 	
 	return cyclesSinceBlit < 0 ? cyclesSinceBlit : static_cast<long>(samples) - (cyclesSinceBlit >> 1);

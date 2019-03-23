@@ -42,7 +42,7 @@ class CPU {
 	int numInterruptAddresses;
 	int hitInterruptAddress;
 
-	void process(unsigned long cycles);
+	void process(unsigned long cycles, bool startsOnFrameBoundaries);
 
 public:
 	
@@ -51,7 +51,7 @@ public:
 
 // 	unsigned interrupt(unsigned address, unsigned cycleCounter);
 	
-	long runFor(unsigned long cycles);
+	long runFor(unsigned long cycles, bool startsOnFrameBoundaries);
 	void setStatePtrs(SaveState &state);
 	void loadState(const SaveState &state);
 	void setLayers(unsigned mask) { memory.setLayers(mask); }

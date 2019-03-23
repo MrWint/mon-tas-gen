@@ -69,7 +69,7 @@ public:
 	  * @param samples in: number of stereo samples to produce, out: actual number of samples produced
 	  * @return sample number at which the video frame was produced. -1 means no frame was produced.
 	  */
-	long runFor(unsigned &samples);
+	long runFor(unsigned &samples, bool startsOnFrameBoundaries);
 
 	void setLayers(unsigned mask);
 

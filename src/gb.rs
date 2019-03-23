@@ -310,12 +310,17 @@ impl <R: JoypadAddresses + RngAddresses> Gb<R> {
   pub fn create_inputs(&mut self) -> Vec<Input> {
     assert!(!self.skipped_relevant_inputs);
     let tmp = self.save();
-
+    let result = self.create_inputs_from_ftii(&tmp.inputs);
+    self.restore(&tmp);
+    assert_eq!(result, self.gb.get_inputs());
+    result
+  }
+  #[allow(dead_code)]
+  pub fn create_inputs_from_ftii(&mut self, inputs: &[Input]) -> Vec<Input> {
     self.restore_initial_state();
 
     let mut result: Vec<Input> = vec![];
-
-    for &input in tmp.inputs.iter() {
+    for &input in inputs.iter() {
       self.gb.set_input(input);
       result.resize(self.gb.frame() as usize, Input::empty());
       result[self.gb.frame() as usize - 1] |= input & if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_HI_ADDRESS { inputs::HI_INPUTS } else { inputs::LO_INPUTS };
@@ -327,7 +332,6 @@ impl <R: JoypadAddresses + RngAddresses> Gb<R> {
       self.step();
     }
 
-    self.restore(&tmp);
     while result.last().unwrap_or(&Input::A).is_empty() { result.pop(); }
     log::info!("creating inputs done: #inputs: {}", result.len());
     result

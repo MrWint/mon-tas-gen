@@ -32,6 +32,7 @@ impl <R: Rom, S1: Segment<R, Key=()>, S2: Segment<R>> Segment<R> for SeqSegment<
   type Key = S2::Key;
   fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
     let sb = self.s1.execute(gbe, iter);
+    if sb.is_empty() { return HashMap::new() }
     self.s2.execute_split(gbe, sb)
   }
 }

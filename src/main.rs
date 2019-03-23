@@ -5,7 +5,7 @@ use crate::bk2::{Bk2Writer, read_bk2_inputs};
 use gambatte::*;
 use gambatte::inputs::*;
 use log::{LevelFilter::*};
-use montas::constants::*;
+#[allow(unused_imports)] use montas::constants::*;
 use montas::ftii;
 use montas::gb::*;
 #[allow(unused_imports)] use montas::gbexecutor::*;
