@@ -511,7 +511,7 @@ void CPU::process(const unsigned long cycles, bool startsOnFrameBoundaries) {
 			if (PC < 0x8000) {
 				uint32_t romAddress = PC;
 				uint32_t bank = 0;
-				if (PC > 0x4000) bank = memory.curRomBank(), romAddress += (bank - 1) << 14;
+				if (PC >= 0x4000) bank = memory.curRomBank(), romAddress += (bank - 1) << 14;
 				if (memory.isInterrupt(romAddress)) {
 					hitInterruptAddress = (bank << 16) | PC;
 					memory.setEndtime(cycleCounter, 0);

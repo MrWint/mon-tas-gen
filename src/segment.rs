@@ -124,3 +124,5 @@ mod skiptextssegment;
 pub use self::skiptextssegment::SkipTextsSegment;
 mod textsegment;
 pub use self::textsegment::TextSegment;
+mod verifyinputsegment;
+pub use self::verifyinputsegment::VerifyInputSegment;

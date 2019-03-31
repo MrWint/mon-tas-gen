@@ -4,7 +4,7 @@ use crate::rom::*;
 use crate::segment::metric::*;
 use gambatte::Input;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub enum OverworldInteractionResult {
   NoOverworldInput,
   WarpTo { map: u8, entrance: u8 },
@@ -27,6 +27,15 @@ fn dir_to_input(dir: u8) -> Input {
     2 => Input::LEFT,
     1 => Input::RIGHT,
     _ => panic!("got invalid direction {}", dir),
+  }
+}
+
+pub struct OverworldInteractionMetric {}
+impl<R: JoypadAddresses + Gen1OverworldAddresses + Gen1DVAddresses> Metric<R> for OverworldInteractionMetric {
+  type ValueType = OverworldInteractionResult;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    Some(get_overworld_interaction_result(gb))
   }
 }
 

@@ -51,7 +51,6 @@
         {
             "name": "Win32",
             "includePath": [
-                "include",
                 "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../include/c++/7.2.0",
                 "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../include/c++/7.2.0/x86_64-w64-mingw32",
                 "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../include/c++/7.2.0/backward",
@@ -60,8 +59,8 @@
                 "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../include/SDL",
                 "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/include-fixed",
                 "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../x86_64-w64-mingw32/include",
-                "${workspaceFolder}/libgambatte/include",
-                "${workspaceFolder}/libgambatte/src"
+                "${workspaceFolder}/gambatte/libgambatte/include",
+                "${workspaceFolder}/gambatte/libgambatte/src"
             ],
             "defines": [
                 "_DEBUG",
@@ -80,8 +79,8 @@
                     "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../include/SDL",
                     "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/include-fixed",
                     "C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/7.2.0/../../../../x86_64-w64-mingw32/include",
-                    "${workspaceFolder}/libgambatte/include",
-                    "${workspaceFolder}/libgambatte/src"
+                    "${workspaceFolder}/gambatte/libgambatte/include",
+                    "${workspaceFolder}/gambatte/libgambatte/src"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
