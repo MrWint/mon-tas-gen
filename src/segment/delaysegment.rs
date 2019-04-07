@@ -5,11 +5,11 @@ use crate::statebuffer::StateBuffer;
 use crate::util::*;
 use std::collections::HashMap;
 use std::marker::PhantomData;
-use log::debug;
+use log::{debug,info};
 
 const DELAY_SEGMENT_DEFAULT_MAX_SKIPS: u32 = 1000;
-const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u64 = 3 * 35112;
-const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u64 = 10 * 35112;
+const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u64 = 1 * 35112;
+const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u64 = 5 * 35112;
 
 pub struct DelaySegment<R, S> {
   segment: S,
@@ -39,36 +39,32 @@ impl<R: Rom, S: Segment<R>> Segment<R> for DelaySegment<R, S> {
 
     let mut active_states: Vec<State> = iter.into_iter().map(|s| s.to_state()).collect();
     let mut skips = 0;
-    let mut full_cycle_count = std::u64::MAX >> 1;
-    let mut nonempty_cycle_count = std::u64::MAX >> 1;
+    let mut cycle_count_cutoff = std::u64::MAX >> 1;
     while !active_states.is_empty() {
-      debug!("DelaySegment processing {} active states at {} skips", active_states.len(), skips);
+      info!("DelaySegment processing {} active states at {} skips", active_states.len(), skips);
       // Try segment on current active states.
       for (value, states) in self.segment.execute_split(gbe, &active_states).into_iter() {
         result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
 
       // Update loop exit conditions.
-      let cur_min_cycle_count = active_states.iter().map(|s| s.cycle_count).min().unwrap();
-      if !result.is_empty() && cur_min_cycle_count < nonempty_cycle_count {
-        nonempty_cycle_count = cur_min_cycle_count;
-        debug!("DelaySegment set nonempty_cycle_count to {}", to_human_readable_time(nonempty_cycle_count));
+      let cur_max_cycle_count = active_states.iter().map(|s| s.cycle_count).max().unwrap();
+      if result.is_all_full() && cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY < cycle_count_cutoff {
+        cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY;
+        info!("DelaySegment set cycle_count_cutoff (full) to {}", to_human_readable_time(cycle_count_cutoff));
       }
-      if result.is_all_full() && cur_min_cycle_count < full_cycle_count {
-        full_cycle_count = cur_min_cycle_count;
-        debug!("DelaySegment set full_cycle_count to {}", to_human_readable_time(full_cycle_count));
+      if !result.is_empty() && cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY < cycle_count_cutoff {
+        cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY;
+        info!("DelaySegment set cycle_count_cutoff (nonempty) to {}", to_human_readable_time(cycle_count_cutoff));
       }
 
       // Update active states for next loop iteration.
       active_states = gbe.execute(active_states.into_iter().filter(|s| {
         if skips > self.max_skips {
-          debug!("DelaySegment interrupting search (maxDelay)");
+          debug!("DelaySegment interrupting search (max_skips)");
           false
-        } else if s.cycle_count > full_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY {
-          debug!("DelaySegment interrupting search (fullFrame)");
-          false
-        } else if s.cycle_count > nonempty_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY {
-          debug!("DelaySegment interrupting search (nonemptyFrame)");
+        } else if s.cycle_count > cycle_count_cutoff {
+          debug!("DelaySegment interrupting search (cycle_count_cutoff)");
           false
         } else { true }
       }), move |gb, s, tx| {

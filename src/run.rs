@@ -44,12 +44,23 @@ impl<R: Rom, G: GbExecutor<R>> GbRunner<R, G> {
       self.run(segment);
     });
   }
+  #[allow(dead_code)]
   fn get_state_metric<V: StateValue + PartialEq + std::fmt::Debug, S: StateFn<R, V> + Send + Sync>(&mut self, state_fn: S) -> V {
     self.gbe.execute_state(&self.sb, state_fn).get_value_assert_all_equal()
   }
 
+  #[allow(dead_code)]
   fn debug_print_states(&self) {
     println!("{}", self.sb);
+  }
+
+  #[allow(dead_code)]
+  fn debug_write_memory(&mut self, address: u16, value: u8) {
+    self.sb = self.gbe.execute(&self.sb, move |gb, s, tx| {
+      gb.restore(&s);
+      gb.gb.write_memory(address, value);
+      tx.send(gb.save()).unwrap();
+    }).into_state_buffer(self.sb.get_max_size());
   }
 
   fn debug_segment_end(&mut self, file_name: &str) {

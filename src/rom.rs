@@ -115,6 +115,7 @@ pub trait Gen2MapAddresses {
   const OVERWORLD_MAP_MEM_ADDRESS: u16; // wOverworldMap
   const MAP_WIDTH_MEM_ADDRESS: u16; // wMapWidth
   const MAP_HEIGHT_MEM_ADDRESS: u16; // wMapHeight
+  const MAP_SCRIPTS_BANK_MEM_ADDRESS: u16; // wMapScriptsBank
   const TILESET_COLLISION_PTR_MEM_ADDRESS: u16; // wTilesetCollisionAddress
   const TILESET_COLLISION_BANK_MEM_ADDRESS: u16; // wTilesetCollisionBank
   const TILE_COLLISION_TABLE_ADDRESS: i32; // TileCollisionTable
@@ -546,6 +547,7 @@ macro_rules! impl_gold_silver_common_addresses {
       const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc700; // wOverworldMap
       const MAP_WIDTH_MEM_ADDRESS: u16 = 0xD088; // wMapWidth
       const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd087; // wMapHeight
+      const MAP_SCRIPTS_BANK_MEM_ADDRESS: u16 = 0xd08c; // wMapScriptsBank
       const TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd0c9; // wTilesetCollisionAddress
       const TILESET_COLLISION_BANK_MEM_ADDRESS: u16 = 0xd0c8; // wTilesetCollisionBank
       const TILE_COLLISION_TABLE_ADDRESS: i32 = 0x3e_74be; // TileCollisionTable
@@ -798,6 +800,7 @@ impl Gen2MapAddresses for Crystal {
   const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc800; // wOverworldMap
   const MAP_WIDTH_MEM_ADDRESS: u16 = 0xd19f; // wMapWidth
   const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd19e; // wMapHeight
+  const MAP_SCRIPTS_BANK_MEM_ADDRESS: u16 = 0xd1a3; // wMapScriptsBank
   const TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd1e0; // wTilesetCollisionAddress
   const TILESET_COLLISION_BANK_MEM_ADDRESS: u16 = 0xd1df; // wTilesetCollisionBank
   const TILE_COLLISION_TABLE_ADDRESS: i32 = 0x13_4E1F; // TileCollisionTable

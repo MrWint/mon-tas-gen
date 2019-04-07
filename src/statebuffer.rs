@@ -9,7 +9,7 @@ use std::iter::FromIterator;
 use std::marker::PhantomData;
 
 pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
-pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 4096;
+pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = STATE_BUFFER_DEFAULT_MAX_SIZE * 16; // 4096;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
 /// ```StateBuffer```s have a maximum size, and prune excess states if they become too full.

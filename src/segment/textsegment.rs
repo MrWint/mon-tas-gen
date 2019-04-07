@@ -194,11 +194,8 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
   type Key = M::ValueType;
 
   fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    // intermediate buffers are larger by default so the goal buffer ends up with enough (varied) states.
-    let intermediate_buffer_size = self.buffer_size; // << 2;
-
     // Collect initial states.
-    let mut active_states: BTreeMap<u32, StateBuffer<PrintLetterState>> = BTreeMap::new();
+    let mut active_states: BTreeMap<IntermediateBufferKey, StateBuffer<PrintLetterState>> = BTreeMap::new();
     let initial_state_buffer = gbe.execute(iter, move |gb, s, tx| {
       gb.restore(&s);
       if !Self::is_print_letter_delay_frame(gb) {
@@ -206,16 +203,16 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
       } else {
         tx.send(s.replace_value(PrintLetterState::BeforeFirstInputUse)).unwrap();
       }
-    }).into_state_buffer(intermediate_buffer_size);
+    }).into_state_buffer(self.buffer_size);
     assert!(!initial_state_buffer.is_empty());
-    active_states.insert(0, initial_state_buffer);
+    active_states.insert(IntermediateBufferKey { printed_characters: 0, ends_to_be_skipped: self.ends_to_be_skipped, last_input: Input::all() }, initial_state_buffer);
 
     let mut goal_buffer = HashMap::<Self::Key, StateBuffer>::new();
     while !active_states.is_empty() {
-      let min_cycles: u32 = *active_states.keys().next().unwrap();
-      let max_cycles: u32 = *active_states.keys().next_back().unwrap();
+      let min_cycles: IntermediateBufferKey = active_states.keys().next().unwrap().clone();
+      let max_cycles: IntermediateBufferKey = active_states.keys().next_back().unwrap().clone();
       let sb = active_states.remove(&min_cycles).unwrap();
-      debug!("TextSegment loop cycles {}-{}, min cycle size {}, goal_buffer size {}", min_cycles, max_cycles, sb.len(), goal_buffer.len());
+      debug!("TextSegment loop cycles {}-{}, min cycle size {}, goal_buffer size {}, min cycle {:?}", min_cycles.printed_characters, max_cycles.printed_characters, sb.len(), goal_buffer.len(), min_cycles);
 
       for s in gbe.execute(sb, move |gb, s, tx| {
         if let Some(result) = self.progress_print_letter_delay_no_input(gb, s.clone()) {
@@ -235,13 +232,21 @@ impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
             goal_buffer.entry(result.metric_value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_state(s)
           },
           PrintLetterProgressResult::ContinueAtLetter { printed_characters, ends_to_be_skipped, last_input } => {
-            active_states.entry(printed_characters).or_insert_with(|| StateBuffer::with_max_size(intermediate_buffer_size)).add_state(s.replace_value(PrintLetterState::InProgress { printed_characters, ends_to_be_skipped, last_input }))
+            active_states.entry(IntermediateBufferKey { printed_characters, ends_to_be_skipped, last_input }).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_state(s.replace_value(PrintLetterState::InProgress { printed_characters, ends_to_be_skipped, last_input }))
           },
         }
       }
     }
     goal_buffer
   }
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct IntermediateBufferKey {
+  // order of members is important as it defines sorting order
+  printed_characters: u32,
+  ends_to_be_skipped: u32,
+  last_input: Input,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]

@@ -310,10 +310,13 @@ impl <R: JoypadAddresses + RngAddresses> Gb<R> {
   pub fn create_inputs(&mut self) -> Vec<Input> {
     assert!(!self.skipped_relevant_inputs);
     let tmp = self.save();
-    let result = self.create_inputs_from_ftii(&tmp.inputs);
+    let ftii_result = self.create_inputs_from_ftii(&tmp.inputs);
     self.restore(&tmp);
-    assert_eq!(result, self.gb.get_inputs());
-    result
+    let gb_result = self.gb.get_inputs();
+    if gb_result != ftii_result {
+      log::error!("Input diff detected! Likely desync. Possibly caused by manual memory writes");
+    }
+    gb_result
   }
   #[allow(dead_code)]
   pub fn create_inputs_from_ftii(&mut self, inputs: &[Input]) -> Vec<Input> {

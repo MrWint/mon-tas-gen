@@ -35,8 +35,8 @@ fn main() {
   // playback_demos();
   // convert_efl();
 
-  crate::run::blue_testing::start();
-  // crate::run::crystal_glitchless::start();
+  // crate::run::blue_testing::start();
+  crate::run::crystal_glitchless::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();
 }
