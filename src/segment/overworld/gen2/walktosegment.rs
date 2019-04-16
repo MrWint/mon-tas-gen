@@ -1,4 +1,3 @@
-use crate::gb::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -36,8 +35,8 @@ impl WithOutputBufferSize for WalkToSegment {
 impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkToSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let initial_states: Vec<_> = iter.into_iter().collect();
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    let initial_states: Vec<_> = sb.into_iter().collect();
     assert!(!initial_states.is_empty());
     let map = gbe.execute_state_fn(vec![&initial_states[0]], |gb| {
       super::map::Map::default().load_gen2_map(gb)

@@ -36,7 +36,35 @@ pub trait GbExecutor<R: Rom> {
   }
 }
 
-pub struct SingleGb<R> {
+pub struct RuntimeGbExecutor<R: Rom>(RuntimeGbExecutorInner<R>);
+enum RuntimeGbExecutorInner<R: Rom> {
+  Single(SingleGb<R>),
+  Pool(GbPool<R>),
+}
+impl<R: Rom> RuntimeGbExecutor<R> {
+  #[allow(dead_code)] pub fn pool_no_screen() -> Self { Self(RuntimeGbExecutorInner::Pool(GbPool::no_screen())) }
+  #[allow(dead_code)] pub fn pool_with_screen() -> Self { Self(RuntimeGbExecutorInner::Pool(GbPool::with_screen())) }
+  #[allow(dead_code)] pub fn single_no_screen() -> Self { Self(RuntimeGbExecutorInner::Single(SingleGb::no_screen())) }
+  #[allow(dead_code)] pub fn single_with_screen() -> Self { Self(RuntimeGbExecutorInner::Single(SingleGb::with_screen())) }
+}
+impl<R: Rom> GbExecutor<R> for RuntimeGbExecutor<R> {
+  fn execute<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, sb: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
+    match self {
+      Self(RuntimeGbExecutorInner::Single(single)) => single.execute(sb, f),
+      Self(RuntimeGbExecutorInner::Pool(pool)) => pool.execute(sb, f),
+    }
+  }
+
+  fn get_initial_state(&mut self) -> State {
+    match self {
+      Self(RuntimeGbExecutorInner::Single(single)) => single.get_initial_state(),
+      Self(RuntimeGbExecutorInner::Pool(pool)) => pool.get_initial_state(),
+    }
+  }
+}
+
+
+struct SingleGb<R> {
   gb: Gb<R>,
 }
 impl<R: Rom> GbExecutor<R> for SingleGb<R> {
@@ -54,13 +82,13 @@ impl<R: Rom> GbExecutor<R> for SingleGb<R> {
   }
 }
 impl<R: BasicRomInfo + JoypadAddresses + RngAddresses> SingleGb<R> {
-  pub fn with_screen() -> Self {
+  fn with_screen() -> Self {
     let sdl = Sdl::init_sdl(1 /* num screens */, 1 /* scale */);
     SingleGb {
       gb: Gb::<R>::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */)),
     }
   }
-  pub fn no_screen() -> Self {
+  fn no_screen() -> Self {
     SingleGb {
       gb: Gb::<R>::create(false /* equal length frames */, NoScreen {}),
     }
@@ -76,17 +104,17 @@ impl<R, F: FnOnce(&mut Gb<R>) + Send> FnBox<R> for F {
   }
 }
 
-pub struct GbPool<R: Rom> {
+struct GbPool<R: Rom> {
   jobs: Sender<Box<FnBox<R>>>,
 }
 
 const STACK_SIZE: usize = 2 * 1024 * 1024;
 
 impl<R: Rom> GbPool<R> {
-  pub fn with_screen() -> GbPool<R> {
+  fn with_screen() -> GbPool<R> {
     Self::new(true)
   }
-  pub fn no_screen() -> GbPool<R> {
+  fn no_screen() -> GbPool<R> {
     Self::new(false)
   }
 

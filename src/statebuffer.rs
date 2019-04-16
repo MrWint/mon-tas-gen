@@ -8,7 +8,7 @@ use std::fs::File;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
 
-pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
+pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 64;
 pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = STATE_BUFFER_DEFAULT_MAX_SIZE * 16; // 4096;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
@@ -40,6 +40,16 @@ impl <V: serde::Serialize + serde::de::DeserializeOwned, S: StateMetric> StateBu
     let f = File::open(file_path).expect("file not found");
     let f = ::flate2::read::GzDecoder::new(f);
     ::bincode::deserialize_from(f).expect("loading statebuffer failed")
+  }
+}
+impl<V: Clone, S: StateMetric> Clone for StateBuffer<V, S> {
+  fn clone(&self) -> Self {
+    Self {
+      states: self.states.clone(),
+      metrics: self.metrics.clone(),
+      max_size: self.max_size,
+      phantom_data: PhantomData,
+    }
   }
 }
 impl<V, S: StateMetric> StateBuffer<V, S> {

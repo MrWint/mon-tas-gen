@@ -1,4 +1,3 @@
-use crate::gb::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -27,9 +26,9 @@ impl VerifyInputSegment {
 impl<R: Rom + InputIdentificationAddresses> Segment<R> for VerifyInputSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
     let &(pre, input, post, _) = R::II_ADDRESSES.iter().find(|(_, _, _, name)| name == &self.expected_input_str).unwrap();
-    gbe.execute(iter, move |gb, s, tx| {
+    gbe.execute(sb, move |gb, s, tx| {
       gb.restore(&s);
       gb.input(self.input);
       if !super::is_correct_input_use(gb, pre, input, post) {

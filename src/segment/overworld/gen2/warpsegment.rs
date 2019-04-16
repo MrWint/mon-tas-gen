@@ -26,8 +26,8 @@ impl WarpSegment {
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for WarpSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let sb = MoveSegment::with_metric(self.input, WarpMetric {}).execute(gbe, iter);
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    let sb = MoveSegment::with_metric(self.input, WarpMetric {}).execute(gbe, sb);
     let sb = MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Warp)).into_unit()).execute(gbe, sb);
     MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ForcedMovement).into_unit()).execute_split(gbe, sb)
   }

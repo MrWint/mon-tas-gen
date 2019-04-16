@@ -25,8 +25,8 @@ impl WithOutputBufferSize for TurnSegment {
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for TurnSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let sb = MoveSegment::with_metric(self.input, TurnMetric {}).with_buffer_size(self.buffer_size).execute(gbe, iter);
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    let sb = MoveSegment::with_metric(self.input, TurnMetric {}).with_buffer_size(self.buffer_size).execute(gbe, sb);
     MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v| v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::JoyChangeFacing)).into_unit()).with_buffer_size(self.buffer_size).execute_split(gbe, sb)
   }
 }

@@ -49,8 +49,8 @@ impl<R, M> WithOutputBufferSize for MoveSegment<R, M> {
 impl<R: Rom, M: Metric<R>> Segment<R> for MoveSegment<R, M> {
   type Key = M::ValueType;
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    gbe.execute(iter, move |gb, mut s, tx| {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    gbe.execute(sb, move |gb, mut s, tx| {
       gb.restore(&s);
       let mut skips = 0;
       loop {

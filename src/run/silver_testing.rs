@@ -7,7 +7,7 @@ use montas::segment::overworld::gen2::*;
 
 #[allow(dead_code)]
 pub fn start() {
-  let mut r: GbRunner<Silver, _> = GbRunner::pool_with_screen();
+  let mut r: GbRunner<Silver> = GbRunner::pool_with_screen();
 
   run(&mut r);
 
@@ -16,7 +16,7 @@ pub fn start() {
   r.debug_segment_end("temp/silver_test");
 }
 
-fn run<G: GbExecutor<Silver>>(r: &mut GbRunner<Silver, G>) {
+fn run(r: &mut GbRunner<Silver>) {
   r.run(DelaySegment::new(MoveSegment::with_metric_fn(A, |_gb| Some(()))));
   r.debug_print_states();
   r.run(MoveSegment::new(START).with_max_skips(10));

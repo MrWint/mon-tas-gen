@@ -25,8 +25,8 @@ impl WithOutputBufferSize for JumpLedgeSegment {
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for JumpLedgeSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).execute_split(gbe, iter)
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    MoveSegment::with_metric(self.input, JumpLedgeMetric {}).with_buffer_size(self.buffer_size).execute_split(gbe, sb)
   }
 }
 

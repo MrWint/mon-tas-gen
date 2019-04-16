@@ -323,3 +323,16 @@ impl<R: Rom + BattleMonInfoAddresses> StateFn<R, BattleMonInfo> for BattleMonInf
     }
   }
 }
+
+pub struct CatchSuccessMetric {}
+impl<R: JoypadAddresses + BattleCatchMonAddresses> Metric<R> for CatchSuccessMetric {
+  type ValueType = ();
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::CATCH_SUCCESS_ADDRESS, R::CATCH_FAIL_ADDRESS]) == R::CATCH_SUCCESS_ADDRESS {
+      Some(())
+    } else {
+      None
+    }
+  }
+}

@@ -36,8 +36,8 @@ impl IdentifyInputSegment {
 impl<R: Rom + InputIdentificationAddresses> Segment<R> for IdentifyInputSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    gbe.execute(iter, move |gb, s, tx| {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    gbe.execute(sb, move |gb, s, tx| {
       Self::print_identification(gb, &s);
       tx.send(s).unwrap();
     }).into_state_buffer_map(self.buffer_size)

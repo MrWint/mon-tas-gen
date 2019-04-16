@@ -174,7 +174,10 @@ pub trait BattleMonInfoAddresses {
   const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16; // wEnemyStatLevels
   const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16; // wEnemyStats
 }
-
+pub trait BattleCatchMonAddresses {
+  const CATCH_SUCCESS_ADDRESS: i32; // Address reached when catching succeeded.
+  const CATCH_FAIL_ADDRESS: i32; // Address reached when catching failed.
+}
 
 // Gen 1
 #[allow(dead_code)]
@@ -297,6 +300,10 @@ macro_rules! impl_red_blue_common_addresses {
       const CHECK_OBEDIENCE_START_ADDRESS: i32 = 0x0F_5C88; // CheckForDisobedience
       const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0F_569A; // CheckIfPlayerNeedsToChargeUp
       const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0F_5CEB; // CheckForDisobedience.loop2
+    }
+    impl BattleCatchMonAddresses for $t {
+      const CATCH_SUCCESS_ADDRESS: i32 = 0x03_578B; // PokeBallEffect.captured
+      const CATCH_FAIL_ADDRESS: i32 = 0x03_578D; // PokeBallEffect.failedToCapture
     }
     )+
   }
@@ -422,6 +429,10 @@ impl BattleObedienceAddresses for Yellow {
   const CHECK_OBEDIENCE_START_ADDRESS: i32 = 0x0F_5DFA; // CheckForDisobedience
   const CHECK_OBEDIENCE_OBEY_ADDRESS: i32 = 0x0F_580C; // CheckIfPlayerNeedsToChargeUp
   const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32 = 0x0F_5E5D; // CheckForDisobedience.loop2
+}
+impl BattleCatchMonAddresses for Yellow {
+  const CATCH_SUCCESS_ADDRESS: i32 = 0x03_54D4; // PokeBallEffect.captured
+  const CATCH_FAIL_ADDRESS: i32 = 0x03_54D6; // PokeBallEffect.failedToCapture
 }
 
 // Gen 2
@@ -603,6 +614,14 @@ macro_rules! impl_gold_silver_common_addresses {
   }
 }
 impl_gold_silver_common_addresses!(Gold, Silver);
+impl BattleCatchMonAddresses for Gold {
+  const CATCH_SUCCESS_ADDRESS: i32 = 0x03_6A20; // PokeBallEffect.catch_without_fail
+  const CATCH_FAIL_ADDRESS: i32 = 0x03_6A23; // PokeBallEffect.fail_to_catch
+}
+impl BattleCatchMonAddresses for Silver {
+  const CATCH_SUCCESS_ADDRESS: i32 = 0x03_6A1E; // PokeBallEffect.catch_without_fail
+  const CATCH_FAIL_ADDRESS: i32 = 0x03_6A21; // PokeBallEffect.fail_to_catch
+}
 
 #[allow(dead_code)]
 pub enum Crystal {}
@@ -851,4 +870,8 @@ impl BattleMonInfoAddresses for Crystal {
   const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xD206; // wEnemyMon
   const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xC6D4; // wEnemyStatLevels
   const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xC6C1; // wEnemyStats
+}
+impl BattleCatchMonAddresses for Crystal {
+  const CATCH_SUCCESS_ADDRESS: i32 = 0x03_699C; // PokeBallEffect.catch_without_fail
+  const CATCH_FAIL_ADDRESS: i32 = 0x03_699F; // PokeBallEffect.fail_to_catch
 }

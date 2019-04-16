@@ -34,8 +34,8 @@ impl WithOutputBufferSize for WalkStepSegment {
 impl<R: Rom + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkStepSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    gbe.execute(iter, move |gb, mut s, tx| {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    gbe.execute(sb, move |gb, mut s, tx| {
       let mut skips = 0;
       loop {
         gb.restore(&s);

@@ -1,4 +1,3 @@
-use crate::gb::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -24,7 +23,7 @@ impl WithOutputBufferSize for SkipScriptSegment {
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for SkipScriptSegment {
   type Key = ();
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
     MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v|
         v != &super::OverworldInteractionResult::CountStepEvent &&
         v != &super::OverworldInteractionResult::MapCoordEvent &&
@@ -32,6 +31,6 @@ impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for SkipScriptSegment {
         v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::MapScript) &&
         v != &super::OverworldInteractionResult::SeenByTrainer &&
         v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::SeenByTrainer)
-    ).into_unit()).with_buffer_size(self.buffer_size).execute_split(gbe, iter)
+    ).into_unit()).with_buffer_size(self.buffer_size).execute_split(gbe, sb)
   }
 }

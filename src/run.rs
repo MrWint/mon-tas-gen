@@ -8,24 +8,21 @@ use montas::statebuffer::*;
 use montas::util::with_log_level;
 use std::marker::PhantomData;
 
-struct GbRunner<R: Rom, G: GbExecutor<R>> {
-  gbe: G,
+struct GbRunner<R: Rom> {
+  gbe: RuntimeGbExecutor<R>,
   sb: StateBuffer,
   _rom: PhantomData<R>,
 }
 
-impl<R: Rom> GbRunner<R, GbPool<R>> {
-  #[allow(dead_code)] fn pool_no_screen() -> Self { GbRunner::new(GbPool::<R>::no_screen()) }
-  #[allow(dead_code)] fn pool_with_screen() -> Self { GbRunner::new(GbPool::<R>::with_screen()) }
+impl<R: Rom> GbRunner<R> {
+  #[allow(dead_code)] fn pool_no_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::pool_no_screen()) }
+  #[allow(dead_code)] fn pool_with_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::pool_with_screen()) }
+  #[allow(dead_code)] fn single_no_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::single_no_screen()) }
+  #[allow(dead_code)] fn single_with_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::single_with_screen()) }
 }
 
-impl<R: Rom> GbRunner<R, SingleGb<R>> {
-  #[allow(dead_code)] fn single_no_screen() -> Self { GbRunner::new(SingleGb::<R>::no_screen()) }
-  #[allow(dead_code)] fn single_with_screen() -> Self { GbRunner::new(SingleGb::<R>::with_screen()) }
-}
-
-impl<R: Rom, G: GbExecutor<R>> GbRunner<R, G> {
-  fn new(mut gbe: G) -> Self {
+impl<R: Rom> GbRunner<R> {
+  fn new(mut gbe: RuntimeGbExecutor<R>) -> Self {
     let sb: StateBuffer = vec![gbe.get_initial_state()].into_iter().collect();
     Self {
       gbe,

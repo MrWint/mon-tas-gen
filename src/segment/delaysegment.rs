@@ -1,4 +1,3 @@
-use crate::gb::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -34,21 +33,22 @@ impl<R, S> WithOutputBufferSize for DelaySegment<R, S> {
 impl<R: Rom, S: Segment<R>> Segment<R> for DelaySegment<R, S> {
   type Key = S::Key;
 
-  fn execute_split<SR: StateRef, I: IntoIterator<Item=SR>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
     let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
 
-    let mut active_states: Vec<State> = iter.into_iter().map(|s| s.to_state()).collect();
+    let active_buffer_size = sb.get_max_size();
+    let mut active_states = sb;
     let mut skips = 0;
     let mut cycle_count_cutoff = std::u64::MAX >> 1;
     while !active_states.is_empty() {
       info!("DelaySegment processing {} active states at {} skips", active_states.len(), skips);
       // Try segment on current active states.
-      for (value, states) in self.segment.execute_split(gbe, &active_states).into_iter() {
+      for (value, states) in self.segment.execute_split(gbe, active_states.clone()).into_iter() {
         result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
 
       // Update loop exit conditions.
-      let cur_max_cycle_count = active_states.iter().map(|s| s.cycle_count).max().unwrap();
+      let cur_max_cycle_count = (&active_states).into_iter().map(|s| s.cycle_count).max().unwrap();
       if result.is_all_full() && cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY < cycle_count_cutoff {
         cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY;
         info!("DelaySegment set cycle_count_cutoff (full) to {}", to_human_readable_time(cycle_count_cutoff));
@@ -72,7 +72,7 @@ impl<R: Rom, S: Segment<R>> Segment<R> for DelaySegment<R, S> {
         gb.input(::gambatte::Input::empty());
         gb.step();
         tx.send(gb.save()).unwrap();
-      }).into_iter().collect();
+      }).into_state_buffer(active_buffer_size);
 
       skips += 1;
     }

@@ -1,4 +1,3 @@
-use crate::gb::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -28,10 +27,11 @@ impl<R, S> WithOutputBufferSize for ApplyIndividuallySegment<R, S> {
 impl<R: Rom, S: Segment<R>> Segment<R> for ApplyIndividuallySegment<R, S> {
   type Key = S::Key;
 
-  fn execute_split<SR: StateRef, I: IntoIterator<Item=SR>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
     let mut result: HashMap<S::Key, StateBuffer> = HashMap::new();
-    for s in iter {
-      for (value, states) in self.segment.execute_split(gbe, vec![s]).into_iter() {
+    let input_buffer_size = sb.get_max_size();
+    for s in sb.into_iter() {
+      for (value, states) in self.segment.execute_split(gbe, StateBuffer::from_iter_sized(vec![s], input_buffer_size)).into_iter() {
         result.entry(value).or_insert_with(|| StateBuffer::with_max_size(self.buffer_size)).add_all(states);
       }
     }

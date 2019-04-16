@@ -193,10 +193,10 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
 impl<R: Rom + TextAddresses, M: Metric<R>> Segment<R> for TextSegment<R, M> {
   type Key = M::ValueType;
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
     // Collect initial states.
     let mut active_states: BTreeMap<IntermediateBufferKey, StateBuffer<PrintLetterState>> = BTreeMap::new();
-    let initial_state_buffer = gbe.execute(iter, move |gb, s, tx| {
+    let initial_state_buffer = gbe.execute(sb, move |gb, s, tx| {
       gb.restore(&s);
       if !Self::is_print_letter_delay_frame(gb) {
         log::warn!("found State not at PrintLetterDelay initially, maybe there's another input before. Dropping state.");

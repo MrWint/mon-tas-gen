@@ -4,7 +4,7 @@ use montas::segment::overworld::gen1::*;
 
 #[allow(dead_code)]
 pub fn start() {
-  let mut r: GbRunner<Blue, _> = GbRunner::single_with_screen();
+  let mut r: GbRunner<Blue> = GbRunner::single_with_screen();
 
   run(&mut r);
 
@@ -13,7 +13,7 @@ pub fn start() {
   r.debug_segment_end("temp/blue_test");
 }
 
-fn run<G: GbExecutor<Blue>>(r: &mut GbRunner<Blue, G>) {
+fn run(r: &mut GbRunner<Blue>) {
   r.run_debug(DelaySegment::new(MoveSegment::with_metric_fn(START, |_gb| Some(()))));
   // r.run(MoveSegment::new(START).with_max_skips(10));
   r.debug_print_states();

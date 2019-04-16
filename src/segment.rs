@@ -11,9 +11,9 @@ use std::marker::PhantomData;
 pub trait Segment<R: Rom> {
   type Key: StateKey;
 
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer>;
-  fn execute<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gb: &mut E, iter: I) -> StateBuffer<Self::Key> where Self::Key: Clone {
-    self.execute_split(gb, iter).into_state_buffer()
+  fn execute_split(&self, gb: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer>;
+  fn execute(&self, gb: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> StateBuffer<Self::Key> where Self::Key: Clone {
+    self.execute_split(gb, sb).into_state_buffer()
   }
   fn seq<S2: Segment<R>>(self, s2: S2) -> SeqSegment<R, Self, S2> where Self: Sized + Segment<R, Key=()> {
     SeqSegment {
@@ -30,8 +30,8 @@ pub struct SeqSegment<R, S1, S2> {
 }
 impl <R: Rom, S1: Segment<R, Key=()>, S2: Segment<R>> Segment<R> for SeqSegment<R, S1, S2> {
   type Key = S2::Key;
-  fn execute_split<S: StateRef, I: IntoIterator<Item=S>, E: GbExecutor<R>>(&self, gbe: &mut E, iter: I) -> HashMap<Self::Key, StateBuffer> {
-    let sb = self.s1.execute(gbe, iter);
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    let sb = self.s1.execute(gbe, sb);
     if sb.is_empty() { return HashMap::new() }
     self.s2.execute_split(gbe, sb)
   }
@@ -114,6 +114,7 @@ mod applyindividuallysegment;
 pub use self::applyindividuallysegment::ApplyIndividuallySegment;
 mod delaysegment;
 pub use self::delaysegment::DelaySegment;
+mod graphsegment;
 mod identifyinputsegment;
 pub use self::identifyinputsegment::IdentifyInputSegment;
 mod moveloopsegment;
