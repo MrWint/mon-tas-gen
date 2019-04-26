@@ -156,6 +156,7 @@ pub trait Gen2FightTurnAddresses {
   const CUR_DAMAGE_MEM_ADDRESS: u16; // wCurDamage
   const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32; // BattleCommand_LowerSub
   const ATTACK_MISSED_MEM_ADDRESS: u16; // wAttackMissed
+  const EFFECT_FAILED_MEM_ADDRESS: u16; // wEffectFailed
   const CRITICAL_HIT_MEM_ADDRESS: u16; // wCriticalHit
 }
 pub trait BattleMovesInfoAddresses {
@@ -592,6 +593,7 @@ macro_rules! impl_gold_silver_common_addresses {
       const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xd141; // wCurDamage
       const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32 = 0x0D_503e; // BattleCommand_LowerSub
       const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xcb45; // wAttackMissed
+      const EFFECT_FAILED_MEM_ADDRESS: u16 = 0xcbeb; // wEffectFailed
       const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xcb44; // wCriticalHit
     }
     impl BattleMovesInfoAddresses for $t {
@@ -853,6 +855,7 @@ impl Gen2FightTurnAddresses for Crystal {
   const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xD256; // wCurDamage
   const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32 = 0x0D_4EEE; // BattleCommand_LowerSub
   const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xC667; // wAttackMissed
+  const EFFECT_FAILED_MEM_ADDRESS: u16 = 0xC70D; // wEffectFailed
   const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xC666; // wCriticalHit
 }
 impl BattleMovesInfoAddresses for Crystal {

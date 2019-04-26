@@ -19,20 +19,25 @@ pub enum FightTurnResult {
   HitMissed,
   Hit { damage: u16, },
   CriticalHit { damage: u16, },
+  HitWithoutEffect { damage: u16, },
+  CriticalHitWithoutEffect { damage: u16, },
   Failed,
-  StatUpDown,
+  Succeeded,
 }
 pub struct Gen2NormalHitMetric {
   expected_max_damage: u16,
   expected_max_crit_damage: u16,
+  has_effect: bool,
 }
 impl Gen2NormalHitMetric {
   pub fn with_expected_max_damage(expected_max_damage: u16, expected_max_crit_damage: u16) -> Gen2NormalHitMetric {
     Gen2NormalHitMetric {
       expected_max_damage,
-      expected_max_crit_damage
+      expected_max_crit_damage,
+      has_effect: false,
     }
   }
+  pub fn with_effect(self) -> Gen2NormalHitMetric { Gen2NormalHitMetric { has_effect: true, ..self } }
 }
 impl<R: JoypadAddresses + Gen2FightTurnAddresses> Metric<R> for Gen2NormalHitMetric {
   type ValueType = FightTurnResult;
@@ -55,16 +60,19 @@ impl<R: JoypadAddresses + Gen2FightTurnAddresses> Metric<R> for Gen2NormalHitMet
     if gb.gb.read_memory(R::ATTACK_MISSED_MEM_ADDRESS) != 0 { return Some(FightTurnResult::HitMissed); }
     let damage = gb.gb.read_memory_word_be(R::CUR_DAMAGE_MEM_ADDRESS);
     let critical_hit = gb.gb.read_memory_word_be(R::CRITICAL_HIT_MEM_ADDRESS) != 0;
+    let effect_failed = self.has_effect && gb.gb.read_memory(R::EFFECT_FAILED_MEM_ADDRESS) != 0;
 
     assert!(max_damage == if critical_hit { self.expected_max_crit_damage } else  { self.expected_max_damage });
 
-    if critical_hit { Some(FightTurnResult::CriticalHit { damage, }) }
+    if critical_hit && effect_failed { Some(FightTurnResult::CriticalHitWithoutEffect { damage, }) }
+    else if critical_hit { Some(FightTurnResult::CriticalHit { damage, }) }
+    else if effect_failed { Some(FightTurnResult::HitWithoutEffect { damage, }) }
     else { Some(FightTurnResult::Hit { damage, }) }
   }
 }
 
-pub struct Gen2StatUpDownMetric {}
-impl<R: JoypadAddresses + Gen2FightTurnAddresses> Metric<R> for Gen2StatUpDownMetric {
+pub struct Gen2MoveSuccessMetric {}
+impl<R: JoypadAddresses + Gen2FightTurnAddresses> Metric<R> for Gen2MoveSuccessMetric {
   type ValueType = FightTurnResult;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
@@ -79,6 +87,6 @@ impl<R: JoypadAddresses + Gen2FightTurnAddresses> Metric<R> for Gen2StatUpDownMe
     // Enter BattleCommand_LowerSub
     if gb.run_until_or_next_input_use(&[R::BATTLE_COMMAND_LOWERSUB_ADDRESS]) == 0 { return None; }
     if gb.gb.read_memory(R::ATTACK_MISSED_MEM_ADDRESS) != 0 { return Some(FightTurnResult::Failed); }
-    Some(FightTurnResult::StatUpDown)
+    Some(FightTurnResult::Succeeded)
   }
 }

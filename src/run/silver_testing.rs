@@ -169,7 +169,7 @@ fn run(r: &mut GbRunner<Silver>) {
       )); // Scratch //// mon // used // move // !
   r.run(TextSegment::new()); // critical hit!
   r.run(MoveSegment::with_metric(A|B, BattleObedienceMetric {}.expect(BattleObedience::Obey))); // confirm
-  r.run_debug(TextSegment::with_metric(Gen2StatUpDownMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer()); // mon // used // move // !
+  r.run_debug(TextSegment::with_metric(Gen2MoveSuccessMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer()); // mon // used // move // !
   r.run(TextSegment::new().with_allowed_end_inputs(A)); // but it failed!
   r.run(DelaySegment::new(MoveSegment::with_metric(B, Gen2AIChooseMoveMetric {}.debug_print().expect(Move::Growl)))); // confirm
   // Turn 2
@@ -190,7 +190,7 @@ fn run(r: &mut GbRunner<Silver>) {
       MoveSegment::with_metric(A|B,
           BattleObedienceMetric {}.expect(BattleObedience::Obey))
       .seq(TextSegment::with_metric(
-          Gen2StatUpDownMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer())
+          Gen2MoveSuccessMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer())
       )); // confirm //// mon // used // move // !
   r.run(SkipTextsSegment::new(1).with_confirm_input(B)); // but it failed!
   // Turn 3

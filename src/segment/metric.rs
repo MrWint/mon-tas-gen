@@ -22,8 +22,14 @@ pub trait Metric<R>: Sync {
   fn filter<F>(self, f: F) -> Filter<R, Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
     Filter { metric: self, f, _rom: PhantomData, }
   }
+  fn assert<F>(self, f: F) -> Assert<R, Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
+    Assert { metric: self, f, _rom: PhantomData, }
+  }
   fn expect(self, expected_value: Self::ValueType) -> Expect<R, Self> where Self: Sized {
     Expect { metric: self, expected_value, _rom: PhantomData, }
+  }
+  fn assert_eq(self, expected_value: Self::ValueType) -> AssertEq<R, Self> where Self: Sized {
+    AssertEq { metric: self, expected_value, _rom: PhantomData, }
   }
   fn map<F, K: StateKey>(self, f: F) -> Map<R, Self, F> where Self: Sized, F: Fn(Self::ValueType) -> K {
     Map { metric: self, f, _rom: PhantomData, }
@@ -49,6 +55,18 @@ impl<R: Sync, M: Metric<R>, F: Sync> Metric<R> for Filter<R, M, F> where F: Fn(&
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     self.metric.evaluate(gb).filter(&self.f)
+  }
+}
+pub struct Assert<R, M, F> {
+  metric: M,
+  f: F,
+  _rom: PhantomData<R>,
+}
+impl<R: Sync, M: Metric<R>, F: Sync> Metric<R> for Assert<R, M, F> where F: Fn(&M::ValueType) -> bool {
+  type ValueType = M::ValueType;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    self.metric.evaluate(gb).map(|v| { assert!((self.f)(&v)); v })
   }
 }
 pub struct Map<R, M, F> {
@@ -96,6 +114,18 @@ impl<R: Sync, M: Metric<R>> Metric<R> for Expect<R, M> where M::ValueType: Sync 
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     self.metric.evaluate(gb).filter(|v| v == &self.expected_value).map(|_| ())
+  }
+}
+pub struct AssertEq<R, M: Metric<R>> {
+  metric: M,
+  expected_value: M::ValueType,
+  _rom: PhantomData<R>,
+}
+impl<R: Sync, M: Metric<R>> Metric<R> for AssertEq<R, M> where M::ValueType: Sync {
+  type ValueType = ();
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    self.metric.evaluate(gb).map(|v| assert_eq!(v, self.expected_value))
   }
 }
 pub struct DebugPrint<R, M> {

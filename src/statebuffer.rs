@@ -8,7 +8,7 @@ use std::fs::File;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
 
-pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 64;
+pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
 pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = STATE_BUFFER_DEFAULT_MAX_SIZE * 16; // 4096;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
