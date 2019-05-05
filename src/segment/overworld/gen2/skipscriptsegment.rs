@@ -29,6 +29,8 @@ impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for SkipScriptSegment {
         v != &super::OverworldInteractionResult::MapCoordEvent &&
         v != &super::OverworldInteractionResult::SceneScript &&
         v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::MapScript) &&
+        v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::TalkToTrainer) &&
+        v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::Fall) &&
         v != &super::OverworldInteractionResult::SeenByTrainer &&
         v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::SeenByTrainer)
     ).into_unit()).with_buffer_size(self.buffer_size).execute_split(gbe, sb)

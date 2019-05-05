@@ -4,7 +4,7 @@ use crate::statebuffer::StateBuffer;
 use gambatte::Input;
 
 pub struct SkipTextsSegment {
-  num_texts: u32,
+  num_texts: usize,
   confirm_input: Input,
   buffer_size: usize,
   ends_to_be_skipped: u32,
@@ -13,7 +13,7 @@ impl WithOutputBufferSize for SkipTextsSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 impl SkipTextsSegment {
-  pub fn new(num_texts: u32) -> Self {
+  pub fn new(num_texts: usize) -> Self {
     assert!(num_texts > 0);
     SkipTextsSegment {
       num_texts,

@@ -272,3 +272,27 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen2MapEventsAddres
     }
   } else { result }
 }
+
+
+
+
+pub struct RoamMonLocationMetric {
+  mon: Pokemon,
+}
+impl RoamMonLocationMetric {
+  pub fn new(mon: Pokemon) -> RoamMonLocationMetric { RoamMonLocationMetric { mon } }
+}
+impl<R: Rom + RoamMonAddresses> Metric<R> for RoamMonLocationMetric {
+  type ValueType = (u8, u8);
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::AFTER_ROAM_MON_UPDATE_ADDRESS]) == 0 { return None; }
+    for i in 0..3 {
+      if self.mon != Pokemon::from_index::<R>(gb.gb.read_memory(R::ROAM_MON_DATA_MEM_ADDRESS + i*7)).unwrap() { continue; }
+      let map_group = gb.gb.read_memory(R::ROAM_MON_DATA_MEM_ADDRESS + i*7 + 2);
+      let map_number = gb.gb.read_memory(R::ROAM_MON_DATA_MEM_ADDRESS + i*7 + 3);
+      return Some((map_group, map_number));
+    }
+    panic!("Species {:?} is not roaming", self.mon);
+  }
+}

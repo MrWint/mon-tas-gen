@@ -129,6 +129,7 @@ pub trait Gen1DVAddresses {
 }
 pub trait Gen2DVAddresses {
   const AFTER_DV_GENERATION_ADDRESS: i32; // GeneratePartyMonStats.initializeDVs
+  const AFTER_WILD_DV_GENERATION_ADDRESS: i32; // LoadEnemyMon.UpdateDVs
 }
 pub trait TrainerIDAddresses {
   const TRAINER_ID_AFTER_GENERATION_ADDRESS: i32; // after trainer ID is determined
@@ -155,9 +156,11 @@ pub trait Gen2FightTurnAddresses {
   const BATTLE_COMMAND_DAMAGEVARIATION_ADDRESS: i32; // BattleCommand_DamageVariation
   const CUR_DAMAGE_MEM_ADDRESS: u16; // wCurDamage
   const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32; // BattleCommand_LowerSub
+  const BATTLE_COMMAND_MOVEANIMNOSUB_ADDRESS: i32; // BattleCommand_MoveAnimNoSub
   const ATTACK_MISSED_MEM_ADDRESS: u16; // wAttackMissed
   const EFFECT_FAILED_MEM_ADDRESS: u16; // wEffectFailed
   const CRITICAL_HIT_MEM_ADDRESS: u16; // wCriticalHit
+  const CUR_MOVE_INDEX_MEM_ADDRESS: u16; // wCurMoveNum
 }
 pub trait BattleMovesInfoAddresses {
   const MOVES_ADDRESS: i32; // Moves
@@ -178,6 +181,22 @@ pub trait BattleMonInfoAddresses {
 pub trait BattleCatchMonAddresses {
   const CATCH_SUCCESS_ADDRESS: i32; // Address reached when catching succeeded.
   const CATCH_FAIL_ADDRESS: i32; // Address reached when catching failed.
+}
+pub trait Gen2BattleSwitchMonAddresses {
+  const SWITCH_DECIDED_ADDRESS: i32; // Address reached when mon to switch to is decided.
+  const SWITCH_SPECIES_MEM_ADDRESS: u16; // Memory address containing the new mon's species.
+  const SWITCH_LEVEL_MEM_ADDRESS: u16; // Memory address containing the new mon's level.
+}
+pub trait Gen2BattleSpiteAddresses {
+  const SPITE_SUCCESS_ADDRESS: i32; // Address reached when spite succeeded.
+  const SPITE_FAIL_ADDRESS: i32; // Address reached when spite failed.
+}
+pub trait Gen2BattleMultiHitAddresses {
+  const MULTI_HIT_ADDRESS: i32; // Address reached when multi-hit loop count is determined.
+}
+pub trait RoamMonAddresses {
+  const AFTER_ROAM_MON_UPDATE_ADDRESS: i32; // Address reached after roaming mon locations were updated.
+  const ROAM_MON_DATA_MEM_ADDRESS: u16; // Memory address containing the roaming mon data.
 }
 
 // Gen 1
@@ -570,6 +589,7 @@ macro_rules! impl_gold_silver_common_addresses {
     }
     impl Gen2DVAddresses for $t {
       const AFTER_DV_GENERATION_ADDRESS: i32 = 0x03_59bb; // GeneratePartyMonStats.initializeDVs
+      const AFTER_WILD_DV_GENERATION_ADDRESS: i32 = 0x0f_6800; // LoadEnemyMon.UpdateDVs
     }
     impl BattleDetermineMoveOrderAddresses for $t {
       const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_42cb; // DetermineMoveOrder
@@ -592,9 +612,11 @@ macro_rules! impl_gold_silver_common_addresses {
       const BATTLE_COMMAND_DAMAGEVARIATION_ADDRESS: i32 = 0x0D_4e4d; // BattleCommand_DamageVariation
       const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xd141; // wCurDamage
       const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32 = 0x0D_503e; // BattleCommand_LowerSub
+      const BATTLE_COMMAND_MOVEANIMNOSUB_ADDRESS: i32 = 0x0D_50b1; // BattleCommand_MoveAnimNoSub
       const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xcb45; // wAttackMissed
       const EFFECT_FAILED_MEM_ADDRESS: u16 = 0xcbeb; // wEffectFailed
       const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xcb44; // wCriticalHit
+      const CUR_MOVE_INDEX_MEM_ADDRESS: u16 = 0xcfc7; // wCurMoveNum
     }
     impl BattleMovesInfoAddresses for $t {
       const MOVES_ADDRESS: i32 = 0x10_5AFE; // Moves
@@ -611,6 +633,22 @@ macro_rules! impl_gold_silver_common_addresses {
       const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xD0EF; // wEnemyMon
       const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcbb2; // wEnemyStatLevels
       const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xcb9f; // wEnemyStats
+    }
+    impl Gen2BattleSwitchMonAddresses for $t {
+      const SWITCH_DECIDED_ADDRESS: i32 = 0x0f_55c3; // LoadEnemyMonToSwitchTo.skip_unown
+      const SWITCH_SPECIES_MEM_ADDRESS: u16 = 0xd004; // wCurPartySpecies
+      const SWITCH_LEVEL_MEM_ADDRESS: u16 = 0xd040; // wCurPartyLevel
+    }
+    impl Gen2BattleSpiteAddresses for $t {
+      const SPITE_SUCCESS_ADDRESS: i32 = 0x0d_5d97; // BattleCommand_Spite.deplete_pp
+      const SPITE_FAIL_ADDRESS: i32 = 0x0d_5dcd; // BattleCommand_Spite.failed
+    }
+    impl Gen2BattleMultiHitAddresses for $t {
+      const MULTI_HIT_ADDRESS: i32 = 0x0D_6b48; // BattleCommand_EndLoop.double_hit
+    }
+    impl RoamMonAddresses for $t {
+      const AFTER_ROAM_MON_UPDATE_ADDRESS: i32 = 0x0a_6942; // _BackUpMapIndices
+      const ROAM_MON_DATA_MEM_ADDRESS: u16 = 0xdd1a; // wRoamMon1
     }
     )+
   }
@@ -832,6 +870,7 @@ impl Gen2MapAddresses for Crystal {
 }
 impl Gen2DVAddresses for Crystal {
   const AFTER_DV_GENERATION_ADDRESS: i32 = 0x03_59B5; // GeneratePartyMonStats.initializeDVs
+  const AFTER_WILD_DV_GENERATION_ADDRESS: i32 = 0x0F_69A8; // LoadEnemyMon.UpdateDVs
 }
 impl BattleDetermineMoveOrderAddresses for Crystal {
   const DETERMINE_MOVE_ORDER_START_ADDRESS: i32 = 0x0F_4314; // DetermineMoveOrder
@@ -854,9 +893,11 @@ impl Gen2FightTurnAddresses for Crystal {
   const BATTLE_COMMAND_DAMAGEVARIATION_ADDRESS: i32 = 0x0D_4CFD; // BattleCommand_DamageVariation
   const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xD256; // wCurDamage
   const BATTLE_COMMAND_LOWERSUB_ADDRESS: i32 = 0x0D_4EEE; // BattleCommand_LowerSub
+  const BATTLE_COMMAND_MOVEANIMNOSUB_ADDRESS: i32 = 0x0D_4F60; // BattleCommand_MoveAnimNoSub
   const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xC667; // wAttackMissed
   const EFFECT_FAILED_MEM_ADDRESS: u16 = 0xC70D; // wEffectFailed
   const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xC666; // wCriticalHit
+  const CUR_MOVE_INDEX_MEM_ADDRESS: u16 = 0xD0D5; // wCurMoveNum
 }
 impl BattleMovesInfoAddresses for Crystal {
   const MOVES_ADDRESS: i32 = 0x10_5AFB; // Moves
@@ -877,4 +918,20 @@ impl BattleMonInfoAddresses for Crystal {
 impl BattleCatchMonAddresses for Crystal {
   const CATCH_SUCCESS_ADDRESS: i32 = 0x03_699C; // PokeBallEffect.catch_without_fail
   const CATCH_FAIL_ADDRESS: i32 = 0x03_699F; // PokeBallEffect.fail_to_catch
+}
+impl Gen2BattleSwitchMonAddresses for Crystal {
+  const SWITCH_DECIDED_ADDRESS: i32 = 0x0F_5708; // LoadEnemyMonToSwitchTo.skip_unown
+  const SWITCH_SPECIES_MEM_ADDRESS: u16 = 0xD108; // wCurPartySpecies
+  const SWITCH_LEVEL_MEM_ADDRESS: u16 = 0xD143; // wCurPartyLevel
+}
+impl Gen2BattleSpiteAddresses for Crystal {
+  const SPITE_SUCCESS_ADDRESS: i32 = 0x0D_5C5B; // BattleCommand_Spite.deplete_pp
+  const SPITE_FAIL_ADDRESS: i32 = 0x0D_5C91; // BattleCommand_Spite.failed
+}
+impl Gen2BattleMultiHitAddresses for Crystal {
+  const MULTI_HIT_ADDRESS: i32 = 0x0D_6A3A; // BattleCommand_EndLoop.double_hit
+}
+impl RoamMonAddresses for Crystal {
+  const AFTER_ROAM_MON_UPDATE_ADDRESS: i32 = 0x0A_63F6; // _BackUpMapIndices
+  const ROAM_MON_DATA_MEM_ADDRESS: u16 = 0xDFCF; // wRoamMon1
 }

@@ -212,7 +212,7 @@ impl<R: JoypadAddresses + Gen2DVAddresses> Metric<R> for Gen2DVMetric {
   type ValueType = DVs;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    if gb.run_until_or_next_input_use(&[R::AFTER_DV_GENERATION_ADDRESS]) == 0 { return None; }
+    if gb.run_until_or_next_input_use(&[R::AFTER_DV_GENERATION_ADDRESS, R::AFTER_WILD_DV_GENERATION_ADDRESS]) == 0 { return None; }
     let registers = gb.gb.read_registers();
 
     Some(DVs::from_u16_be((registers.b as u16) << 8 | (registers.c as u16)))

@@ -45,11 +45,13 @@ impl Sdl {
 
       loop {
         while let Some(_) = event_pump.poll_event() {} // Work through window events to keep it responsive. All events are discarded.
-        match screen_update_rx.recv_timeout(Duration::from_millis(50)) {
+        let mut window_surface = window.surface(&event_pump).unwrap();
+        surface.blit_scaled(None, &mut window_surface, None).unwrap();
+        window_surface.update_window().unwrap();
+        match screen_update_rx.recv_timeout(Duration::from_millis(10)) {
           Ok(_screen) => { // update screen
-            let mut window_surface = window.surface(&event_pump).unwrap();
-            surface.blit_scaled(None, &mut window_surface, None).unwrap();
-            window_surface.update_window().unwrap();
+            while screen_update_rx.try_recv().is_err() {} // clear all events
+            thread::sleep(Duration::from_millis(10)); // wait at least 1/100 second before next event
           },
           Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
           Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {},
@@ -88,6 +90,7 @@ impl ScreenUpdateCallback for SdlScreen {
   }
 
   fn update_screen(&self) {
-    self.sdl.screen_update_tx.send(self.screen).unwrap();
+    // Commented out: Degrades performance over time
+    // self.sdl.screen_update_tx.send(self.screen).unwrap();
   }
 }

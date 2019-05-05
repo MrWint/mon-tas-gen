@@ -56,6 +56,9 @@ pub struct RawState {
   // derived state for StateBuffer decisions
   pub rng_state: u32,
   pub cycle_count: u64,
+
+  // additional semantic information and stats
+  pub num_delays: u32,
 }
 impl RawState {
   /// Returns the D-Sum of this state.
@@ -92,6 +95,7 @@ pub struct Gb<R> {
   /// Whether the execution is currently stopped at a decision point.
   pub is_at_input: bool,
   ignored_inputs: Input, // inputs ignored by next input use
+  pub num_delays: u32,
 }
 
 impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
@@ -109,6 +113,7 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
       last_input_frame: [0, 0],
       is_at_input: false,
       ignored_inputs: Input::empty(),
+      num_delays: 0,
     };
     pgb.step(); // move to first decision point
     pgb
@@ -130,6 +135,7 @@ impl <R: RngAddresses> Gb<R> {
         // save derived state
         cycle_count: self.gb.get_cycle_count(),
         rng_state: if self.is_at_input { self.get_rng_state() } else { 0 },
+        num_delays: self.num_delays,
       }),
       // save associated value
       value,
@@ -150,6 +156,7 @@ impl <R> Gb<R> {
     self.last_input_frame.clone_from(&s.last_input_frame);
     self.is_at_input = s.is_at_input;
     self.ignored_inputs = s.ignored_inputs;
+    self.num_delays = s.num_delays;
   }
   /// Generates a stack trace of the current point in the game's execution, returning at most 40 values from the stack.
   /// Values may be return addresses or registers stored on the stack.
@@ -175,7 +182,14 @@ impl <R: JoypadAddresses> Gb<R> {
     self.last_input_frame = [0, 0];
     self.is_at_input = false;
     self.ignored_inputs = Input::empty();
+    self.num_delays = 0;
     self.step(); // move to first decision point
+  }
+
+  pub fn delay(&mut self) {
+    self.num_delays += 1;
+    self.input(Input::empty());
+    self.step();
   }
 
   /// Performs an input at a decision point.

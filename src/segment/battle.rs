@@ -75,6 +75,7 @@ pub struct MoveInfo {
   pub max_damage: u16,
   pub min_crit_damage: u16,
   pub max_crit_damage: u16,
+  pub is_effective: bool,
 }
 
 fn truncate_hl_bc(atk: u16, def: u16) -> (u8, u8) {
@@ -124,7 +125,7 @@ impl<R: Rom + BattleMovesInfoAddresses + BattleMonInfoAddresses> StateFn<R, Vec<
       let crit_level = if R::is_gen1() { 2 * level } else { level }; // in gen1, level is doubled for crits
 
       let calc_damage = |lvl: u32, atk: u8, mut def: u8, crit_multiplier: u32| {
-        if power == 0 { return 0; }
+        if power == 0 { return (0, false); }
 
         if mov == Move::SelfDestruct || mov == Move::Explosion { def = std::cmp::max(def >> 1, 1); } // Explosion moves halve enemy defense
 
@@ -134,7 +135,7 @@ impl<R: Rom + BattleMovesInfoAddresses + BattleMonInfoAddresses> StateFn<R, Vec<
         }
         damage = std::cmp::min(damage * crit_multiplier, 997) + 2;
 
-        if mov == Move::Struggle { return damage; } // no stab or type effectiveness when using Struggle
+        if mov == Move::Struggle { return (damage, false); } // no stab or type effectiveness when using Struggle
 
         // apply gen2 badge type boosts
         if R::is_gen2() && self.who == Who::Player {
@@ -150,22 +151,27 @@ impl<R: Rom + BattleMovesInfoAddresses + BattleMonInfoAddresses> StateFn<R, Vec<
         }
 
         // apply type effectiveness
+        let mut is_effective = false;
+        let mut total_effectivity = 10;
         for (at, dt, eff) in read_type_matchups::<R>(gb) {
           if typ == at && opp_info.types.contains(&dt) {
+            if R::is_gen1() { is_effective = true; }
+            total_effectivity = total_effectivity * eff / 10;
             damage = if damage == 0 || eff == 0 { 0 } else { std::cmp::max(damage * eff / 10, 1) };
           }
         }
+        if R::is_gen2() && total_effectivity != 10 { is_effective = true; }
 
-        damage
+        (damage, is_effective)
       };
-      let damage = calc_damage(level, atk, def, 1);
-      let crit_damage = calc_damage(crit_level, crit_atk, crit_def, if R::is_gen2() { 2 } else { 1 }); // in gen2, damage is doubled for crits
+      let (damage, is_effective) = calc_damage(level, atk, def, 1);
+      let (crit_damage, _) = calc_damage(crit_level, crit_atk, crit_def, if R::is_gen2() { 2 } else { 1 }); // in gen2, damage is doubled for crits
 
       let min_damage = if damage > 1 { damage * 217 / 255 } else { damage } as u16;
       let max_damage = damage as u16;
       let min_crit_damage = if crit_damage > 1 { crit_damage * 217 / 255 } else {crit_damage } as u16;
       let max_crit_damage = crit_damage as u16;
-      MoveInfo { mov, power, typ, min_damage, max_damage, min_crit_damage, max_crit_damage }
+      MoveInfo { mov, power, typ, min_damage, max_damage, min_crit_damage, max_crit_damage, is_effective }
     }).collect()
   }
 }

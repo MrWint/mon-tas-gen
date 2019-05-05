@@ -89,7 +89,7 @@ impl Map {
         }
         if gb.gb.read_memory(object_base_address + 8) & 0xf == 2 && [0x06, 0x07, 0x08, 0x09].contains(&movement) { // is stationary trainer
           let script_pointer = gb.gb.read_memory_word_le(object_base_address + 0xa);
-          let map_scripts_bank = gb.gb.read_memory(T::MAP_SCRIPTS_BANK_MEM_ADDRESS);
+          let map_scripts_bank = if script_pointer >= 0x4000 { gb.gb.read_memory(T::MAP_SCRIPTS_BANK_MEM_ADDRESS) } else { 0 };
           let script_pointer_rom_address = (i32::from(map_scripts_bank) << 16) + i32::from(script_pointer);
           let event_flag_index = gb.gb.read_rom_word_le(script_pointer_rom_address);
           if gb.gb.read_memory(T::EVENT_FLAGS_MEM_ADDRESS + event_flag_index/8) & (1 << (event_flag_index % 8)) == 0 { // not already fought

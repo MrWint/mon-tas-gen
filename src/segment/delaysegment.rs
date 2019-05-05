@@ -8,7 +8,7 @@ use log::{debug,info};
 
 const DELAY_SEGMENT_DEFAULT_MAX_SKIPS: u32 = 1000;
 const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u64 = 1 * 35112;
-const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u64 = 5 * 35112;
+const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u64 = 10 * 35112;
 
 pub struct DelaySegment<R, S> {
   segment: S,
@@ -69,8 +69,7 @@ impl<R: Rom, S: Segment<R>> Segment<R> for DelaySegment<R, S> {
         } else { true }
       }), move |gb, s, tx| {
         gb.restore(&s);
-        gb.input(::gambatte::Input::empty());
-        gb.step();
+        gb.delay();
         tx.send(gb.save()).unwrap();
       }).into_state_buffer(active_buffer_size);
 
