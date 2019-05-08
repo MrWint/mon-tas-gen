@@ -1218,10 +1218,11 @@ fn run(r: &mut GbRunner<Crystal>) {
   //   r.run(MoveSegment::new(A)); // Escape Rope
   //   r.run(TextSegment::new());
   //   r.run(MoveSegment::new(U));
+  //   r.run(MoveSegment::new(U|R));
   //   r.run(MoveSegment::new(U|L));
   //   r.run(MoveSegment::new(U|R));
   //   r.run(MoveSegment::new(U|L));
-  //   r.run(MoveSegment::new(A)); // x5
+  //   r.run(MoveSegment::new(A)); // x6
   //   r.run(SkipTextsSegment::new(1).with_skip_ends(3).with_confirm_input(A)); // buy
   //   r.run(SkipTextsSegment::new(1));
   //   r.run(MoveSegment::new(D));
@@ -1236,8 +1237,7 @@ fn run(r: &mut GbRunner<Crystal>) {
   //   r.run(MoveSegment::new(A)); // X Attack
   //   r.run(TextSegment::new());
   //   r.run(MoveSegment::new(U));
-  //   r.run(MoveSegment::new(U|L));
-  //   r.run(MoveSegment::new(A)); // x3
+  //   r.run(MoveSegment::new(A)); // x2
   //   r.run(SkipTextsSegment::new(1).with_skip_ends(3).with_confirm_input(A)); // buy
   //   r.run(SkipTextsSegment::new(1).with_confirm_input(A));
   //   r.run(MoveSegment::new(B)); // close
@@ -3742,95 +3742,1047 @@ fn run(r: &mut GbRunner<Crystal>) {
   // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
   // r.save("crystal_after_kimono5");
 
-  r.load("crystal_after_kimono5");
-  r.run(TurnSegment::new(D));
-  r.run(WalkToSegment::new(7, 8));
-  r.run(WalkToSegment::new(7, 9));
-  r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
-  r.run(SkipTextsSegment::new(10)); // Get Surf
-  r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got HM03
-  r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put HM03 in
-  r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
-  r.run(SkipTextsSegment::new(3)); // Get Surf
-  r.run(TurnSegment::new(L));
-  r.run(WalkToSegment::new(6, 13));
-  r.run(WarpSegment::new().with_input(D)); // leave
-  r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
-  r.run(WalkToSegment::new(6, 27).into(OverworldInteractionResult::Warped));
-  r.run(WarpSegment::new()); // enter gym
-  r.run(WalkToSegment::new(4, 13).into(OverworldInteractionResult::SeenByTrainer));
-  r.run(SkipScriptSegment::new()); // Sage Ping
-  r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(2)); // Sage Ping
-  r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
-  r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
-  r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
-  r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
-  r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
-  r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
-  r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
-  r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
-  r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
-  r.run(EndTrainerBattleSegment::with_defeat_texts(1));
-  r.save("crystal_after_sage_ping");
+  // r.load("crystal_after_kimono5");
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(7, 8));
+  // r.run(WalkToSegment::new(7, 9));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(10)); // Get Surf
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got HM03
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put HM03 in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
+  // r.run(SkipTextsSegment::new(3)); // Get Surf
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(6, 13));
+  // r.run(WarpSegment::new().with_input(D)); // leave
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(WalkToSegment::new(6, 27).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter gym
+  // r.run(WalkToSegment::new(4, 13).into(OverworldInteractionResult::SeenByTrainer));
+  // r.run(SkipScriptSegment::new()); // Sage Ping
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(2)); // Sage Ping
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 16));
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_sage_ping");
 
-  r.load("crystal_after_sage_ping");
-  r.run(TurnSegment::new(R));
-  r.run(WalkToSegment::new(6, 13));
-  r.run(WalkToSegment::new(6, 11));
-  r.run(WalkToSegment::new(3, 11));
-  r.run(WalkToSegment::new(3, 7).into(OverworldInteractionResult::SeenByTrainer));
-  r.run(SkipScriptSegment::new()); // Sage Jeffrey
-  r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(4)); // Sage Jeffrey
-  r.run(OHKOSegment::new(Move::ThunderShock)); // Haunter
-  r.run(EndTrainerBattleSegment::with_defeat_texts(1));
-  r.save("crystal_after_sage_jeffrey");
+  // r.load("crystal_after_sage_ping");
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(6, 13));
+  // r.run(WalkToSegment::new(6, 11));
+  // r.run(WalkToSegment::new(3, 11));
+  // r.run(WalkToSegment::new(3, 7).into(OverworldInteractionResult::SeenByTrainer));
+  // r.run(SkipScriptSegment::new()); // Sage Jeffrey
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(4)); // Sage Jeffrey
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Haunter
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_sage_jeffrey");
 
-  r.load("crystal_after_sage_jeffrey");
-  r.run(TurnSegment::new(R));
-  r.run(WalkToSegment::new(6, 7));
-  r.run(WalkToSegment::new(6, 5).into(OverworldInteractionResult::SeenByTrainer));
-  r.run(SkipScriptSegment::new()); // Medium Martha
-  r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Medium Martha
-  r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
-  r.run(NextTrainerMonSegment::new(Pokemon::Haunter, 20).with_level_up().with_override_move(Move::Leer)); // learn Spark
-  r.run(OHKOSegment::new(Move::Spark)); // Haunter
-  r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 20));
-  r.run(OHKOSegment::new(Move::Spark)); // Gastly
-  r.run(EndTrainerBattleSegment::with_defeat_texts(1));
-  r.save("crystal_after_medium_martha");
+  // r.load("crystal_after_sage_jeffrey");
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(6, 7));
+  // r.run(WalkToSegment::new(6, 5).into(OverworldInteractionResult::SeenByTrainer));
+  // r.run(SkipScriptSegment::new()); // Medium Martha
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Medium Martha
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Gastly
+  // r.run(NextTrainerMonSegment::new(Pokemon::Haunter, 20).with_level_up().with_override_move(Move::Leer)); // learn Spark
+  // r.run(OHKOSegment::new(Move::Spark)); // Haunter
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gastly, 20));
+  // r.run(OHKOSegment::new(Move::Spark)); // Gastly
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_medium_martha");
 
-  r.load("crystal_after_medium_martha");
-  r.run(TurnSegment::new(U));
-  r.run(WalkToSegment::new(5, 3));
-  r.run(WalkToSegment::new(5, 2));
-  r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
-  r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(16)); // Morty
-  r.run(OHKOSegment::new(Move::Spark)); // Gastly
-  r.run(NextTrainerMonSegment::new(Pokemon::Haunter, 21));
-  r.run(OHKOSegment::new(Move::Spark)); // Haunter
-  r.run(NextTrainerMonSegment::new(Pokemon::Gengar, 25));
-  r.run(OHKOSegment::new(Move::Spark)); // Gengar
-  r.run(NextTrainerMonSegment::new(Pokemon::Haunter, 23));
-  r.run(OHKOSegment::new(Move::Spark)); // Haunter
-  r.run(EndTrainerBattleSegment::with_defeat_texts(2));
-  r.save("crystal_after_morty");
+  // r.load("crystal_after_medium_martha");
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(5, 3));
+  // r.run(WalkToSegment::new(5, 2));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(16)); // Morty
+  // r.run(OHKOSegment::new(Move::Spark)); // Gastly
+  // r.run(NextTrainerMonSegment::new(Pokemon::Haunter, 21));
+  // r.run(OHKOSegment::new(Move::Spark)); // Haunter
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gengar, 25));
+  // r.run(OHKOSegment::new(Move::Spark)); // Gengar
+  // r.run(NextTrainerMonSegment::new(Pokemon::Haunter, 23));
+  // r.run(OHKOSegment::new(Move::Spark)); // Haunter
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(2));
+  // r.save("crystal_after_morty");
 
-  r.load("crystal_after_morty");
+  // r.load("crystal_after_morty");
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got badge
+  // r.run(SkipTextsSegment::new(4)); // Morty text
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got TM
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put TM in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
+  // r.run(SkipTextsSegment::new(3)); // Morty text
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(4, 4).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new());
+  // r.run(SkipScriptSegment::new()); // fall
+  // r.run(WalkToSegment::new(4, 17));
+  // r.run(WarpSegment::new().with_input(D)); // leave
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(0, 19));
+  // r.run(WarpSegment::new().with_input(L)); // enter gatehouse
+  // r.run(WalkToSegment::new(1, 5));
+  // r.run(WalkToSegment::new(0, 5));
+  // r.run(WarpSegment::new().with_input(L)); // enter Route 38
+  // {
+  //   r.run(WalkToSegment::new(26, 6)); // work around consistent spinner
+  //   r.run(WalkToSegment::new(25, 6)); // work around consistent spinner
+  //   for _ in 0..7 {
+  //     r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::NoEvents)));
+  //   }
+  // }
+  // r.run(WalkToSegment::new(15, 5));
+  // r.run(WalkToSegment::new(-1, 8).into(OverworldInteractionResult::MapConnection));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::MapConnection))); // Enter Route 39
+  // r.run(WalkToSegment::new(11, 18));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().expect(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(D));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(3)); // Pokefan Ruth
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Pikachu
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_pokefan_ruth");
+
+  // r.load("crystal_after_pokefan_ruth");
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(12, 22));
+  // r.run(JumpLedgeSegment::new(D));
+  // r.run(WalkToSegment::new(8, 36).into(OverworldInteractionResult::MapConnection));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::MapConnection))); // Enter Olivine
+  // r.run(WalkToSegment::new(13, 12).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // Rival script
+  // r.run(SkipTextsSegment::new(16)); // Rival text
+  // r.run(SkipScriptSegment::new()); // Rival script
+  // r.run(WalkToSegment::new(29, 27).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter light house
+  // r.run(WalkToSegment::new(3, 11).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 2f
+  // r.run(WalkToSegment::new(17, 10));
+  // r.run(WalkToSegment::new(17, 9));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(SkipScriptSegment::new()); // Gentleman Alfred
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Gentleman Alfred
+  // r.run(OHKOSegment::new(Move::QuickAttack).crit()); // Noctowl
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_gentleman_alfred");
+
+  // r.load("crystal_after_gentleman_alfred");
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(5, 3).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 3f
+  // r.run(WalkToSegment::new(14, 5).into(OverworldInteractionResult::SeenByTrainer));
+  // r.run(SkipScriptSegment::new()); // Gentleman Preston
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(3)); // Gentleman Preston
+  // r.run(OHKOSegment::new(Move::Spark)); // Growlithe
+  // r.run(NextTrainerMonSegment::new(Pokemon::Growlithe, 18));
+  // r.run(OHKOSegment::new(Move::Spark)); // Growlithe
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_gentleman_preston");
+
+  // r.load("crystal_after_gentleman_preston");
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(13, 3).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 4f
+  // r.run(WalkToSegment::new(13, 2));
+  // r.run(WalkToSegment::new(12, 2));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(SkipScriptSegment::new()); // Lass Connie
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(3)); // Lass Connie
+  // r.run(OHKOSegment::new(Move::QuickAttack).crit()); // Marill
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_lass_connie");
+
+  // r.load("crystal_after_lass_connie");
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(10, 2));
+  // r.run(WalkToSegment::new(8, 2));
+  // r.run(WalkToSegment::new(8, 3).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new());
+  // r.run(SkipScriptSegment::new()); // fall
+  // r.run(WalkToSegment::new(9, 4));
+  // r.run(WalkToSegment::new(9, 5).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 4f
+  // r.run(WalkToSegment::new(9, 7).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 5f
+  // r.run(WalkToSegment::new(9, 15).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 6f
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(8, 10));
+  // r.run(WalkToSegment::new(8, 9));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(10)); // Jasmine text
+  // { // Menuing
+  //   r.run(MoveSegment::new(START)); // Open menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // items
+  //   r.run(VerifyInputSegment::new("Pack")); // InitGFX
+  //   r.run(VerifyInputSegment::new("Pack")); // InitItemsPocket
+  //   r.run(VerifyInputSegment::new("Pack")); // ItemsPocketMenu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Escape Rope
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Use
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(SkipTextsSegment::new(1)); // Used Escape Rope
+  //   r.run(SkipScriptSegment::new()); // Escape Rope MapScript
+  //   r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::ForcedMovement)));
+  // }
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(7, 21).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Strength house
+  // r.run(WalkToSegment::new(4, 5));
+  // r.run(WalkToSegment::new(4, 4));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.save("crystal_test_tmp2");
+  // r.load("crystal_test_tmp2");
+  // r.run(SkipTextsSegment::new(6)); // Get Strength
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got HM04
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put HM04 in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
+  // r.run(SkipTextsSegment::new(3)); // Get Strength
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(3, 6));
+  // r.run(WalkToSegment::new(3, 7));
+  // r.run(WarpSegment::new().with_input(D)); // leave
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(WalkToSegment::new(-1, 24).into(OverworldInteractionResult::MapConnection));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::MapConnection))); // Enter Route 40
+  // r.run(WalkToSegment::new(10, 13));
+  // { // Menuing
+  //   r.run(MoveSegment::new(START)); // Open menu
+  //   r.run(MoveSegment::new(A)); // items
+  //   r.run(VerifyInputSegment::new("Pack")); // InitGFX
+  //   r.run(VerifyInputSegment::new("Pack")); // InitItemsPocket
+  //   r.run(VerifyInputSegment::new("Pack")); // ItemsPocketMenu
+  //   r.run(MoveSegment::new(L));
+  //   r.run(VerifyInputSegment::new("Pack")); // InitTMHMPocket
+  //   r.run(VerifyInputSegment::new("Pack")); // TMHMPocketMenu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A));
+  //   r.run(SkipTextsSegment::new(1)); // Booted up HM
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // contains // move // .
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(2).with_confirm_input(A)); // teach // move // to mon?
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Poliwag
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(3)); // Poliwag learned Surf
+  //   r.run(VerifyInputSegment::new("Pack")); // TMHMPocketMenu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A));
+  //   r.run(SkipTextsSegment::new(1)); // Booted up HM
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // contains // move // .
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(2).with_confirm_input(A)); // teach // move // to mon?
+  //   r.run(MoveSegment::new(U));
+  //   r.run(MoveSegment::new(A)); // B
+  //   r.run(OverrideMoveSegment::new(2)); // override Roar with Strength
+  //   r.run(VerifyInputSegment::new("Pack")); // TMHMPocketMenu
+  //   r.run(MoveSegment::new(B));
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(MoveSegment::new(U));
+  //   r.run(MoveSegment::new(A)); // mon menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Poliwag
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Surf
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(1)); // mon // used Surf!
+  // }
+  // r.run(SkipScriptSegment::new()); // Surf MapScript
+  // r.save("crystal_test_tmp3");
+  // r.load("crystal_test_tmp3");
+  // r.run(WalkToSegment::new(2, 36).surfing().into(OverworldInteractionResult::MapConnection));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::MapConnection))); // Enter Route 41
+  // r.run(WalkToSegment::new(-1, 5).surfing().into(OverworldInteractionResult::MapConnection));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::MapConnection))); // Enter Cianwood
+  // r.run(WalkToSegment::new(23, 32).surfing());
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(WalkToSegment::new(8, 43).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Gym
+  // r.run(WalkToSegment::new(4, 12).into(OverworldInteractionResult::SeenByTrainer));
+  // r.run(SkipScriptSegment::new()); // Blackbelt Yoshi
+  // r.save("crystal_before_blackbelt_yoshi");
+
+  // r.load("crystal_before_blackbelt_yoshi");
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(3)); // Blackbelt Yoshi
+  // print_battle_stats(r);
+  // r.run(OHKOSegment::new(Move::Strength)); // Hitmonlee
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Blackbelt Lao
+  // print_battle_stats(r);
+  // r.run(OHKOSegment::new(Move::Spark).crit()); // Hitmonchan
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1).with_level_up());
+  // r.save("crystal_after_blackbelt_lao");
+
+  // r.load("crystal_after_blackbelt_lao");
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(4, 9).into(OverworldInteractionResult::SeenByTrainer));
+  // r.run(SkipScriptSegment::new()); // Blackbelt Nob
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(2)); // Blackbelt Nob
+  // r.run(OHKOSegment::new(Move::Spark)); // Machop
+  // r.run(NextTrainerMonSegment::new(Pokemon::Machoke, 25));
+  // r.run(OHKOSegment::new(Move::Spark)); // Machoke
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_blackbelt_nob");
+
+  // r.load("crystal_after_blackbelt_nob");
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(5, 9));
+  // r.run(WalkToSegment::new(5, 8));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(1)); // Use Strength
+  // r.run(SkipTextsSegment::new(1).with_confirm_input(A)); // Use Strength
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(4)); // Use Strength
+  // r.run(MoveSegment::with_metric(U, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents))); // Push boulder
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(3, 8));
+  // r.run(MoveSegment::with_metric(U, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents))); // Push boulder
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents))); // wait for boulder to move
+  // r.run(TurnSegment::new(D));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(R));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(3, 7));
+  // r.run(MoveSegment::with_metric(R, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents))); // Push boulder
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents))); // wait for boulder to move
+  // r.run(TurnSegment::new(L));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(D));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(4, 5).into(OverworldInteractionResult::SeenByTrainer)); // 187874
+  // r.run(SkipScriptSegment::new()); // Blackbelt Lung
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(2)); // Blackbelt Lung
+  // r.run(OHKOSegment::new(Move::Spark)); // Mankey
+  // r.run(NextTrainerMonSegment::new(Pokemon::Mankey, 23));
+  // r.run(OHKOSegment::new(Move::Spark)); // Mankey
+  // r.run(NextTrainerMonSegment::new(Pokemon::Primeape, 25));
+  // r.run(OHKOSegment::new(Move::Spark)); // Primeape
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_blackbelt_lung");
+
+  // r.load("crystal_after_blackbelt_lung");
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(4, 2));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(U));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(8)); // Chuck
+  // r.run(SkipScriptSegment::new()); // Chuck
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(4)); // Chuck
+  // r.run(OHKOSegment::new(Move::Spark)); // Primeape
+  // r.run(NextTrainerMonSegment::new(Pokemon::Poliwrath, 30));
+  // r.run(OHKOSegment::new(Move::Spark)); // Poliwrath
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(3));
+  // r.save("crystal_after_chuck");
+
+  // r.load("crystal_after_chuck");
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got badge
+  // r.run(SkipTextsSegment::new(4)); // Chuck text
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got TM
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put TM in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
+  // r.run(SkipTextsSegment::new(3)); // Chuck text
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(4, 17));
+  // r.run(WarpSegment::new().with_input(D)); // leave
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(WalkToSegment::new(8, 46));
+  // r.run(WalkToSegment::new(9, 46));
+  // r.run(WalkToSegment::new(10, 46));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(6)); // Get Fly
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got HM02
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put HM02 in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
+  // r.run(SkipTextsSegment::new(7)); // Get Fly
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(15, 47).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter House
+  // r.run(WalkToSegment::new(2, 4));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(7)); // Get Medicine
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(3)); // got Secretpotion
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put in Key pocket
+  // r.run(SkipTextsSegment::new(2)); // Get Medicine
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(2, 7));
+  // r.run(WarpSegment::new().with_input(D)); // leave
+  // { // Menuing
+  //   r.run(MoveSegment::new(START)); // Open menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // items
+  //   r.run(VerifyInputSegment::new("Pack")); // InitGFX
+  //   r.run(VerifyInputSegment::new("Pack")); // InitItemsPocket
+  //   r.run(VerifyInputSegment::new("Pack")); // ItemsPocketMenu
+  //   r.run(MoveSegment::new(L));
+  //   r.run(VerifyInputSegment::new("Pack")); // InitTMHMPocket
+  //   r.run(VerifyInputSegment::new("Pack")); // TMHMPocketMenu
+  //   r.run(MoveSegment::new(A));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A));
+  //   r.run(SkipTextsSegment::new(1)); // Booted up HM
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // contains // move // .
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(2).with_confirm_input(A)); // teach // move // to mon?
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Kenya
+  //   r.run(SkipTextsSegment::new(1).with_skip_ends(3)); // Kenya learned Fly
+  //   r.run(VerifyInputSegment::new("Pack")); // TMHMPocketMenu
+  //   r.run(MoveSegment::new(B));
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(MoveSegment::new(U));
+  //   r.run(MoveSegment::new(A)); // mon menu
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Kenya
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Fly
+  // }
+  // r.run(MoveSegment::new(D));
+  // r.run(MoveSegment::new(D|L));
+  // r.run(MoveSegment::new(D|R));
+  // r.run(MoveSegment::new(A));
+  // r.run(SkipScriptSegment::new()); // Fly
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(35, 27));
+  // r.run(WarpSegment::new().with_input(R)); // enter gate house
+  // r.run(WalkToSegment::new(9, 5));
+  // r.run(WarpSegment::new().with_input(R)); // enter Route 42
+  // { // Mt. Mortar Route
+  //   r.run(WalkToSegment::new(10, 5).into(OverworldInteractionResult::Warped));
+  //   r.run(WarpSegment::new()); // enter Mt. Mortar
+  //   r.run(WalkToSegment::new(11, 21).into(OverworldInteractionResult::Warped));
+  //   r.run(WarpSegment::new()); // enter Mt. Mortar b2f
+  //   r.run(WalkToSegment::new(29, 46));
+  //   r.run(WalkToSegment::new(29, 47));
+  //   r.run(WarpSegment::new().with_input(D)); // leave
+  //   r.run(WalkToSegment::new(37, 32));
+  //   r.run(WalkToSegment::new(37, 33));
+  //   r.run(WarpSegment::new().with_input(D)); // leave
+  // }
+  // // { // Surf route +196f
+  // //   r.run(WalkToSegment::new(13, 9));
+  // //   r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().expect(OverworldInteractionResult::Interact(InteractType::TileCollision))));
+  // //   r.run(SkipTextsSegment::new(1).with_confirm_input(A)); // use Surf
+  // //   r.run(SkipTextsSegment::new(1).with_skip_ends(1)); // mon // used Surf!
+  // //   r.run(SkipScriptSegment::new()); // Surf MapScript
+  // //   r.run(WalkToSegment::new(20, 10).surfing());
+  // //   r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // //   r.run(WalkToSegment::new(32, 9));
+  // //   r.run(WalkToSegment::new(33, 9));
+  // //   r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().expect(OverworldInteractionResult::Interact(InteractType::TileCollision))));
+  // //   r.run(SkipTextsSegment::new(1).with_confirm_input(A)); // use Surf
+  // //   r.run(SkipTextsSegment::new(1).with_skip_ends(1)); // mon // used Surf!
+  // //   r.run(SkipScriptSegment::new()); // Surf MapScript
+  // //   r.run(WalkToSegment::new(42, 9).surfing());
+  // //   r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // // }
+  // r.run(WalkToSegment::new(60, 7).into(OverworldInteractionResult::MapConnection));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::MapConnection))); // Enter Mahogany // 199838 // 200034
+  // r.run(WalkToSegment::new(9, 1).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter gate house
+  // r.run(WalkToSegment::new(4, 0).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Route 43
+  // r.run(WalkToSegment::new(8, 0));
+  // r.run(WalkToSegment::new(8, -1).into(OverworldInteractionResult::MapConnection));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::MapConnection))); // Lake of Rage
+  // r.run(WalkToSegment::new(18, 28));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().expect(OverworldInteractionResult::Interact(InteractType::TileCollision))));
+  // r.run(SkipTextsSegment::new(1).with_confirm_input(A)); // use Surf
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(1)); // mon // used Surf!
+  // r.run(SkipScriptSegment::new()); // Surf MapScript
+  // r.run(WalkToSegment::new(18, 23).surfing());
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(1)); // Gyarados
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // wild // mon // appeared
+  // r.run(TextSegment::new().with_skip_ends(2)); // Go // mon // !
+  // r.run(OHKOSegment::new(Move::Strength).crit()); // Gyarados
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // fainted
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // gained XP
+  // r.run(SkipScriptSegment::new()); // Gyarados MapScript
+  // r.save("crystal_after_gyarados");
+
+  // r.load("crystal_after_gyarados");
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(4)); // got Red Scale
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put in Item pocket
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(18, 28).surfing());
+  // r.run(WalkToSegment::new(20, 28));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(15)); // Lance
+  // r.run(SkipTextsSegment::new(1).with_confirm_input(A)); // agree to help
+  // r.run(SkipTextsSegment::new(6)); // Lance
+  // r.run(SkipScriptSegment::new()); // Lance MapScript
+  // { // Menuing
+  //   r.run(MoveSegment::new(START)); // Open menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // mon menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Kenya
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Fly
+  // }
+  // r.save("crystal_test_tmp");
+  // r.load("crystal_test_tmp");
+  // r.run(MoveSegment::new(D));
+  // r.run(MoveSegment::new(D|L));
+  // r.run(MoveSegment::new(A)); // Mahogany
+  // r.run(SkipScriptSegment::new()); // Fly
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(11, 7).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout
+  // r.run(SkipScriptSegment::new()); // SceneScript
+  // r.run(TextSegment::new()); // Lance
+  // r.run(SkipScriptSegment::new()); // casual Hyperbeaming
+  // r.run(SkipTextsSegment::new(3)); // Lance
+  // r.run(SkipScriptSegment::new()); // SceneScript
+  // r.run(SkipTextsSegment::new(1)); // Lance
+  // r.run(SkipScriptSegment::new()); // SceneScript
+  // r.run(SkipTextsSegment::new(2)); // Lance
+  // r.run(SkipScriptSegment::new()); // SceneScript
+  // r.run(WalkToSegment::new(7, 3).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b1f
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(24, 2).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // Rocket alarm script
+  // r.save("crystal_test_tmp2");
+  // r.load("crystal_test_tmp2");
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Rocket
+  // r.run(OHKOSegment::new(Move::Spark)); // Drowzee
+  // r.run(NextTrainerMonSegment::new(Pokemon::Zubat, 19).with_level_up());
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Zubat
+  // r.save("crystal_test_tmp3");
+  // r.load("crystal_test_tmp3");
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_hideout_rocket1");
+
+  // r.load("crystal_after_hideout_rocket1");
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Rocket
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Zubat
+  // r.run(NextTrainerMonSegment::new(Pokemon::Grimer, 17));
+  // r.run(OHKOSegment::new(Move::Spark)); // Grimer
+  // r.run(NextTrainerMonSegment::new(Pokemon::Rattata, 18));
+  // r.run(OHKOSegment::new(Move::Spark)); // Grimer
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(4));
+  // r.save("crystal_after_hideout_rocket2");
+
+  // r.load("crystal_after_hideout_rocket2");
+  // r.run(WalkToSegment::new(17, 12).into(OverworldInteractionResult::SeenByTrainer));
+  // r.run(SkipScriptSegment::new()); // Scientist Jed
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(3)); // Scientist Jed
+  // r.run(OHKOSegment::new(Move::Spark)); // Magnemite
+  // r.run(NextTrainerMonSegment::new(Pokemon::Magnemite, 20));
+  // r.run(OHKOSegment::new(Move::Strength)); // Magnemite
+  // r.run(NextTrainerMonSegment::new(Pokemon::Magnemite, 20));
+  // r.run(OHKOSegment::new(Move::Strength)); // Magnemite
+  // r.save("crystal_test_tmp");
+  // r.load("crystal_test_tmp");
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_scientist_jed");
+
+  // r.load("crystal_after_scientist_jed");
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(19, 12));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::BgRead))));
+  // r.run(SkipTextsSegment::new(1)); // press switch
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(24, 7).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // deactivated alarm script
+  // r.run(WalkToSegment::new(22, 16).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // deactivated alarm script
+  // r.run(WalkToSegment::new(8, 16).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // deactivated alarm script
+  // r.run(WalkToSegment::new(4, 16));
+  // r.run(WalkToSegment::new(3, 14).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b2f
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(5, 14).into(OverworldInteractionResult::MapCoordEvent));
+  // r.save("crystal_test_tmp");
+  // r.load("crystal_test_tmp");
+  // r.run(SkipScriptSegment::new()); // Lance
+  // r.run(SkipTextsSegment::new(6)); // Lance
+  // r.run(SkipScriptSegment::new()); // Lance
+  // r.run(WalkToSegment::new(21, 13));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(D));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Rocket
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Venonat
+  // r.run(NextTrainerMonSegment::new(Pokemon::Venonat, 18));
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Venonat
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_hideout_rocket3");
+
+  // r.load("crystal_after_hideout_rocket3");
+  // r.run(TurnSegment::new(R));
+  // r.run(WalkToSegment::new(27, 14).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b3f
+  // r.run(SkipScriptSegment::new()); // Lance
+  // r.run(SkipTextsSegment::new(7)); // Lance
+  // r.run(SkipScriptSegment::new()); // Lance
+  // r.run(WalkToSegment::new(19, 7));
+  // r.run(WalkToSegment::new(20, 7));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(3)); // Rocket
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Venonat
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gloom, 18));
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Gloom
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_hideout_rocket4");
+
+  // r.load("crystal_after_hideout_rocket4");
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(SkipTextsSegment::new(4)); // Get Password
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(6, 14));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.expect(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(6)); // Rocket
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Raticate
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_hideout_rocket5");
+
+  // r.load("crystal_after_hideout_rocket5");
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  // r.run(SkipTextsSegment::new(3)); // Get Password
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(27, 3));
+  // r.run(WalkToSegment::new(27, 2).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b2f // 227229
+  // r.run(WalkToSegment::new(3, 2).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b3f
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(8, 10).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // Rival script
+  // r.run(SkipTextsSegment::new(15)); // Rival
+  // r.run(SkipScriptSegment::new()); // Rival script
+  // r.run(WalkToSegment::new(10, 10));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(U));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::BgThenRead))));
+  // r.run(SkipTextsSegment::new(3)); // Open door
+  // r.run(WalkToSegment::new(10, 8).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // Giovanni
+  // r.run(SkipTextsSegment::new(9)); // Giovanni
+  // r.run(SkipScriptSegment::new()); // Giovanni
+  // r.run(StartTrainerBattleSegment::new()); // Giovanni
+  // r.run(OHKOSegment::new(Move::QuickAttack)); // Zubat
+  // r.run(NextTrainerMonSegment::new(Pokemon::Raticate, 24));
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Raticate
+  // r.run(NextTrainerMonSegment::new(Pokemon::Koffing, 22));
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Koffing
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(2));
+  // r.save("crystal_after_hideout_giovanni");
+
+  // r.load("crystal_after_hideout_giovanni");
+  // r.run(SkipTextsSegment::new(2)); // Giovanni
+  // r.run(SkipScriptSegment::new()); // Giovanni
+  // r.run(WalkToSegment::new(7, 4));
+  // r.run(WalkToSegment::new(7, 3));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(SkipTextsSegment::new(2)); // Murkrow
+  // r.run(TurnSegment::new(L));
+  // r.run(WalkToSegment::new(3, 2).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b2f
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(27, 1));
+  // r.run(WalkToSegment::new(27, 2).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b3f
+  // r.run(WalkToSegment::new(28, 8));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectItemball))));
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player received // item // .
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player put // potion // in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the // item pocket // .
+  // r.run(WalkToSegment::new(27, 14).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Hideout b2f
+  // r.run(WalkToSegment::new(15, 14));
+  // r.run(WalkToSegment::new(15, 13));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::BgThenRead))));
+  // r.save("crystal_test_tmp2");
+  // r.load("crystal_test_tmp2");
+  // r.run(SkipTextsSegment::new(3)); // Open door
+  // r.run(WalkToSegment::new(15, 11).into(OverworldInteractionResult::MapCoordEvent));
+  // r.run(SkipScriptSegment::new()); // Rocket ambush
+  // r.run(SkipTextsSegment::new(1)); // Rocket ambush
+  // r.run(SkipScriptSegment::new()); // Rocket ambush
+  // r.run(SkipTextsSegment::new(8)); // Rocket ambush
+  // r.run(SkipScriptSegment::new()); // Rocket ambush
+  // r.run(SkipTextsSegment::new(2)); // Rocket ambush
+  // r.run(SkipScriptSegment::new()); // Rocket ambush
+  // r.run(SkipTextsSegment::new(5)); // Rocket ambush
+  // r.run(SkipScriptSegment::new()); // Rocket ambush
+  // r.run(StartTrainerBattleSegment::new()); // Executive
+  // r.run(OHKOSegment::new(Move::ThunderShock)); // Arbok
+  // r.run(NextTrainerMonSegment::new(Pokemon::Gloom, 23));
+  // r.run(OHKOSegment::new(Move::Strength)); // Gloom
+  // r.run(NextTrainerMonSegment::new(Pokemon::Murkrow, 25));
+  // r.run(OHKOSegment::new(Move::Strength)); // Murkrow
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(4).with_level_up());
+  // r.save("crystal_after_hideout_rocket6");
+
+  // r.load("crystal_after_hideout_rocket6");
+  // r.run(SkipTextsSegment::new(11)); // Rocket ambush
+  // r.run(SkipTextsSegment::new(4)); // Lance
+  // r.run(SkipScriptSegment::new()); // Lance
+  // r.run(SkipTextsSegment::new(4)); // Lance
+  // r.run(SkipScriptSegment::new()); // Lance
+  // r.run(SkipTextsSegment::new(10)); // Lance
+  // r.run(SkipScriptSegment::new()); // Lance
+  // r.run(WalkToSegment::new(8, 5));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))).with_buffer_size(1)); // 242545
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // wild // mon // appeared
+  // r.run(TextSegment::new().with_skip_ends(2)); // Go // mon // !
+  // r.run(OHKOSegment::new(Move::Strength)); // Electrode
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // fainted
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // gained XP
+  // r.run(SkipScriptSegment::new()); // Electrode MapScript
+  // r.save("crystal_after_electrode1");
+
+  // r.load("crystal_after_electrode1");
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(8, 7));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))).with_buffer_size(1)); // 242545
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // wild // mon // appeared
+  // r.run(TextSegment::new().with_skip_ends(2)); // Go // mon // !
+  // r.run(OHKOSegment::new(Move::Strength)); // Electrode
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // fainted
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // gained XP
+  // r.run(SkipScriptSegment::new()); // Electrode MapScript
+  // r.save("crystal_after_electrode2");
+
+  // r.load("crystal_after_electrode2");
+  // r.run(TurnSegment::new(D));
+  // r.run(WalkToSegment::new(8, 9));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))).with_buffer_size(1)); // 242545
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // wild // mon // appeared
+  // r.run(TextSegment::new().with_skip_ends(2)); // Go // mon // !
+  // r.run(OHKOSegment::new(Move::Strength)); // Electrode
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // fainted
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // gained XP
+  // r.run(SkipScriptSegment::new()); // Electrode MapScript
+  // r.save("crystal_after_electrode3");
+
+  // r.load("crystal_after_electrode3");
+  // r.run(SkipTextsSegment::new(8)); // Lance
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player received // HM06 // .
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player put // HM06 // in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the // TM pocket // .
+  // r.run(SkipTextsSegment::new(15)); // Lance
+  // r.run(SkipScriptSegment::new()); // Lance
+  // // { // Walking
+  // //   r.run(WalkToSegment::new(3, 13));
+  // //   r.run(WalkToSegment::new(3, 14).into(OverworldInteractionResult::Warped));
+  // //   r.run(WarpSegment::new()); // enter Hideout b1f
+  // //   r.run(WalkToSegment::new(5, 15).into(OverworldInteractionResult::Warped));
+  // //   r.run(WarpSegment::new()); // warp
+  // //   r.run(WalkToSegment::new(27, 2).into(OverworldInteractionResult::Warped));
+  // //   r.run(WarpSegment::new()); // enter Hideout 1f
+  // //   r.run(TurnSegment::new(U));
+  // //   r.run(WalkToSegment::new(4, 6));
+  // //   r.run(WalkToSegment::new(4, 7));
+  // //   r.run(WarpSegment::new().with_input(D)); // leave
+  // // }
+  // { // Menuing
+  //   r.run(MoveSegment::new(START)); // Open menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // items
+  //   r.run(VerifyInputSegment::new("Pack")); // InitGFX
+  //   r.run(VerifyInputSegment::new("Pack")); // InitItemsPocket
+  //   r.run(VerifyInputSegment::new("Pack")); // ItemsPocketMenu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Escape Rope
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Use
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(SkipTextsSegment::new(1)); // Used Escape Rope
+  //   r.run(SkipScriptSegment::new()); // Escape Rope MapScript
+  //   r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::ForcedMovement)));
+  // }
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu))); // 248811
+  // r.run(WalkToSegment::new(11, 14).into(OverworldInteractionResult::CountStepEvent));
+  // r.run(SkipScriptSegment::new()); // Bike Shop
+  // r.run(SkipTextsSegment::new(6)); // Bike Shop
+  // r.run(TextSegment::new().with_skip_ends(6)); // Bike Shop
+  // r.run_debug(WalkToSegment::new(6, 13).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter Gym
+  // r.run(WalkToSegment::new(2, 14));
+  // r.save("crystal_test_tmp");
+  // r.load("crystal_test_tmp");
+  // r.run(MoveSegment::with_metric(U, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(U, WalkType::Walk))));
+  // for _ in 0..3 { r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(U, WalkType::Ice)))); }
+  // r.run(MoveSegment::with_metric(U, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(U, WalkType::Walk))));
+  // for _ in 0..4 { r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(U, WalkType::Ice)))); }
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().expect(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(R));
+  // for _ in 0..4 { r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(R, WalkType::Ice)))); }
+  // r.run(MoveSegment::with_metric(D, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(D, WalkType::Walk))));
+  // for _ in 0..7 { r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(D, WalkType::Ice)))); }
+  // r.run(MoveSegment::with_metric(L, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(L, WalkType::Walk))));
+  // for _ in 0..2 { r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(L, WalkType::Ice)))); }
+  // r.run(MoveSegment::with_metric(U, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(U, WalkType::Walk))));
+  // for _ in 0..8 { r.run(MoveSegment::with_metric(U, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(U, WalkType::Ice)))); }
+  // r.run(MoveSegment::with_metric(R, OverworldInteractionMetric {}.debug_print().expect(OverworldInteractionResult::Walked(R, WalkType::Walk))));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(R, WalkType::Ice))));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(U));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(11)); // Pryce
+  // r.run(OHKOSegment::new(Move::Strength)); // Seel
+  // r.run(NextTrainerMonSegment::new(Pokemon::Piloswine, 31));
+  // r.run(OHKOSegment::new(Move::Strength).crit()); // Piloswine
+  // r.run(NextTrainerMonSegment::new(Pokemon::Dewgong, 29));
+  // r.run(OHKOSegment::new(Move::Strength).crit()); // Dewgong
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(4));
+  // r.save("crystal_after_pryce");
+
+  // r.load("crystal_after_pryce");
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got badge
+  // r.run(SkipTextsSegment::new(5)); // Pryce text
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got TM
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put TM in
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
+  // r.run(SkipTextsSegment::new(4)); // Pryce text
+  // r.run(TurnSegment::new(R));
+  // r.run(MoveSegment::with_metric(L, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(L, WalkType::Walk))));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(L, WalkType::Ice))));
+  // r.run(MoveSegment::with_metric(D, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(D, WalkType::Walk))));
+  // for _ in 0..8 { r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(D, WalkType::Ice)))); }
+  // r.run(MoveSegment::with_metric(L, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(L, WalkType::Walk))));
+  // r.run(MoveSegment::with_metric(D, OverworldInteractionMetric {}.debug_print().expect(OverworldInteractionResult::NoEvents)));
+  // r.run(TurnSegment::new(D));
+  // r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Walked(D, WalkType::Ice))));
+  // r.run(WalkToSegment::new(4, 16));
+  // r.run(WalkToSegment::new(4, 17));
+  // r.run(WarpSegment::new().with_input(D)); // leave
+  // { // Menuing
+  //   r.run(MoveSegment::new(START)); // Open menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // mon menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Kenya
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Fly
+  // }
+  // r.save("crystal_test_tmp");
+  // r.load("crystal_test_tmp");
+  // r.run(MoveSegment::new(D));
+  // r.run(MoveSegment::new(D|L));
+  // r.run(MoveSegment::new(D|R));
+  // r.run(MoveSegment::new(D|L));
+  // r.run(MoveSegment::new(A)); // Olivine
+  // r.run(SkipScriptSegment::new()); // Fly
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(WalkToSegment::new(29, 27).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter light house
+  // r.run(WalkToSegment::new(3, 11).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 2f
+  // r.run(WalkToSegment::new(5, 3).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 3f
+  // r.run(WalkToSegment::new(13, 3).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 4f
+  // r.run(WalkToSegment::new(10, 2));
+  // r.run(WalkToSegment::new(8, 2));
+  // r.run(WalkToSegment::new(8, 3).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new());
+  // r.run(SkipScriptSegment::new()); // fall
+  // r.run(WalkToSegment::new(9, 4));
+  // r.run(WalkToSegment::new(9, 5).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 4f
+  // r.run(WalkToSegment::new(9, 7).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 5f
+  // r.run(WalkToSegment::new(9, 15).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter 6f
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(8, 10));
+  // r.run(WalkToSegment::new(8, 9));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.save("crystal_test_tmp2");
+  // r.load("crystal_test_tmp2");
+  // r.run(SkipTextsSegment::new(1)); // Jasmine text
+  // r.run(SkipTextsSegment::new(1).with_confirm_input(A)); // Jasmine text
+  // r.run(SkipTextsSegment::new(13)); // Jasmine text
+  // r.run(SkipScriptSegment::new()); // Jasmine MapScript
+  // r.save("crystal_test_tmp3");
+  // r.load("crystal_test_tmp3");
+  // { // Menuing
+  //   r.run(MoveSegment::new(START)); // Open menu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // items
+  //   r.run(VerifyInputSegment::new("Pack")); // InitGFX
+  //   r.run(VerifyInputSegment::new("Pack")); // InitItemsPocket
+  //   r.run(VerifyInputSegment::new("Pack")); // ItemsPocketMenu
+  //   r.run(MoveSegment::new(D));
+  //   r.run(MoveSegment::new(A)); // Escape Rope
+  //   r.run(MoveSegment::new(NIL));
+  //   r.run(MoveSegment::new(A)); // Use
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(VerifyInputSegment::new("Pack")); // quit
+  //   r.run(SkipTextsSegment::new(1)); // Used Escape Rope
+  //   r.run(SkipScriptSegment::new()); // Escape Rope MapScript
+  //   r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::ForcedMovement)));
+  // }
+  // r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
+  // r.run(TurnSegment::new(U));
+  // r.run(WalkToSegment::new(10, 11).into(OverworldInteractionResult::Warped));
+  // r.run(WarpSegment::new()); // enter gym
+  // r.run(WalkToSegment::new(5, 5));
+  // r.run(WalkToSegment::new(5, 4));
+  // r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectScript))));
+  // r.save("crystal_before_jasmine");
+
+  // r.load("crystal_before_jasmine");
+  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(10)); // Jasmine
+  // r.run(OHKOSegment::new(Move::ThunderShock).crit()); // Magnemite
+  // r.run(NextTrainerMonSegment::new(Pokemon::Magnemite, 30));
+  // r.run(OHKOSegment::new(Move::ThunderShock).crit()); // Magnemite
+  // r.save("crystal_test_tmp2");
+  // r.load("crystal_test_tmp2");
+  // r.run(NextTrainerMonSegment::new(Pokemon::Steelix, 35).with_expected_move(Move::IronTail));
+  // r.save("crystal_test_tmp3");
+  // r.load("crystal_test_tmp3");
+  // r.run(MoveSegment::new(D)); // pack
+  // r.run(MoveSegment::new(A)); // select pack
+  // r.run(VerifyInputSegment::new("BattlePack")); // InitGFX
+  // r.run(VerifyInputSegment::new("BattlePack")); // InitItemsPocket
+  // r.run(VerifyInputSegment::new("BattlePack")); // ItemsPocketMenu
+  // r.run(MoveSegment::new(D));
+  // r.run(MoveSegment::new(NIL));
+  // r.run(MoveSegment::new(D));
+  // r.run(MoveSegment::new(A)); // X Attack
+  // r.run(MoveSegment::new(NIL));
+  // r.run(MoveSegment::new(A)); // Use
+  // r.run(MoveSegment::new(B)); // close
+  // r.run(
+  //   DelaySegment::new(MoveSegment::new(A)
+  //   .seq(VerifyInputSegment::new("BattlePack"))
+  //   .seq(MoveSegment::with_metric(NIL, BattleObedienceMetric {}.expect(BattleObedience::Obey))) // confirm
+  //   .seq(TextSegment::with_metric(Gen2MoveSuccessMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer())) // mon // used // move // !
+  // );
+  // r.run(TextSegment::new().with_allowed_end_inputs(A).with_unbounded_buffer()); // but it failed!
+  // r.run(DelaySegment::new(MoveSegment::with_metric(B, Gen2AIChooseMoveMetric {}.debug_print().expect(Move::IronTail)))); // confirm
+  // r.save("crystal_test_tmp");
+  // r.load("crystal_test_tmp");
+  // // Steelix Turn 2
+  // r.run(MoveSegment::new(U)); // back to Fight
+  // r.run(SelectMoveSegment::new(Move::Strength));
+  // r.run(
+  //   DelaySegment::new(
+  //     MoveSegment::with_metric(A,
+  //         BattleMoveOrderMetric {}.debug_print().expect(MoveOrder::PlayerFirst).and_then(BattleObedienceMetric {}.debug_print().expect(BattleObedience::Obey)))
+  //     .seq(TextSegment::with_metric(
+  //         Gen2NormalHitMetric::with_expected_max_damage(19, 38).debug_print().expect(FightTurnResult::CriticalHit { damage: 37, })).with_skip_ends(3).with_unbounded_buffer())
+  //     )); // Strength //// mon // used // move // !
+  // r.run(SkipTextsSegment::new(1)); // critical hit!
+  // r.run(TextSegment::new()); // not effective
+  // r.run(
+  //   DelaySegment::new(MoveSegment::with_metric(A|B, BattleObedienceMetric {}.expect(BattleObedience::Obey)) // confirm
+  //   .seq(TextSegment::with_metric(Gen2MoveSuccessMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer())) // mon // used // move // !
+  // );
+  // r.run(TextSegment::new().with_allowed_end_inputs(A).with_unbounded_buffer()); // but it failed!
+  // r.run(DelaySegment::new(MoveSegment::with_metric(B, Gen2AIChooseMoveMetric {}.debug_print().expect(Move::IronTail)))); // confirm
+  // // Steelix Turn 3
+  // r.run(SelectMoveSegment::new(Move::Strength));
+  // r.run(
+  //   DelaySegment::new(
+  //     MoveSegment::with_metric(A,
+  //         BattleMoveOrderMetric {}.debug_print().expect(MoveOrder::PlayerFirst).and_then(BattleObedienceMetric {}.debug_print().expect(BattleObedience::Obey)))
+  //     .seq(TextSegment::with_metric(
+  //         Gen2NormalHitMetric::with_expected_max_damage(19, 38).debug_print().expect(FightTurnResult::CriticalHit { damage: 37, })).with_skip_ends(3).with_unbounded_buffer())
+  //     )); // Strength //// mon // used // move // !
+  // r.run(SkipTextsSegment::new(1)); // critical hit!
+  // r.run(TextSegment::new()); // not effective
+  // r.run(
+  //   DelaySegment::new(MoveSegment::with_metric(A|B, BattleObedienceMetric {}.expect(BattleObedience::Obey)) // confirm
+  //   .seq(TextSegment::with_metric(Gen2MoveSuccessMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer())) // mon // used // move // !
+  // );
+  // r.run(SkipTextsSegment::new(1).with_confirm_input(B)); // but it failed!
+  // // Steelix Turn 4
+  // r.run(OHKOSegment::new(Move::Strength).crit()); // Steelix
+  // r.save("crystal_test_tmp2");
+  // r.load("crystal_test_tmp2");
+  // r.run(EndTrainerBattleSegment::with_defeat_texts(4));
+  // r.save("crystal_after_jasmine");
+
+  r.load("crystal_after_jasmine");
   r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got badge
-  r.run(SkipTextsSegment::new(4)); // Morty text
+  r.run(SkipTextsSegment::new(2)); // Jasmine text
   r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // player got TM
   r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // put TM in
   r.run(SkipTextsSegment::new(1).with_skip_ends(2)); // the TM pocket
-  r.run(SkipTextsSegment::new(3)); // Morty text
-  r.run(TurnSegment::new(D));
-  r.run(WalkToSegment::new(4, 4).into(OverworldInteractionResult::Warped));
-  r.run(WarpSegment::new());
-  r.run(SkipScriptSegment::new()); // fall
-  r.run(WalkToSegment::new(4, 17));
-  r.run(WarpSegment::new().with_input(D)); // leave
+  r.run(SkipTextsSegment::new(2)); // Jasmine text
+  r.run(TurnSegment::new(R));
+  r.run(WalkToSegment::new(5, 15));
+  r.run(WarpSegment::new().with_input(D));
+  r.run(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::CountStepEvent)));
+  r.run(SkipTextsSegment::new(9)); // Elm phone call
+  r.run(TextSegment::new().with_skip_ends(6)); // Click // ... // ... // ...
+  { // Menuing
+    r.run(MoveSegment::new(START)); // Open menu
+    r.run(MoveSegment::new(D));
+    r.run(MoveSegment::new(A)); // mon menu
+    r.run(MoveSegment::new(D));
+    r.run(MoveSegment::new(NIL));
+    r.run(MoveSegment::new(D));
+    r.run(MoveSegment::new(A)); // Kenya
+    r.run(MoveSegment::new(NIL));
+    r.run(MoveSegment::new(A)); // Fly
+    r.run(MoveSegment::new(U));
+    r.run(MoveSegment::new(U|L));
+    r.run(MoveSegment::new(U|R));
+    r.run(MoveSegment::new(U|L));
+    r.run(MoveSegment::new(A)); // Goldenrod
+    r.run(SkipScriptSegment::new()); // Fly
+  }
   r.run(MoveSegment::with_metric(SELECT, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::SelectMenu)));
-  r.save("crystal_test_tmp");
-  r.load("crystal_test_tmp");
+  r.run(TurnSegment::new(U));
+  r.run(WalkToSegment::new(5, 15).into(OverworldInteractionResult::Warped));
+  r.run(WarpSegment::new()); // enter tower
+  r.run(WalkToSegment::new(12, 1));
+  r.run(WalkToSegment::new(13, 1));
+  r.run(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().assert_eq(OverworldInteractionResult::Interact(InteractType::ObjectTrainer))));
+  r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(5)); // Rocket
+  r.run(OHKOSegment::new(Move::ThunderShock)); // Raticate
+  r.run(NextTrainerMonSegment::new(Pokemon::Raticate, 24).with_level_up());
+  r.run(OHKOSegment::new(Move::ThunderShock)); // Raticate
+  r.run(EndTrainerBattleSegment::with_defeat_texts(1));
+  // r.save("crystal_after_radio_tower_rocket1");
+
+  // r.load("crystal_after_radio_tower_rocket1");
+
 
 
 
@@ -3838,6 +4790,15 @@ fn run(r: &mut GbRunner<Crystal>) {
   // r.save("crystal_test_tmp");
   // r.load("crystal_test_tmp");
 
-  // r.run_debug(TextSegment::new().with_skip_ends(2));
-  r.run_debug(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().into_unit()));
+  // r.run_debug(TextSegment::new().with_skip_ends(6));
+  // r.run_debug(MoveSegment::with_metric(NIL, OverworldInteractionMetric {}.debug_print().into_unit()));
+}
+
+
+#[allow(dead_code)]
+fn print_battle_stats(r: &mut GbRunner<Crystal>) {
+  println!("Player: {:#?}", r.get_state_metric(MoveInfosFn::new(Who::Player)));
+  // println!("Player: {:?}", r.get_state_metric(BattleMonInfoFn::new(Who::Player)));
+  // println!("Enemy: {:?}", r.get_state_metric(MoveInfosFn::new(Who::Enemy)));
+  // println!("Enemy: {:?}", r.get_state_metric(BattleMonInfoFn::new(Who::Enemy)));
 }

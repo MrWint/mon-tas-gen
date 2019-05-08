@@ -14,7 +14,7 @@ pub struct Map {
 
 impl Map {
   #[allow(dead_code)]
-  pub fn with_water_tiles(self) -> Self { Self { allow_water_tiles: true, ..self } }
+  pub fn with_water_tiles(self, allow_water_tiles: bool) -> Self { Self { allow_water_tiles, ..self } }
 
   #[allow(clippy::cyclomatic_complexity)]
   pub fn load_gen2_map<T: JoypadAddresses + RngAddresses + Gen2MapAddresses>(mut self, gb: &Gb<T>) -> Self {

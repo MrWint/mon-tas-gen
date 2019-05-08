@@ -43,6 +43,8 @@ impl<R: Rom + Gen2FightTurnAddresses + BattleMovesInfoAddresses + BattleMonInfoA
       } else if num_down_moves == 2 {
         gb.input(Input::DOWN);
         gb.step();
+        gb.input(Input::empty());
+        gb.step();
         gb.input(Input::DOWN);
       } else {
         assert!(num_down_moves == 1);

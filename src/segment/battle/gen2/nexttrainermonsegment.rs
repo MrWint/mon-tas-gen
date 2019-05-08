@@ -49,31 +49,10 @@ impl<R: Rom + TextAddresses + Gen2BattleSwitchMonAddresses + Gen2AIChooseMoveAdd
       let move_infos = gbe.execute_state(&sb, MoveInfosFn::new(Who::Player)).get_value_assert_all_equal();
       let move_index = move_infos.iter().position(|move_info| move_info.mov == mov).expect("move not found");
 
-      sb = SkipTextsSegment::new(1).with_skip_ends(1).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // trying to learn
-      sb = SkipTextsSegment::new(1).with_skip_ends(1).with_buffer_size(self.buffer_size).execute(gbe, sb); // move // .
-      sb = SkipTextsSegment::new(1).with_skip_ends(2).with_buffer_size(self.buffer_size).execute(gbe, sb); // but // mon // can't learn more
-      sb = SkipTextsSegment::new(1).with_buffer_size(self.buffer_size).execute(gbe, sb); // than four moves
-      sb = SkipTextsSegment::new(1).with_buffer_size(self.buffer_size).execute(gbe, sb); // delete to make room
-      sb = SkipTextsSegment::new(1).with_buffer_size(self.buffer_size).with_skip_ends(2).with_confirm_input(Input::A).execute(gbe, sb); // for // move // ?
-      sb = TextSegment::new().with_allowed_end_inputs(Input::B).with_buffer_size(self.buffer_size).execute(gbe, sb); // which shoiuld be forgotten?
-      if move_index == 3 {
-        sb = MoveSegment::new(Input::UP).with_buffer_size(self.buffer_size).execute(gbe, sb);
-      } else if move_index == 2 {
-        sb = MoveSegment::new(Input::DOWN).with_buffer_size(self.buffer_size).execute(gbe, sb);
-        sb = MoveSegment::new(Input::empty()).with_buffer_size(self.buffer_size).execute(gbe, sb);
-        sb = MoveSegment::new(Input::DOWN).with_buffer_size(self.buffer_size).execute(gbe, sb);
-      } else if move_index == 1 {
-        sb = MoveSegment::new(Input::DOWN).with_buffer_size(self.buffer_size).execute(gbe, sb);
-      }
-      sb = MoveSegment::new(Input::A).with_buffer_size(self.buffer_size).execute(gbe, sb);
-
-      sb = SkipTextsSegment::new(2).with_confirm_input(Input::B).with_buffer_size(self.buffer_size).execute(gbe, sb); // 1, 2, poof!
-      sb = MoveSegment::new(Input::A).with_buffer_size(self.buffer_size).execute(gbe, sb); // confirm text line
-      sb = SkipTextsSegment::new(1).with_skip_ends(3).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // forgot // move // .
-      sb = SkipTextsSegment::new(1).with_buffer_size(self.buffer_size).execute(gbe, sb); // and
-      sb = TextSegment::new().with_skip_ends(3).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // learned // move // !
+      sb = OverrideMoveSegment::new(move_index).with_expected_next_mon(self.expected_pokemon, self.expected_level).with_buffer_size(self.buffer_size).execute(gbe, sb);
+    } else {
+      sb = DelaySegment::new(MoveSegment::with_metric(Input::A | Input::B, Gen2SwitchMonMetric {}.debug_print().expect((self.expected_pokemon, self.expected_level)))).with_buffer_size(self.buffer_size).execute(gbe, sb);
     }
-    let sb = DelaySegment::new(MoveSegment::with_metric(Input::A | Input::B, Gen2SwitchMonMetric {}.debug_print().expect((self.expected_pokemon, self.expected_level)))).with_buffer_size(self.buffer_size).execute(gbe, sb);
     let sb = TextSegment::new().with_buffer_size(self.buffer_size).execute(gbe, sb); // sent out
     let sb = DelaySegment::new(
         MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).seq(

@@ -13,6 +13,7 @@ pub struct WalkToSegment {
   dest_x: usize,
   dest_y: usize,
   into_result: OverworldInteractionResult,
+  allow_water_tiles: bool,
   buffer_size: usize,
 }
 impl WalkToSegment {
@@ -22,11 +23,14 @@ impl WalkToSegment {
       dest_x: (dest_x + 6) as usize,
       dest_y: (dest_y + 6) as usize,
       into_result: OverworldInteractionResult::NoEvents,
+      allow_water_tiles: false,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
   #[allow(dead_code)]
   pub fn into(self, into_result: OverworldInteractionResult) -> Self { Self { into_result, ..self } }
+  #[allow(dead_code)]
+  pub fn surfing(self) -> Self { Self { allow_water_tiles: true, ..self } }
 }
 impl WithOutputBufferSize for WalkToSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
@@ -39,7 +43,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
     let initial_states: Vec<_> = sb.into_iter().collect();
     assert!(!initial_states.is_empty());
     let map = gbe.execute_state_fn(vec![&initial_states[0]], |gb| {
-      super::map::Map::default().load_gen2_map(gb)
+      super::map::Map::default().with_water_tiles(self.allow_water_tiles).load_gen2_map(gb)
     }).into_split_iter().next().unwrap().1;
 
     debug!("WalkToSegment navigate to ({}, {})", self.dest_x as isize-6, self.dest_y as isize-6);

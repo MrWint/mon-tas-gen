@@ -9,6 +9,8 @@ mod nexttrainermonsegment;
 pub use self::nexttrainermonsegment::NextTrainerMonSegment;
 mod ohkosegment;
 pub use self::ohkosegment::OHKOSegment;
+mod overridemovesegment;
+pub use self::overridemovesegment::OverrideMoveSegment;
 mod selectmovesegment;
 pub use self::selectmovesegment::SelectMoveSegment;
 mod starttrainerbattlesegment;

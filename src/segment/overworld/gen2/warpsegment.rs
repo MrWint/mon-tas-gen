@@ -8,11 +8,13 @@ use super::{OverworldInteractionResult,PlayerEventScript};
 #[allow(dead_code)]
 pub struct WarpSegment {
   input: Input,
+  buffer_size: usize,
 }
 impl Default for WarpSegment {
     fn default() -> Self {
       Self {
         input: Input::empty(),
+        buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       }
     }
 }
@@ -21,6 +23,9 @@ impl WarpSegment {
   pub fn new() -> Self { Default::default() }
   #[allow(dead_code)]
   pub fn with_input(self, input: Input) -> Self { Self { input, ..self } }
+}
+impl WithOutputBufferSize for WarpSegment {
+  fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
 impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for WarpSegment {
