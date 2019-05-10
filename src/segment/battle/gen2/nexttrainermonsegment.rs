@@ -10,6 +10,7 @@ pub struct NextTrainerMonSegment {
   expected_level: u8,
   expected_move: Option<Move>,
   level_up: bool,
+  skip_learning_move: bool,
   override_move: Option<Move>,
   buffer_size: usize,
 }
@@ -21,11 +22,13 @@ impl NextTrainerMonSegment {
       expected_level,
       expected_move: None,
       level_up: false,
+      skip_learning_move: false,
       override_move: None,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
   pub fn with_level_up(self) -> Self { Self { level_up: true, ..self } }
+  pub fn with_skip_learning_move(self) -> Self { Self { skip_learning_move: true, ..self } }
   pub fn with_override_move(self, mov: Move) -> Self { Self { override_move: Some(mov), ..self } }
   pub fn with_expected_move(self, mov: Move) -> Self { Self { expected_move: Some(mov), ..self } }
 }
@@ -50,6 +53,9 @@ impl<R: Rom + TextAddresses + Gen2BattleSwitchMonAddresses + Gen2AIChooseMoveAdd
       let move_index = move_infos.iter().position(|move_info| move_info.mov == mov).expect("move not found");
 
       sb = OverrideMoveSegment::new(move_index).with_expected_next_mon(self.expected_pokemon, self.expected_level).with_buffer_size(self.buffer_size).execute(gbe, sb);
+    } else if self.skip_learning_move {
+      sb = MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).execute(gbe, sb); // confirm
+      sb = OverrideMoveSegment::dont_learn().with_expected_next_mon(self.expected_pokemon, self.expected_level).with_buffer_size(self.buffer_size).execute(gbe, sb);
     } else {
       sb = DelaySegment::new(MoveSegment::with_metric(Input::A | Input::B, Gen2SwitchMonMetric {}.debug_print().expect((self.expected_pokemon, self.expected_level)))).with_buffer_size(self.buffer_size).execute(gbe, sb);
     }
