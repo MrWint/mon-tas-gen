@@ -161,6 +161,7 @@ pub trait Gen2FightTurnAddresses {
   const EFFECT_FAILED_MEM_ADDRESS: u16; // wEffectFailed
   const CRITICAL_HIT_MEM_ADDRESS: u16; // wCriticalHit
   const CUR_MOVE_INDEX_MEM_ADDRESS: u16; // wCurMoveNum
+  const FULLY_PARALYZED_ADDRESS: i32; // Address reached when mon is fully paralyzed
 }
 pub trait BattleMovesInfoAddresses {
   const MOVES_ADDRESS: i32; // Moves
@@ -197,6 +198,9 @@ pub trait Gen2BattleMultiHitAddresses {
 pub trait RoamMonAddresses {
   const AFTER_ROAM_MON_UPDATE_ADDRESS: i32; // Address reached after roaming mon locations were updated.
   const ROAM_MON_DATA_MEM_ADDRESS: u16; // Memory address containing the roaming mon data.
+}
+pub trait HallOfFameAddresses {
+  const HALL_OF_FAME_AFTER_SAVING_ADDRESS: i32; // After save is complete, safe to reset now.
 }
 
 // Gen 1
@@ -617,6 +621,7 @@ macro_rules! impl_gold_silver_common_addresses {
       const EFFECT_FAILED_MEM_ADDRESS: u16 = 0xcbeb; // wEffectFailed
       const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xcb44; // wCriticalHit
       const CUR_MOVE_INDEX_MEM_ADDRESS: u16 = 0xcfc7; // wCurMoveNum
+      const FULLY_PARALYZED_ADDRESS: i32 = 0x0D_439B; // in CheckEnemyTurn.no_disabled_move
     }
     impl BattleMovesInfoAddresses for $t {
       const MOVES_ADDRESS: i32 = 0x10_5AFE; // Moves
@@ -649,6 +654,9 @@ macro_rules! impl_gold_silver_common_addresses {
     impl RoamMonAddresses for $t {
       const AFTER_ROAM_MON_UPDATE_ADDRESS: i32 = 0x0a_6942; // _BackUpMapIndices
       const ROAM_MON_DATA_MEM_ADDRESS: u16 = 0xdd1a; // wRoamMon1
+    }
+    impl HallOfFameAddresses for $t {
+      const HALL_OF_FAME_AFTER_SAVING_ADDRESS: i32 = 0x21_64af; // AnimateHallOfFame
     }
     )+
   }
@@ -898,6 +906,7 @@ impl Gen2FightTurnAddresses for Crystal {
   const EFFECT_FAILED_MEM_ADDRESS: u16 = 0xC70D; // wEffectFailed
   const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xC666; // wCriticalHit
   const CUR_MOVE_INDEX_MEM_ADDRESS: u16 = 0xD0D5; // wCurMoveNum
+  const FULLY_PARALYZED_ADDRESS: i32 = 0x0D_437C; // in CheckEnemyTurn.no_disabled_move
 }
 impl BattleMovesInfoAddresses for Crystal {
   const MOVES_ADDRESS: i32 = 0x10_5AFB; // Moves
@@ -934,4 +943,7 @@ impl Gen2BattleMultiHitAddresses for Crystal {
 impl RoamMonAddresses for Crystal {
   const AFTER_ROAM_MON_UPDATE_ADDRESS: i32 = 0x0A_63F6; // _BackUpMapIndices
   const ROAM_MON_DATA_MEM_ADDRESS: u16 = 0xDFCF; // wRoamMon1
+}
+impl HallOfFameAddresses for Crystal {
+  const HALL_OF_FAME_AFTER_SAVING_ADDRESS: i32 = 0x21_64C3; // AnimateHallOfFame
 }

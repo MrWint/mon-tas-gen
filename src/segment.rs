@@ -121,6 +121,8 @@ mod moveloopsegment;
 pub use self::moveloopsegment::MoveLoopSegment;
 mod movesegment;
 pub use self::movesegment::MoveSegment;
+mod noopsegment;
+pub use self::noopsegment::NoopSegment;
 mod skiptextssegment;
 pub use self::skiptextssegment::SkipTextsSegment;
 mod textsegment;

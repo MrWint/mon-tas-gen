@@ -168,3 +168,13 @@ impl<R: Rom + Gen2BattleSwitchMonAddresses> Metric<R> for Gen2SwitchMonMetric {
     Some((mon, lvl))
   }
 }
+
+pub struct Gen2FullyParalyzedMetric {}
+impl<R: Rom + Gen2FightTurnAddresses> Metric<R> for Gen2FullyParalyzedMetric {
+  type ValueType = ();
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::FULLY_PARALYZED_ADDRESS]) == 0 { return None; }
+    Some(())
+  }
+}

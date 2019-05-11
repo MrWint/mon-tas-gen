@@ -9,6 +9,8 @@ mod map;
 pub use self::map::Map;
 mod jumpledgesegment;
 pub use self::jumpledgesegment::JumpLedgeSegment;
+mod resetafterhofsegment;
+pub use self::resetafterhofsegment::ResetAfterHofSegment;
 mod skipscriptsegment;
 pub use self::skipscriptsegment::SkipScriptSegment;
 mod turnsegment;

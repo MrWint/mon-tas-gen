@@ -48,7 +48,12 @@ pub struct RawState {
   /// Saved internal Gambatte state.
   gb_state: SaveState,
   /// List of all inputs performed so far.
-  inputs: Vec<Input>,
+  #[serde(skip_deserializing)]
+  #[serde(skip_serializing)] 
+  inputs_old: Vec<Input>,
+  /// List of all non-null inputs with corresponding frame
+  // #[serde(skip_deserializing)]
+  inputs: Vec<(u32, Input)>,
   last_input_frame: [u32; 2], // first, last
   pub is_at_input: bool,
   ignored_inputs: Input, // inputs ignored by next input use
@@ -87,8 +92,8 @@ pub struct Gb<R> {
   _rom: PhantomData<R>,
 
   // Savable state variables
-  /// List of all inputs performed so far at past decision points.
-  inputs: Vec<Input>,
+  /// List of all non-null inputs with corresponding frame
+  inputs: Vec<(u32, Input)>,
   /// Frame (according to Gambatte's used timing) at which the last decision point occurred.
   /// Used to discard future inputs in the frame due to BizHawk's limit of only allowing one input per frame in its input format.
   last_input_frame: [u32; 2], // first, last
@@ -128,6 +133,7 @@ impl <R: RngAddresses> Gb<R> {
       raw_state: std::sync::Arc::new(RawState {
         // save inherent state
         gb_state: self.gb.save_state(),
+        inputs_old: vec![],
         inputs: self.inputs.clone(),
         last_input_frame: self.last_input_frame,
         is_at_input: self.is_at_input,
@@ -147,17 +153,6 @@ impl <R: RngAddresses> Gb<R> {
   }
 }
 impl <R> Gb<R> {
-  // Restores a saved execution state object.
-  pub fn restore<V>(&mut self, s: &State<V>) {
-    // load inherent state
-    self.gb.load_state(&s.gb_state);
-    self.skipped_relevant_inputs = false;
-    self.inputs.clone_from(&s.inputs);
-    self.last_input_frame.clone_from(&s.last_input_frame);
-    self.is_at_input = s.is_at_input;
-    self.ignored_inputs = s.ignored_inputs;
-    self.num_delays = s.num_delays;
-  }
   /// Generates a stack trace of the current point in the game's execution, returning at most 40 values from the stack.
   /// Values may be return addresses or registers stored on the stack.
   pub fn get_stack_trace_string(&self) -> String {
@@ -200,8 +195,20 @@ impl <R: JoypadAddresses> Gb<R> {
     }
     self.gb.set_input(input);
     self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
-    self.inputs.push(input);
+    Self::record_input(&mut self.inputs, self.last_input_frame[0] - 1, input & if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_HI_ADDRESS { inputs::HI_INPUTS } else { inputs::LO_INPUTS });
+    Self::record_input(&mut self.inputs, self.last_input_frame[1] - 1, input & if R::JOYPAD_READ_LAST_ADDRESS == R::JOYPAD_READ_HI_ADDRESS { inputs::HI_INPUTS } else { inputs::LO_INPUTS });
     self.is_at_input = false;
+  }
+  fn record_input(inputs: &mut Vec<(u32, Input)>, frame: u32, input: Input) {
+    if input.is_empty() { return; }
+    if let Some((last_frame, last_input)) = inputs.last_mut() {
+      assert!(*last_frame <= frame);
+      if *last_frame == frame {
+        *last_input |= input;
+        return;
+      }
+    }
+    inputs.push((frame, input));
   }
 
   /// Executes until any of the given addresses are about to be executed, or until the execution is about to read its next usable input.
@@ -318,43 +325,80 @@ impl <R: JoypadAddresses> Gb<R> {
       RunToNextVBlankResult::AtNextVBlank(s, input_frame) => self.skip_irrelevant_vblanks_until(addresses, s, input_frame, /* allow_hit_after_relevant_input_read = */ true),
     }
   }
-}
-impl <R: JoypadAddresses + RngAddresses> Gb<R> {
+
+  /// Issues soft reset inputs (A+B+START+SELECT) at the the next possible vblank (not necessarily a decision point).
+  pub fn soft_reset(&mut self) {
+    if !self.is_at_input {
+      match self.run_to_next_vblank_until(&[]) {
+        RunToNextVBlankResult::HitAddress(hit) => panic!("unexpected hit of address {:x}", hit),
+        RunToNextVBlankResult::AtNextVBlank(s, input_frame) => {
+          self.gb.load_state(&s);
+          self.last_input_frame = input_frame;
+          self.is_at_input = true;
+        },
+      };
+    }
+    self.input(inputs::LO_INPUTS);
+  }
+
+  // Restores a saved execution state object.
+  pub fn restore<V>(&mut self, s: &State<V>) {
+    // load or reconstruct inputs
+    if s.inputs.is_empty() && !s.inputs_old.iter().all(Input::is_empty) {
+      log::info!("legacy state loaded, reconstructing inputs...");
+      self.inputs = self.create_inputs_from_ftii(&s.inputs_old);
+      log::info!("successfully reconstructed {} inputs", self.inputs.len());
+    } else {
+      self.inputs.clone_from(&s.inputs);
+    }
+
+    // load inherent state
+    self.gb.load_state(&s.gb_state);
+    self.skipped_relevant_inputs = false;
+    self.last_input_frame.clone_from(&s.last_input_frame);
+    self.is_at_input = s.is_at_input;
+    self.ignored_inputs = s.ignored_inputs;
+    self.num_delays = s.num_delays;
+  }
+
   #[allow(dead_code)]
   pub fn create_inputs(&mut self) -> Vec<Input> {
     assert!(!self.skipped_relevant_inputs);
-    let gb_result = self.gb.get_inputs();
-    if false { // check inputs against ftii
-      let tmp = self.save();
-      let ftii_result = self.create_inputs_from_ftii(&tmp.inputs);
-      self.restore(&tmp);
-      if gb_result != ftii_result {
+
+    let result = self.get_inputs();
+    #[cfg(feature = "gambatte-track-inputs")] {
+      let gb_result = self.gb.get_inputs();
+      if gb_result != result {
         log::error!("Input diff detected! Likely desync. Possibly caused by manual memory writes");
       }
-    } else {
-      log::info!("creating inputs done: #inputs: {}", gb_result.len());
     }
-    gb_result
+    log::info!("creating inputs done: #inputs: {}", result.len());
+    result
   }
+  pub fn get_inputs(&self) -> Vec<Input> {
+    let mut result = vec![];
+    for &(frame, input) in self.inputs.iter() {
+      assert!(result.len() <= frame as usize);
+      result.resize((frame + 1) as usize, Input::empty());
+      result[frame as usize] = input;
+    }
+    result
+  }
+
   #[allow(dead_code)]
-  pub fn create_inputs_from_ftii(&mut self, inputs: &[Input]) -> Vec<Input> {
+  pub fn create_inputs_from_ftii(&mut self, inputs: &[Input]) -> Vec<(u32, Input)> {
     self.restore_initial_state();
 
-    let mut result: Vec<Input> = vec![];
+    let mut result: Vec<(u32, Input)> = vec![];
     for &input in inputs.iter() {
       self.gb.set_input(input);
-      result.resize(self.gb.frame() as usize, Input::empty());
-      result[self.gb.frame() as usize - 1] |= input & if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_HI_ADDRESS { inputs::HI_INPUTS } else { inputs::LO_INPUTS };
+      Self::record_input(&mut result, self.gb.frame() - 1, input & if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_HI_ADDRESS { inputs::HI_INPUTS } else { inputs::LO_INPUTS });
       self.gb.run_until(&[R::JOYPAD_READ_LAST_ADDRESS]);
-      result.resize(self.gb.frame() as usize, Input::empty());
-      result[self.gb.frame() as usize - 1] |= input & if R::JOYPAD_READ_LAST_ADDRESS == R::JOYPAD_READ_HI_ADDRESS { inputs::HI_INPUTS } else { inputs::LO_INPUTS };
+      Self::record_input(&mut result, self.gb.frame() - 1, input & if R::JOYPAD_READ_LAST_ADDRESS == R::JOYPAD_READ_HI_ADDRESS { inputs::HI_INPUTS } else { inputs::LO_INPUTS });
       self.gb.run_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
       self.is_at_input = false;
       self.step();
     }
-
-    while result.last().unwrap_or(&Input::A).is_empty() { result.pop(); }
-    log::info!("creating inputs done: #inputs: {}", result.len());
     result
   }
 }

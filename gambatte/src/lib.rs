@@ -137,7 +137,7 @@ pub struct Gambatte {
   is_on_frame_boundaries: bool,
   overflow_samples: u32,
   cycle_count: u64,
-  inputs: HashMap<u32, Input>,
+  #[cfg(feature = "track-inputs")] inputs: HashMap<u32, Input>,
   screen_update_callback: Box<ScreenUpdateCallback>, // trait object to avoid generics.
 
   frame_start_gambatte_state: Option<Vec<u8>>,
@@ -181,7 +181,7 @@ impl Gambatte {
         is_on_frame_boundaries: true,
         overflow_samples: 0,
         cycle_count: 0,
-        inputs: HashMap::new(),
+        #[cfg(feature = "track-inputs")] inputs: HashMap::new(),
         screen_update_callback: Box::new(screen_update_callback),
 
         frame_start_gambatte_state: None,
@@ -288,8 +288,10 @@ impl Gambatte {
   pub fn set_input(&mut self, input: Input) {
     if self.is_on_frame_boundaries {
       self.input_getter.input = input;
-      self.inputs.remove(&*self.frame);
-      if !input.is_empty() { self.inputs.insert(*self.frame, input); }
+      #[cfg(feature = "track-inputs")] {
+        self.inputs.remove(&*self.frame);
+        if !input.is_empty() { self.inputs.insert(*self.frame, input); }
+      }
     } else if self.causes_frame_start_interrupt(input) {
       log::warn!("set_input ({:?}) at joypad interrupt frame, trying to replay frame", input);
       {
@@ -302,8 +304,10 @@ impl Gambatte {
       *self.frame -= 1;
       self.is_on_frame_boundaries = true;
       self.input_getter.input = input;
-      self.inputs.remove(&*self.frame);
-      if !input.is_empty() { self.inputs.insert(*self.frame, input); }
+      #[cfg(feature = "track-inputs")] {
+        self.inputs.remove(&*self.frame);
+        if !input.is_empty() { self.inputs.insert(*self.frame, input); }
+      }
       for (hit, cycle_count) in self.hit_addresses_since_frame_start.clone().into_iter() {
         let actual_hit = self.step_until(&[hit]);
         assert!(actual_hit.is_some(), "failed to replay hit {:x} at {}", hit, cycle_count);
@@ -311,8 +315,10 @@ impl Gambatte {
       }
     } else {
       self.input_getter.input = input;
-      self.inputs.remove(&(*self.frame - 1));
-      if !input.is_empty() { self.inputs.insert(*self.frame - 1, input); }
+      #[cfg(feature = "track-inputs")] {
+        self.inputs.remove(&(*self.frame - 1));
+        if !input.is_empty() { self.inputs.insert(*self.frame - 1, input); }
+      }
     }
   }
 
@@ -341,7 +347,9 @@ impl Gambatte {
     self.is_on_frame_boundaries = s.is_on_frame_boundaries;
     self.overflow_samples = s.overflow_samples;
     self.cycle_count = s.cycle_count;
-    self.inputs = s.inputs.clone();
+    #[cfg(feature = "track-inputs")] {
+      self.inputs = s.inputs.clone();
+    }
 
     self.frame_start_gambatte_state = s.frame_start_gambatte_state.clone();
     self.frame_start_overflow_samples = s.frame_start_overflow_samples;
@@ -372,7 +380,8 @@ impl Gambatte {
       is_on_frame_boundaries: self.is_on_frame_boundaries,
       overflow_samples: self.overflow_samples,
       cycle_count: self.cycle_count,
-      inputs: self.inputs.clone(),
+      #[cfg(feature = "track-inputs")] inputs: self.inputs.clone(),
+      #[cfg(not(feature = "track-inputs"))] inputs: HashMap::new(),
 
       frame_start_gambatte_state: self.frame_start_gambatte_state.clone(),
       frame_start_overflow_samples: self.frame_start_overflow_samples,
@@ -397,7 +406,8 @@ impl Gambatte {
   pub fn get_cycle_count(&self) -> u64 {
     self.cycle_count
   }
-  #[allow(dead_code)]
+
+  #[cfg(feature = "track-inputs")]
   pub fn get_inputs(&self) -> Vec<Input> {
     let mut result = vec![];
     for (&frame, &input) in self.inputs.iter() {
