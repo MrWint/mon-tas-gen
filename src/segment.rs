@@ -22,6 +22,13 @@ pub trait Segment<R: Rom> {
       _rom: PhantomData,
     }
   }
+  fn seq_split<S2: Segment<R, Key=()>>(self, s2: S2) -> SeqSplitSegment<R, Self, S2> where Self: Sized {
+    SeqSplitSegment {
+      s1: self,
+      s2,
+      _rom: PhantomData,
+    }
+  }
 }
 pub struct SeqSegment<R, S1, S2> {
   s1: S1,
@@ -34,6 +41,19 @@ impl <R: Rom, S1: Segment<R, Key=()>, S2: Segment<R>> Segment<R> for SeqSegment<
     let sb = self.s1.execute(gbe, sb);
     if sb.is_empty() { return HashMap::new() }
     self.s2.execute_split(gbe, sb)
+  }
+}
+
+pub struct SeqSplitSegment<R, S1, S2> {
+  s1: S1,
+  s2: S2,
+  _rom: PhantomData<R>,
+}
+impl <R: Rom, S1: Segment<R>, S2: Segment<R, Key=()>> Segment<R> for SeqSplitSegment<R, S1, S2> {
+  type Key = S1::Key;
+  fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
+    let sb_map = self.s1.execute_split(gbe, sb);
+    sb_map.into_iter().map(|(k, sb)| (k, self.s2.execute(gbe, sb))).filter(|(_, sb)| !sb.is_empty()).collect()
   }
 }
 
@@ -66,7 +86,7 @@ impl<V, K: StateKey, S: std::hash::BuildHasher> StateBufferHashMap<V> for HashMa
     !self.is_empty() && self.values().all(|sb| sb.is_full())
   }
   fn to_string(&self) -> String {
-    format!("{:?}", self.iter().map(|(k, v)| (k, format!("{}", v))).collect::<HashMap<_,_>>())
+    format!("{:?}", self.iter().map(|(k, v)| (k, format!("{:?}", v))).collect::<HashMap<_,_>>())
   }
 }
 pub trait SingleStateBuffer<K> {

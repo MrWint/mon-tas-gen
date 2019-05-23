@@ -53,7 +53,7 @@ pub struct RawState {
   inputs_old: Vec<Input>,
   /// List of all non-null inputs with corresponding frame
   // #[serde(skip_deserializing)]
-  inputs: Vec<(u32, Input)>,
+  pub inputs: Vec<(u32, Input)>,
   last_input_frame: [u32; 2], // first, last
   pub is_at_input: bool,
   ignored_inputs: Input, // inputs ignored by next input use

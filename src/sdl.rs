@@ -48,7 +48,7 @@ impl Sdl {
         let mut window_surface = window.surface(&event_pump).unwrap();
         surface.blit_scaled(None, &mut window_surface, None).unwrap();
         window_surface.update_window().unwrap();
-        match screen_update_rx.recv_timeout(Duration::from_millis(10)) {
+        match screen_update_rx.recv_timeout(Duration::from_millis(50)) {
           Ok(_screen) => { // update screen
             while screen_update_rx.try_recv().is_err() {} // clear all events
             thread::sleep(Duration::from_millis(10)); // wait at least 1/100 second before next event

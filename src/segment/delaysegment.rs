@@ -8,25 +8,28 @@ use log::{debug,info};
 
 const DELAY_SEGMENT_DEFAULT_MAX_SKIPS: u32 = 1000;
 const DELAY_SEGMENT_FULL_CUTOFF_DELAY: u64 = 1 * 35112;
-const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u64 = 10 * 35112;
+const DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY: u64 = 5 * 35112;
 
-pub struct DelaySegment<R, S> {
+pub struct DelaySegment<R: Rom, S: Segment<R>> {
   segment: S,
   buffer_size: usize,
   max_skips: u32,
+  primary_key: Option<S::Key>,
   _rom: PhantomData<R>,
 }
-impl<R, S> DelaySegment<R, S> {
+impl<R: Rom, S: Segment<R>> DelaySegment<R, S> {
   pub fn new(segment: S) -> Self {
     Self {
       segment,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       max_skips: DELAY_SEGMENT_DEFAULT_MAX_SKIPS,
+      primary_key: None,
       _rom: PhantomData,
     }
   }
+  pub fn with_primary_key(self, primary_key: S::Key) -> Self { Self { primary_key: Some(primary_key), ..self } }
 }
-impl<R, S> WithOutputBufferSize for DelaySegment<R, S> {
+impl<R: Rom, S: Segment<R>> WithOutputBufferSize for DelaySegment<R, S> {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
@@ -49,13 +52,26 @@ impl<R: Rom, S: Segment<R>> Segment<R> for DelaySegment<R, S> {
 
       // Update loop exit conditions.
       let cur_max_cycle_count = (&active_states).into_iter().map(|s| s.cycle_count).max().unwrap();
-      if result.is_all_full() && cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY < cycle_count_cutoff {
-        cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY;
-        info!("DelaySegment set cycle_count_cutoff (full) to {}", to_human_readable_time(cycle_count_cutoff));
-      }
-      if !result.is_empty() && cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY < cycle_count_cutoff {
-        cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY;
-        info!("DelaySegment set cycle_count_cutoff (nonempty) to {}", to_human_readable_time(cycle_count_cutoff));
+      if let Some(primary_key) = &self.primary_key {
+        if let Some(sb) = result.get(primary_key) {
+          if sb.is_full() && cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY < cycle_count_cutoff {
+            cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY;
+            info!("DelaySegment set cycle_count_cutoff (primary full) to {}", to_human_readable_time(cycle_count_cutoff));
+          }
+          if !sb.is_empty() && cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY < cycle_count_cutoff {
+            cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY;
+            info!("DelaySegment set cycle_count_cutoff (primary nonempty) to {}", to_human_readable_time(cycle_count_cutoff));
+          }
+        }
+      } else {
+        if result.is_all_full() && cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY < cycle_count_cutoff {
+          cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_FULL_CUTOFF_DELAY;
+          info!("DelaySegment set cycle_count_cutoff (full) to {}", to_human_readable_time(cycle_count_cutoff));
+        }
+        if !result.is_empty() && cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY < cycle_count_cutoff {
+          cycle_count_cutoff = cur_max_cycle_count + DELAY_SEGMENT_NONEMPTY_CUTOFF_DELAY;
+          info!("DelaySegment set cycle_count_cutoff (nonempty) to {}", to_human_readable_time(cycle_count_cutoff));
+        }
       }
 
       // Update active states for next loop iteration.

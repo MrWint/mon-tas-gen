@@ -37,7 +37,7 @@ impl<R: Rom + Gen2FightTurnAddresses + BattleMovesInfoAddresses + BattleMonInfoA
     log::debug!("Enemy: {:?}", gbe.execute_state(&sb, BattleMonInfoFn::new(Who::Enemy)).get_value_assert_all_equal());
 
     let move_infos = gbe.execute_state(&sb, MoveInfosFn::new(Who::Player)).get_value_assert_all_equal();
-    let move_info = move_infos.iter().find(|move_info| move_info.mov == self.mov).expect("move not found");
+    let move_info = move_infos.into_iter().find(|move_info| move_info.mov == self.mov).expect("move not found");
     let expected_max_damage = if self.expect_crit { move_info.max_crit_damage } else { move_info.max_damage };
 
     let player_mon_info = gbe.execute_state(&sb, BattleMonInfoFn::new(Who::Player)).get_value_assert_all_equal();

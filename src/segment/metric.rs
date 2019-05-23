@@ -37,6 +37,9 @@ pub trait Metric<R>: Sync {
   fn and_then<M: Metric<R>>(self, then_metric: M) -> AndThen<R, Self, M> where Self: Sized {
     AndThen { metric: self, then_metric, _rom: PhantomData, }
   }
+  fn and_then_split<M: Metric<R, ValueType=()>>(self, then_metric: M) -> AndThenSplit<R, Self, M> where Self: Sized {
+    AndThenSplit { metric: self, then_metric, _rom: PhantomData, }
+  }
   fn into_unit(self) -> IntoUnit<R, Self> where Self: Sized {
     IntoUnit {metric: self, _rom: PhantomData, }
   }
@@ -91,6 +94,18 @@ impl<R: Sync, M: Metric<R>, TM: Metric<R>> Metric<R> for AndThen<R, M, TM> {
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     self.metric.evaluate(gb).and_then(|_| self.then_metric.evaluate(gb))
+  }
+}
+pub struct AndThenSplit<R, M, TM> {
+  metric: M,
+  then_metric: TM,
+  _rom: PhantomData<R>,
+}
+impl<R: Sync, M: Metric<R>, TM: Metric<R, ValueType=()>> Metric<R> for AndThenSplit<R, M, TM> {
+  type ValueType = M::ValueType;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    self.metric.evaluate(gb).and_then(|v| self.then_metric.evaluate(gb).map(|_| v))
   }
 }
 pub struct IntoUnit<R, M> {

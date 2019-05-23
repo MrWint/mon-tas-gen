@@ -10,6 +10,7 @@ pub struct NextTrainerMonSegment {
   expected_level: u8,
   expected_move: Option<Move>,
   level_up: bool,
+  learn_move: bool,
   skip_learning_move: bool,
   override_move: Option<Move>,
   buffer_size: usize,
@@ -22,12 +23,14 @@ impl NextTrainerMonSegment {
       expected_level,
       expected_move: None,
       level_up: false,
+      learn_move: false,
       skip_learning_move: false,
       override_move: None,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
   pub fn with_level_up(self) -> Self { Self { level_up: true, ..self } }
+  pub fn with_learn_move(self) -> Self { Self { learn_move: true, ..self } }
   pub fn with_skip_learning_move(self) -> Self { Self { skip_learning_move: true, ..self } }
   pub fn with_override_move(self, mov: Move) -> Self { Self { override_move: Some(mov), ..self } }
   pub fn with_expected_move(self, mov: Move) -> Self { Self { expected_move: Some(mov), ..self } }
@@ -46,7 +49,10 @@ impl<R: Rom + TextAddresses + Gen2BattleSwitchMonAddresses + Gen2AIChooseMoveAdd
       sb = MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).execute(gbe, sb); // confirm
       sb = TextSegment::new().with_skip_ends(2).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // grew to level // X
     }
-    if let Some(mov) = self.override_move {
+    if self.learn_move {
+      sb = MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).execute(gbe, sb); // confirm
+      sb = TextSegment::new().with_skip_ends(3).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // learns // move // .
+    } else if let Some(mov) = self.override_move {
       sb = MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).execute(gbe, sb); // confirm
 
       let move_infos = gbe.execute_state(&sb, MoveInfosFn::new(Who::Player)).get_value_assert_all_equal();
@@ -62,11 +68,7 @@ impl<R: Rom + TextAddresses + Gen2BattleSwitchMonAddresses + Gen2AIChooseMoveAdd
     let sb = TextSegment::new().with_buffer_size(self.buffer_size).execute(gbe, sb); // sent out
     let sb = DelaySegment::new(
         MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).seq(
-        TextSegment::with_metric(Gen2AIChooseMoveMetric {}.debug_print().filter(|&m| if let Some(mov) = self.expected_move {
-          m == mov
-        } else {
-          ![Move::QuickAttack, Move::MachPunch, Move::ExtremeSpeed, Move::Endure, Move::Protect, Move::Detect].contains(&m)
-        }).into_unit()).with_allowed_end_inputs(Input::B).with_skip_ends(1).with_unbounded_buffer()) // mon
+        TextSegment::with_metric(Gen2ExpectedAIChooseMoveMetric { expected_move: self.expected_move }).with_allowed_end_inputs(Input::B).with_skip_ends(1).with_unbounded_buffer()) // mon
       ).with_buffer_size(self.buffer_size).execute(gbe, sb);
 
     Some(((), sb)).into_iter().collect()

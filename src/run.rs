@@ -36,6 +36,11 @@ impl<R: Rom> GbRunner<R> {
     self.sb = segment.execute(&mut self.gbe, sb);
   }
   #[allow(dead_code)]
+  fn run_merge<S: Segment<R>>(&mut self, segment: S) {
+    let sb = std::mem::replace(&mut self.sb, StateBuffer::new());
+    self.sb = segment.execute_split(&mut self.gbe, sb).merge_state_buffers();
+  }
+  #[allow(dead_code)]
   fn run_debug<S: Segment<R, Key=()>>(&mut self, segment: S) {
     with_log_level(Debug, || {
       self.run(segment);
@@ -48,7 +53,7 @@ impl<R: Rom> GbRunner<R> {
 
   #[allow(dead_code)]
   fn debug_print_states(&self) {
-    println!("{}", self.sb);
+    println!("{:?}", self.sb);
   }
 
   #[allow(dead_code)]
@@ -61,7 +66,7 @@ impl<R: Rom> GbRunner<R> {
   }
 
   fn debug_segment_end(&mut self, file_name: &str) {
-    let chosen_state = (&self.sb).into_iter().min_by_key(|s| s.cycle_count).unwrap().clone();
+    let chosen_state = (&self.sb).into_iter().min_by_key(|s| s.inputs.last().map(|(f, _)| f).unwrap_or(&0)).unwrap().clone();
     {
       log::info!("Creating sample input file...");
       let inputs = self.gbe.execute(&[&chosen_state], move |gb, s, tx| {
@@ -71,7 +76,7 @@ impl<R: Rom> GbRunner<R> {
       Bk2Writer::new::<R>().write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
       log::info!("Inputs contain {} delays", chosen_state.num_delays);
     }
-    log::info!("Rendering end states of {}", self.sb);
+    log::info!("Rendering end states of {:?}", self.sb);
     self.gbe.execute(&self.sb, move |gb, s, tx| {
       gb.restore(&s);
       for _ in 0..10 {
@@ -90,6 +95,7 @@ impl<R: Rom> GbRunner<R> {
 
   fn save(&self, file_name: &str) {
     self.sb.save(file_name);
+    log::info!("saved states to {}", file_name);
   }
   fn load(&mut self, file_name: &str) {
     self.sb = StateBuffer::load(file_name);

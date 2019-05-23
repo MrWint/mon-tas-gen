@@ -9,7 +9,7 @@ use std::iter::FromIterator;
 use std::marker::PhantomData;
 
 pub const STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
-pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = STATE_BUFFER_DEFAULT_MAX_SIZE * 16; // 4096;
+pub const STATE_BUFFER_UNBOUNDED_MAX_SIZE: usize = 256; // STATE_BUFFER_DEFAULT_MAX_SIZE * 16; // 4096;
 
 /// Collection of ```States``` which are assumed to be at the same logical decision point in the execution.
 /// ```StateBuffer```s have a maximum size, and prune excess states if they become too full.
@@ -174,7 +174,7 @@ impl<'a, V, S: StateMetric> IntoIterator for &'a StateBuffer<V, S> {
   }
 }
 
-impl<V, S: StateMetric> fmt::Display for StateBuffer<V, S> {
+impl<V, S: StateMetric> fmt::Debug for StateBuffer<V, S> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let max_cycle_count = self.states.values().map(|s| s.cycle_count).max().unwrap_or(0);
     let min_cycle_count = self.states.values().map(|s| s.cycle_count).min().unwrap_or(0);

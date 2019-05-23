@@ -5,6 +5,12 @@ use crate::segment::Metric;
 
 mod endtrainerbattlesegment;
 pub use self::endtrainerbattlesegment::EndTrainerBattleSegment;
+mod fightturnsegment;
+pub use self::fightturnsegment::EnemyAttack;
+pub use self::fightturnsegment::EnemyAttackType;
+pub use self::fightturnsegment::FightTurnSegment;
+mod kosegment;
+pub use self::kosegment::KOSegment;
 mod nexttrainermonsegment;
 pub use self::nexttrainermonsegment::NextTrainerMonSegment;
 mod ohkosegment;
@@ -24,6 +30,20 @@ impl<R: JoypadAddresses + Gen2AIChooseMoveAddresses> Metric<R> for Gen2AIChooseM
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     if gb.run_until_or_next_input_use(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
     Some(Move::from_index(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS)).unwrap())
+  }
+}
+pub struct Gen2ExpectedAIChooseMoveMetric {
+  expected_move: Option<Move>,
+}
+impl<R: Rom + Gen2AIChooseMoveAddresses> Metric<R> for Gen2ExpectedAIChooseMoveMetric {
+  type ValueType = ();
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    Gen2AIChooseMoveMetric {}.filter(|&m| if let Some(mov) = self.expected_move {
+      m == mov
+    } else {
+      ![Move::QuickAttack, Move::MachPunch, Move::ExtremeSpeed, Move::Endure, Move::Protect, Move::Detect].contains(&m)
+    }).into_unit().evaluate(gb)
   }
 }
 

@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use std::fmt::Write;
 use super::OverworldInteractionResult;
 
-const MAX_WALK_STEP_SKIPS: u32 = 1;
+const MAX_WALK_STEP_SKIPS: u32 = 0;
 
 pub struct WalkToSegment {
   dest_x: usize,
@@ -106,7 +106,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
           if distances[map.width * y + x] == cur_dist {
             let sb = std::mem::replace(&mut buffers[map.width * y + x], StateBuffer::new());
             if sb.is_empty() { continue; }
-            debug!("processing states at ({},{}) with dist {}, statebuffer {}", x as isize-6, y as isize-6, cur_dist, sb);
+            debug!("processing states at ({},{}) with dist {}, statebuffer {:?}", x as isize-6, y as isize-6, cur_dist, sb);
             for (s, (nx, ny)) in gbe.execute(sb, |gb, s, tx| {
               for &(dx, dy, input) in &[(0, 1, Input::DOWN), (0, -1, Input::UP), (1, 0, Input::RIGHT), (-1, 0, Input::LEFT)] {
                 if !map.tile_allowed_movements[map.width * y + x].contains(input) { continue; } // step not allowed

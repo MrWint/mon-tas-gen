@@ -7,6 +7,7 @@ use crate::statebuffer::StateBuffer;
 pub struct EndTrainerBattleSegment {
   num_defeat_texts: usize,
   level_up: bool,
+  learn_move: bool,
   skip_learning_move: bool,
   override_move_index: Option<usize>,
   buffer_size: usize,
@@ -17,12 +18,14 @@ impl EndTrainerBattleSegment {
     Self {
       num_defeat_texts,
       level_up: false,
+      learn_move: false,
       skip_learning_move: false,
       override_move_index: None,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
   pub fn with_level_up(self) -> Self { Self { level_up: true, ..self } }
+  pub fn with_learn_move(self) -> Self { Self { learn_move: true, ..self } }
   pub fn with_skip_learning_move(self) -> Self { Self { skip_learning_move: true, ..self } }
   pub fn with_override_move_index(self, move_index: usize) -> Self { Self { override_move_index: Some(move_index), ..self } }
 }
@@ -39,7 +42,9 @@ impl<R: Rom + TextAddresses + Gen2MapEventsAddresses + Gen2BattleSwitchMonAddres
     if self.level_up {
       sb = SkipTextsSegment::new(1).with_skip_ends(2).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // grew to level // X
     }
-    if let Some(override_move_index) = self.override_move_index {
+    if self.learn_move {
+      sb = SkipTextsSegment::new(1).with_skip_ends(3).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // learns // move // .
+    } else if let Some(override_move_index) = self.override_move_index {
       sb = OverrideMoveSegment::new(override_move_index).with_buffer_size(self.buffer_size).execute(gbe, sb);
     } else if self.skip_learning_move {
       sb = OverrideMoveSegment::dont_learn().with_buffer_size(self.buffer_size).execute(gbe, sb);
