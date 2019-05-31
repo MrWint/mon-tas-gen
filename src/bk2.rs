@@ -39,9 +39,9 @@ impl Bk2Writer {
     zip.write_all(b"\r\n")?;
 
     zip.start_file("SyncSettings.json", FileOptions::default())?;
-    zip.write_all(br#"{"o":{"$type":"BizHawk.Emulation.Cores.Nintendo.Gameboy.Gameboy+GambatteSyncSettings, BizHawk.Emulation.Cores","ConsoleMode":2,"GBACGB":true,"MulticartCompat":false,"RealTimeRTC":false,"RTCInitialTime":0,"EqualLengthFrames":"#)?;
+    zip.write_all(br#"{"o":{"$type":"BizHawk.Emulation.Cores.Nintendo.Gameboy.Gameboy+GambatteSyncSettings, BizHawk.Emulation.Cores","ConsoleMode":2,"GBACGB":true,"MulticartCompat":false,"RealTimeRTC":false,"EqualLengthFrames":"#)?;
     zip.write_all(if self.equal_length_frames { b"true" } else { b"false" })?;
-    zip.write_all(br#","InitialDiv":0}}"#)?;
+    zip.write_all(br#"}}"#)?;
     zip.write_all(b"\r\n")?;
 
     zip.start_file("Header.txt", FileOptions::default())?;

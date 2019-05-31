@@ -31,12 +31,13 @@ fn main() {
   // if true {return;}
 
 
+  playback_inputs();
   // playback_test();
   // playback_demos();
   // convert_efl();
 
   // crate::run::blue_testing::start();
-  crate::run::crystal_glitchless::start();
+  // crate::run::crystal_glitchless::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();
 }
@@ -59,13 +60,17 @@ fn convert_efl() {
 
 #[allow(dead_code)]
 fn playback_inputs() {
-  let inputs = read_bk2_inputs("temp/tikevin83-pokemonyellow-consoleverified.bk2").unwrap();
+  let inputs = read_bk2_inputs("temp/crystal_glitchless.bk2").unwrap();
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/yellow.gbc", false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */));
+  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */));
+  let mut i = 0;
   for input in inputs {
+    i += 1;
     gb.set_input(input);
     gb.step();
-    // sleep(Duration::from_millis(1));
+    if i > 123000 {
+      std::thread::sleep(std::time::Duration::from_millis(15));
+    }
   }
 }
 

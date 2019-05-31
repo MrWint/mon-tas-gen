@@ -58,18 +58,17 @@ pub struct Registers {
 
 extern {
   fn gambatte_create() -> *mut c_void;
-  fn gambatte_loadgbcbios(gb: *mut c_void, biosdata: *const u8);
-  fn gambatte_load(gb: *mut c_void, romfiledata: *const u8, romfilelength: usize, now: i64, flags: u32, div: u32);
+  fn gambatte_loadbios(gb: *mut c_void, biosdata: *const u8, biosdatalength: usize);
+  fn gambatte_load(gb: *mut c_void, romfiledata: *const u8, romfilelength: usize, flags: u32);
   fn gambatte_setlayers(gb: *mut c_void, layers: u32);
   fn gambatte_destroy(gb: *mut c_void);
 
   fn gambatte_setvideobuffer(gb: *mut c_void, videobuf: *mut u32, pitch: i32);
 
   fn gambatte_setinputgetter(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
-  fn gambatte_setrtccallback(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
 
   fn gambatte_runfor(gb: *mut c_void, samples: *mut u32, starts_on_frame_boundaries: bool) -> i32;
-  fn gambatte_reset(gb: *mut c_void, now: i64, div: u32);
+  fn gambatte_reset(gb: *mut c_void);
 
   fn gambatte_setinterruptaddresses(gb: *mut c_void, interruptAddresses: *const i32, numInterruptAddresses: i32);
   fn gambatte_clearinterruptaddresses(gb: *mut c_void);
@@ -90,12 +89,6 @@ pub struct InputGetter {
 }
 extern fn input_getter_fn(context: *mut c_void) -> u32 {
   unsafe { u32::from((*(context as *mut InputGetter)).input.bits()) }
-}
-pub type FrameCounter = u32;
-
-extern fn rtc_fn(context: *mut c_void) -> u32 {
-  let frame: u64 = unsafe { u64::from(*(context as *mut FrameCounter)) };
-  (frame * 4389 / 262_144) as u32
 }
 
 pub trait ScreenUpdateCallback {
@@ -130,7 +123,7 @@ pub struct Gambatte {
   /// Pointer to gambatte object used to identify the instance in FFI calls.
   gb: *mut c_void,
   input_getter: Box<InputGetter>, // Boxed to place it on the heap with a fixed address for Gambatte to point to.
-  pub frame: Box<FrameCounter>, // Boxed to place it on the heap with a fixed address for Gambatte to point to.
+  pub frame: u32,
   /// Byte content of the loaded Gameboy ROM.
   rom_data: Vec<u8>,
   equal_length_frames: bool,
@@ -154,19 +147,14 @@ impl Gambatte {
     let rom_data = load_file(rom_file_name);
     unsafe {
       let gb = gambatte_create();
-      gambatte_loadgbcbios(gb, bios_data.as_ptr());
-      gambatte_load(gb, rom_data.as_ptr(), rom_data.len(), 0 /*now*/, 2 /*GBA_CGB*/, 0 /*div*/);
+      gambatte_loadbios(gb, bios_data.as_ptr(), bios_data.len());
+      gambatte_load(gb, rom_data.as_ptr(), rom_data.len(), 2 /*GBA_CGB*/);
       gambatte_setlayers(gb, 7);
 
       let input_getter = Box::new(InputGetter { input: inputs::NIL });
       let input_getter_ptr = Box::into_raw(input_getter);
       gambatte_setinputgetter(gb, input_getter_fn, input_getter_ptr as *mut c_void);
       let input_getter = Box::from_raw(input_getter_ptr);
-
-      let frame = Box::new(0);
-      let frame_ptr = Box::into_raw(frame);
-      gambatte_setrtccallback(gb, rtc_fn, frame_ptr as *mut c_void);
-      let frame = Box::from_raw(frame_ptr);
 
       if let Some((videobuf, pitch)) = screen_update_callback.get_screen_buffer_pointer_and_pitch() {
         gambatte_setvideobuffer(gb, videobuf, pitch as i32);
@@ -175,7 +163,7 @@ impl Gambatte {
       let mut gambatte = Gambatte {
         gb,
         input_getter,
-        frame,
+        frame: 0,
         rom_data,
         equal_length_frames,
         is_on_frame_boundaries: true,
@@ -196,7 +184,7 @@ impl Gambatte {
   }
 
   fn step_internal(&mut self) -> Option<i32> {
-    if self.is_on_frame_boundaries { *self.frame += 1 };
+    if self.is_on_frame_boundaries { self.frame += 1 };
     let mut hit_interrupt_address: i32;
 
     loop {
@@ -209,9 +197,9 @@ impl Gambatte {
       self.overflow_samples += emusamples;
       self.cycle_count += u64::from(emusamples);
       hit_interrupt_address = unsafe { gambatte_gethitinterruptaddress(self.gb) };
-      self.is_on_frame_boundaries = hit_interrupt_address == 0;
+      self.is_on_frame_boundaries = hit_interrupt_address == -1;
 
-      if hit_interrupt_address != 0 { // go into frame
+      if hit_interrupt_address != -1 { // go into frame
         break;
       }
 
@@ -225,7 +213,7 @@ impl Gambatte {
         break;
       }
     }
-    if hit_interrupt_address == 0 {
+    if hit_interrupt_address == -1 {
       self.init_frame_start_variables();
       None
     } else {
@@ -264,7 +252,7 @@ impl Gambatte {
     if self.frame_start_joypad_state & 0xf == 0xf // not already pressed
         && self.frame_start_joypad_state & 0x30 != 0x30 // lines not disabled
         && ifreg & 0x10 != 0x10 { // interrupt not already requested
-      log::log!(if *self.frame < 300 /* before first realistic input */ { log::Level::Debug } else { log::Level::Info }, "at frame {} with potential start-of-frame joypad interrupt ({:x})", *self.frame, self.frame_start_joypad_state);
+      log::log!(if self.frame < 300 /* before first realistic input */ { log::Level::Debug } else { log::Level::Info }, "at frame {} with potential start-of-frame joypad interrupt ({:x})", self.frame, self.frame_start_joypad_state);
 
       self.frame_start_gambatte_state = Some(self.save_gambatte_state());
       self.frame_start_cycle_count = self.cycle_count;
@@ -301,7 +289,7 @@ impl Gambatte {
       }
       self.cycle_count = self.frame_start_cycle_count;
       self.overflow_samples = self.frame_start_overflow_samples;
-      *self.frame -= 1;
+      self.frame -= 1;
       self.is_on_frame_boundaries = true;
       self.input_getter.input = input;
       #[cfg(feature = "track-inputs")] {
@@ -328,7 +316,7 @@ impl Gambatte {
     if !self.is_on_frame_boundaries { // forward to next frame boundary
       self.step();
     }
-    unsafe { gambatte_reset(self.gb, i64::from(*self.frame + 1) * 4389 / 262_144, 0 /*div*/); } // temporarily add a frame since BizHawk increases the frame before checking for resets, so current time is accurate.
+    unsafe { gambatte_reset(self.gb); }
     self.set_input(inputs::NIL);
     self.step(); // BizHawk completes a frame on the reset input
   }
@@ -343,7 +331,7 @@ impl Gambatte {
   pub fn load_state(&mut self, s: &SaveState) {
     self.load_gambatte_state(&s.gambatte_state);
     self.input_getter.input = s.input;
-    *self.frame = s.frame;
+    self.frame = s.frame;
     self.is_on_frame_boundaries = s.is_on_frame_boundaries;
     self.overflow_samples = s.overflow_samples;
     self.cycle_count = s.cycle_count;
@@ -376,7 +364,7 @@ impl Gambatte {
     SaveState {
       gambatte_state: self.save_gambatte_state(),
       input: self.input_getter.input,
-      frame: *self.frame,
+      frame: self.frame,
       is_on_frame_boundaries: self.is_on_frame_boundaries,
       overflow_samples: self.overflow_samples,
       cycle_count: self.cycle_count,
@@ -394,7 +382,7 @@ impl Gambatte {
   /// Number of frames (as defined by BizHawk's timing) that have been emulated so far, including the current frame if not on a frame boundary.
   #[inline]
   pub fn frame(&self) -> u32 {
-    *self.frame
+    self.frame
   }
   /// Whether the emulation is currently stopped at the boundary between two frames (as defined by BizHawk's timing).
   #[inline]
