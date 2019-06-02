@@ -159,6 +159,7 @@ public:
 	void setTimeMode(bool useCycles, unsigned long const cc) {
 		cart_.setTimeMode(useCycles, cc);
 	}
+	void setRtcDivisorOffset(long const rtcDivisorOffset) { cart_.setRtcDivisorOffset(rtcDivisorOffset); }
 
 	int linkStatus(int which);
 

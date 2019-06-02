@@ -1,5 +1,6 @@
 use crate::rom::*;
 use gambatte::*;
+use std::collections::BTreeMap;
 
 pub fn from_ftii<R: JoypadAddresses>(mut gb: Gambatte, hi_inputs: Vec<i32>, lo_inputs: Vec<i32>) -> Vec<Input> {
   let mut inputs:  Vec<Input> = vec![];
@@ -65,6 +66,36 @@ pub fn from_ftii<R: JoypadAddresses>(mut gb: Gambatte, hi_inputs: Vec<i32>, lo_i
   log::info!("conversion done: inputs: {}", inputs.len());
   inputs
 }
+
+
+pub fn to_cycles<R: JoypadAddresses>(mut gb: Gambatte, inputs: Vec<Input>) -> BTreeMap<u64, Input> {
+  let mut input_map: BTreeMap<u64, Input> = BTreeMap::new();
+
+  let mut cur_frame = 0;
+  let mut frame_input = if cur_frame < inputs.len() { inputs[cur_frame] } else { Input::empty() };
+  gb.set_input(frame_input);
+  let mut hit = gb.step_until(&[R::JOYPAD_READ_LAST_ADDRESS]);
+
+  log::warn!("converting input size {} ", inputs.len());
+  loop {
+    if hit == None {
+      cur_frame += 1;
+      frame_input = if cur_frame < inputs.len() { inputs[cur_frame] } else { Input::empty() };
+      gb.set_input(frame_input);
+      hit = gb.step_until(&[R::JOYPAD_READ_LAST_ADDRESS]);
+    } else if hit == Some(R::JOYPAD_READ_LAST_ADDRESS) {
+      input_map.insert(gb.get_cycle_count(), frame_input);
+      if cur_frame >= inputs.len() { break; }
+      hit = gb.step_until(&[R::JOYPAD_READ_LOCKED_ADDRESS]);
+    } else {
+      hit = gb.step_until(&[R::JOYPAD_READ_LAST_ADDRESS]);
+    }
+  }
+  log::warn!("converting output size {} ", input_map.len());
+
+  input_map
+}
+
 
 pub fn to_ftii<R: JoypadAddresses>(mut gb: Gambatte, inputs: Vec<Input>) -> (Vec<i32>, Vec<i32>) {
 

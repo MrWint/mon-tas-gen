@@ -7,7 +7,7 @@ use montas::segment::overworld::gen2::*;
 
 #[allow(dead_code)]
 pub fn start() {
-  let mut r: GbRunner<Silver> = GbRunner::pool_with_screen();
+  let mut r: GbRunner<Silver> = GbRunner::pool_with_screen(&[]);
 
   run(&mut r);
 

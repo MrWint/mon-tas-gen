@@ -31,12 +31,14 @@ fn main() {
   // if true {return;}
 
 
+  // create_gbi_inputs();
   playback_inputs();
   // playback_test();
   // playback_demos();
   // convert_efl();
 
   // crate::run::blue_testing::start();
+  // crate::run::crystal_desync::start();
   // crate::run::crystal_glitchless::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();
@@ -47,29 +49,83 @@ fn main() {
 fn convert_efl() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let (hi_inputs, lo_inputs) = {
-    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
     ftii::to_ftii::<Crystal>(gb, read_bk2_inputs("temp/crystal_test.bk2").unwrap())
   };
 
   let inputs = {
-    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", true /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */));
+    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", true /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
     ftii::from_ftii::<Crystal>(gb, hi_inputs, lo_inputs)
   };
   Bk2Writer::new::<Crystal>().with_equal_length_frames(true).write_bk2("temp/crystal_test_efl.bk2", &inputs).unwrap();
 }
 
+
+const CYCLE_OFFSET: u64 = 484500 + (4 << 9);
+
+#[allow(dead_code)]
+fn create_gbi_inputs() {
+  let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+  let input_map = {
+    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+    ftii::to_cycles::<Crystal>(gb, read_bk2_inputs("temp/crystal_glitchless_82.bk2").unwrap())
+  };
+
+  let mut cur_cycle = 0;
+  let mut cur_input = Input::all();
+  for (cycle, input) in input_map {
+    if input != cur_input {
+      let gbi_time = ((cycle + CYCLE_OFFSET + cur_cycle + CYCLE_OFFSET) * (1 << 21) / ((1 << 21) - 0) ) >> 10;
+      eprintln!("{:08X} {:04X}", gbi_time, input.bits());
+      cur_input = input;
+    }
+    cur_cycle = cycle;
+  }
+}
+
 #[allow(dead_code)]
 fn playback_inputs() {
-  let inputs = read_bk2_inputs("temp/crystal_glitchless.bk2").unwrap();
+  let inputs = read_bk2_inputs("temp/crystal_glitchless_82.bk2").unwrap();
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */));
-  let mut i = 0;
-  for input in inputs {
-    i += 1;
-    gb.set_input(input);
-    gb.step();
-    if i > 123000 {
-      std::thread::sleep(std::time::Duration::from_millis(15));
+  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, -82 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
+
+  let mut i_offset = 0;
+
+  // let mut last_hit_frame = 0;
+  // let mut last_hit_tima = 0;
+  // let mut last_hit_cycle = 0;
+  for i in 0..inputs.len() {
+    gb.set_input(inputs[i + i_offset]);
+    if gb.step_until(&[/*0x0283, */0x3E93]).is_some() {
+      // let tima_diff = (gb.get_cycle_count() - last_hit_cycle) >> 9;
+      // let mut new_tima = u64::from(last_hit_tima) + tima_diff;
+      // if new_tima == 255 { new_tima = 256; }
+      // if new_tima < 256 {
+      //   println!("non-cycling tima {} - {} ({}-{})", last_hit_frame, gb.frame(), last_hit_tima, new_tima);
+      // } else if new_tima >= 512 {
+      //   println!("{} - {} ({}-{})", last_hit_frame, gb.frame(), last_hit_tima, new_tima - 256);
+      // } else if new_tima - 256 != u64::from(gb.read_memory(0xff05)) {
+      //   // println!("non-matching tima {} - {} ({}-{})", last_hit_frame, gb.frame(), last_hit_tima, new_tima - 256);
+      // }
+
+      // last_hit_frame = gb.frame();
+      // last_hit_tima = gb.read_memory(0xff05);
+      // last_hit_cycle = gb.get_cycle_count();
+      gb.step();
+    }
+    // if i == 118000 {
+    //   let dvs = gb.read_memory_word_be(0xDD54);
+    //   println!("DVs: {:x}, cycles: {}", dvs, gb.get_cycle_count());
+    // }
+    // if i == 394400 { // skip a frame
+    //   gb.set_input(Input::empty());
+    //   gb.step();
+    // }
+    if i == 394449 { i_offset += 1; println!("skip: {:08X}", gb.get_cycle_count() >> 9); } // skip an input
+    if i == 394453 { i_offset -= 1; println!("unskip: {:08X}", gb.get_cycle_count() >> 9); } // skip an input
+
+    if i > 393600 {
+      std::thread::sleep(std::time::Duration::from_micros(15000));
     }
   }
 }
@@ -77,10 +133,10 @@ fn playback_inputs() {
 #[allow(dead_code)]
 fn playback_demos() {
   let sdl = Sdl::init_sdl(4 /* num screens */, 3 /* scale */);
-  let mut gb1 = Gambatte::create("roms/gbc_bios.bin", "roms/blue.gb", false /* equal length frames */, SdlScreen::new(sdl.clone(), 0 /* screen */));
-  let mut gb2 = Gambatte::create("roms/gbc_bios.bin", "roms/yellow.gbc", false /* equal length frames */, SdlScreen::new(sdl.clone(), 1 /* screen */));
-  let mut gb3 = Gambatte::create("roms/gbc_bios.bin", "roms/gold.gbc", false /* equal length frames */, SdlScreen::new(sdl.clone(), 2 /* screen */));
-  let mut gb4 = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, SdlScreen::new(sdl.clone(), 3 /* screen */));
+  let mut gb1 = Gambatte::create("roms/gbc_bios.bin", "roms/blue.gb", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  let mut gb2 = Gambatte::create("roms/gbc_bios.bin", "roms/yellow.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 1 /* screen */));
+  let mut gb3 = Gambatte::create("roms/gbc_bios.bin", "roms/gold.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 2 /* screen */));
+  let mut gb4 = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 3 /* screen */));
   let inputs1 = read_bk2_inputs("temp/blue_demo.bk2").unwrap();
   let inputs2 = read_bk2_inputs("temp/tikevin83-pokemonyellow-consoleverified.bk2").unwrap();
   let inputs3 = read_bk2_inputs("temp/gold_demo.bk2").unwrap();
@@ -101,7 +157,7 @@ fn playback_demos() {
 #[allow(dead_code)]
 fn playback_test() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/silver.gbc", false /* equal length frames */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/silver.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
   let inputs = read_bk2_inputs("temp/silver_test.bk2").unwrap();
   for input in inputs {
     gb.set_input(input); gb.step();

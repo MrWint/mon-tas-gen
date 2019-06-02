@@ -65,6 +65,8 @@ extern {
 
   fn gambatte_setvideobuffer(gb: *mut c_void, videobuf: *mut u32, pitch: i32);
 
+  fn gambatte_setrtcdivisoroffset(gb: *mut c_void, rtc_divisor_offset: i32);
+
   fn gambatte_setinputgetter(gb: *mut c_void, cb: extern fn(*mut c_void) -> u32, target: *mut c_void);
 
   fn gambatte_runfor(gb: *mut c_void, samples: *mut u32, starts_on_frame_boundaries: bool) -> i32;
@@ -142,7 +144,7 @@ pub struct Gambatte {
 
 impl Gambatte {
   /// Create a new Gambatte instance.
-  pub fn create<S: ScreenUpdateCallback + 'static>(bios_file_name: &str, rom_file_name: &str, equal_length_frames: bool, screen_update_callback: S) -> Gambatte {
+  pub fn create<S: ScreenUpdateCallback + 'static>(bios_file_name: &str, rom_file_name: &str, equal_length_frames: bool, rtc_divisor_offset: i32, screen_update_callback: S) -> Gambatte {
     let bios_data = load_file(bios_file_name);
     let rom_data = load_file(rom_file_name);
     unsafe {
@@ -150,6 +152,8 @@ impl Gambatte {
       gambatte_loadbios(gb, bios_data.as_ptr(), bios_data.len());
       gambatte_load(gb, rom_data.as_ptr(), rom_data.len(), 2 /*GBA_CGB*/);
       gambatte_setlayers(gb, 7);
+
+      gambatte_setrtcdivisoroffset(gb, rtc_divisor_offset);
 
       let input_getter = Box::new(InputGetter { input: inputs::NIL });
       let input_getter_ptr = Box::into_raw(input_getter);

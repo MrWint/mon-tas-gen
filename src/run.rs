@@ -15,15 +15,15 @@ struct GbRunner<R: Rom> {
 }
 
 impl<R: Rom> GbRunner<R> {
-  #[allow(dead_code)] fn pool_no_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::pool_no_screen()) }
-  #[allow(dead_code)] fn pool_with_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::pool_with_screen()) }
-  #[allow(dead_code)] fn single_no_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::single_no_screen()) }
-  #[allow(dead_code)] fn single_with_screen() -> Self { GbRunner::new(RuntimeGbExecutor::<R>::single_with_screen()) }
+  #[allow(dead_code)] fn pool_no_screen(inputs: &[Input]) -> Self { GbRunner::new(RuntimeGbExecutor::<R>::pool_no_screen(), inputs) }
+  #[allow(dead_code)] fn pool_with_screen(inputs: &[Input]) -> Self { GbRunner::new(RuntimeGbExecutor::<R>::pool_with_screen(), inputs) }
+  #[allow(dead_code)] fn single_no_screen(inputs: &[Input]) -> Self { GbRunner::new(RuntimeGbExecutor::<R>::single_no_screen(), inputs) }
+  #[allow(dead_code)] fn single_with_screen(inputs: &[Input]) -> Self { GbRunner::new(RuntimeGbExecutor::<R>::single_with_screen(), inputs) }
 }
 
 impl<R: Rom> GbRunner<R> {
-  fn new(mut gbe: RuntimeGbExecutor<R>) -> Self {
-    let sb: StateBuffer = vec![gbe.get_initial_state()].into_iter().collect();
+  fn new(mut gbe: RuntimeGbExecutor<R>, inputs: &[Input]) -> Self {
+    let sb: StateBuffer = vec![gbe.get_state_from_inputs(inputs)].into_iter().collect();
     Self {
       gbe,
       sb,
@@ -105,6 +105,7 @@ impl<R: Rom> GbRunner<R> {
 
 
 pub mod blue_testing;
+pub mod crystal_desync;
 pub mod crystal_glitchless;
 pub mod silver_testing;
 pub mod yellow_testing;

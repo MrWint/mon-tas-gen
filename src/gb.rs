@@ -105,8 +105,8 @@ pub struct Gb<R> {
 
 impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
   /// Creates a new game execution using the given Gambatte instance.
-  pub fn create<S: ScreenUpdateCallback + 'static>(equal_length_frames: bool, screen_update_callback: S) -> Self {
-    let gambatte = Gambatte::create("roms/gbc_bios.bin", R::ROM_FILE_NAME, equal_length_frames, screen_update_callback);
+  pub fn create<S: ScreenUpdateCallback + 'static>(equal_length_frames: bool, rtc_divisor_offset: i32, screen_update_callback: S) -> Self {
+    let gambatte = Gambatte::create("roms/gbc_bios.bin", R::ROM_FILE_NAME, equal_length_frames, rtc_divisor_offset, screen_update_callback);
     let initial_gambatte_state = gambatte.save_state();
     let mut pgb = Gb {
       gb: gambatte,
@@ -169,8 +169,19 @@ impl <R> Gb<R> {
   }
 }
 impl <R: JoypadAddresses> Gb<R> {
-  /// Resets the current execution to the initial state.
-  pub fn restore_initial_state(&mut self) {
+  // /// Resets the current execution to the initial state.
+  // pub fn restore_initial_state(&mut self) {
+  //   self.gb.load_state(&self.initial_gambatte_state);
+  //   self.skipped_relevant_inputs = false;
+  //   self.inputs.clear();
+  //   self.last_input_frame = [0, 0];
+  //   self.is_at_input = false;
+  //   self.ignored_inputs = Input::empty();
+  //   self.num_delays = 0;
+  //   self.step(); // move to first decision point
+  // }
+  /// Resets the current execution to the state after executing all given inputs.
+  pub fn restore_state_from_inputs(&mut self, inputs: &[Input]) {
     self.gb.load_state(&self.initial_gambatte_state);
     self.skipped_relevant_inputs = false;
     self.inputs.clear();
@@ -178,7 +189,12 @@ impl <R: JoypadAddresses> Gb<R> {
     self.is_at_input = false;
     self.ignored_inputs = Input::empty();
     self.num_delays = 0;
-    self.step(); // move to first decision point
+    for i in 0..inputs.len() {
+      self.gb.set_input(inputs[i]);
+      Self::record_input(&mut self.inputs, i as u32, inputs[i]);
+      self.gb.step();
+    }
+    self.step(); // move to next decision point
   }
 
   pub fn delay(&mut self) {
@@ -387,7 +403,7 @@ impl <R: JoypadAddresses> Gb<R> {
 
   #[allow(dead_code)]
   pub fn create_inputs_from_ftii(&mut self, inputs: &[Input]) -> Vec<(u32, Input)> {
-    self.restore_initial_state();
+    self.restore_state_from_inputs(&[]);
 
     let mut result: Vec<(u32, Input)> = vec![];
     for &input in inputs.iter() {

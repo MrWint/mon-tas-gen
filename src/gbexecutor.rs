@@ -10,6 +10,11 @@ use std::sync::mpsc::{channel, IntoIter, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+
+const EQUAL_LENGTH_FRAMES: bool = false;
+const RTC_DIVISOR_OFFSET: i32 = 0;
+
+
 pub trait StateValue: Send + 'static {}
 impl<T: Send + 'static> StateValue for T {}
 pub trait StateKey: Eq + Hash + Debug + StateValue {}
@@ -24,7 +29,7 @@ impl<R, OV, F: Fn(&Gb<R>) -> OV> StateFn<R, OV> for F {
 
 pub trait GbExecutor<R: Rom> {
   fn execute<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>>;
-  fn get_initial_state(&mut self) -> State;
+  fn get_state_from_inputs(&mut self, inputs: &[Input]) -> State;
   fn execute_state_fn<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&Gb<R>) -> OV + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
     self.execute_state(states, f)
   }
@@ -55,10 +60,10 @@ impl<R: Rom> GbExecutor<R> for RuntimeGbExecutor<R> {
     }
   }
 
-  fn get_initial_state(&mut self) -> State {
+  fn get_state_from_inputs(&mut self, inputs: &[Input]) -> State {
     match self {
-      Self(RuntimeGbExecutorInner::Single(single)) => single.get_initial_state(),
-      Self(RuntimeGbExecutorInner::Pool(pool)) => pool.get_initial_state(),
+      Self(RuntimeGbExecutorInner::Single(single)) => single.get_state_from_inputs(inputs),
+      Self(RuntimeGbExecutorInner::Pool(pool)) => pool.get_state_from_inputs(inputs),
     }
   }
 }
@@ -76,8 +81,8 @@ impl<R: Rom> GbExecutor<R> for SingleGb<R> {
     GbResults { rx, _f: Arc::new(f) }
   }
 
-  fn get_initial_state(&mut self) -> State {
-    self.gb.restore_initial_state();
+  fn get_state_from_inputs(&mut self, inputs: &[Input]) -> State {
+    self.gb.restore_state_from_inputs(inputs);
     self.gb.save()
   }
 }
@@ -85,12 +90,12 @@ impl<R: BasicRomInfo + JoypadAddresses + RngAddresses> SingleGb<R> {
   fn with_screen() -> Self {
     let sdl = Sdl::init_sdl(1 /* num screens */, 1 /* scale */);
     SingleGb {
-      gb: Gb::<R>::create(false /* equal length frames */, SdlScreen::new(sdl, 0 /* screen */)),
+      gb: Gb::<R>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, SdlScreen::new(sdl, 0 /* screen */)),
     }
   }
   fn no_screen() -> Self {
     SingleGb {
-      gb: Gb::<R>::create(false /* equal length frames */, NoScreen {}),
+      gb: Gb::<R>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, NoScreen {}),
     }
   }
 }
@@ -135,9 +140,9 @@ impl<R: Rom> GbPool<R> {
           .stack_size(STACK_SIZE)
           .spawn(move || {
             let mut gb = if has_screen {
-              Gb::<R>::create(false /* equal length frames */, SdlScreen::new(sdl.unwrap(), i as u32 /* screen */))
+              Gb::<R>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, SdlScreen::new(sdl.unwrap(), i as u32 /* screen */))
             } else {
-              Gb::<R>::create(false /* equal length frames */, NoScreen {})
+              Gb::<R>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, NoScreen {})
             };
 
             loop {
@@ -219,11 +224,12 @@ impl<R: Rom> GbExecutor<R> for GbPool<R> {
     GbResults { rx, _f: f }
   }
 
-  fn get_initial_state(&mut self) -> State {
+  fn get_state_from_inputs(&mut self, inputs: &[Input]) -> State {
     let (tx, rx) = channel::<State>();
+    let inputs_copy = Vec::from(inputs);
 
     let job = Box::new(move |gb: &mut Gb<R>| {
-      gb.restore_initial_state();
+      gb.restore_state_from_inputs(&inputs_copy);
       tx.send(gb.save()).unwrap();
     });
     self.jobs.send(job).unwrap();

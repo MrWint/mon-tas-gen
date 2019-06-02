@@ -4,7 +4,7 @@ use montas::segment::overworld::gen1::*;
 
 #[allow(dead_code)]
 pub fn start() {
-  let mut r: GbRunner<Blue> = GbRunner::single_with_screen();
+  let mut r: GbRunner<Blue> = GbRunner::single_with_screen(&[]);
 
   run(&mut r);
 
