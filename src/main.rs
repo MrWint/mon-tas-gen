@@ -31,8 +31,8 @@ fn main() {
   // if true {return;}
 
 
-  // create_gbi_inputs();
-  playback_inputs();
+  create_gbi_inputs();
+  // playback_inputs();
   // playback_test();
   // playback_demos();
   // convert_efl();
@@ -50,14 +50,14 @@ fn convert_efl() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let (hi_inputs, lo_inputs) = {
     let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
-    ftii::to_ftii::<Crystal>(gb, read_bk2_inputs("temp/crystal_test.bk2").unwrap())
+    ftii::to_ftii::<Crystal>(gb, read_bk2_inputs("temp/crystal_glitchless_90.bk2").unwrap())
   };
 
   let inputs = {
     let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", true /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
     ftii::from_ftii::<Crystal>(gb, hi_inputs, lo_inputs)
   };
-  Bk2Writer::new::<Crystal>().with_equal_length_frames(true).write_bk2("temp/crystal_test_efl.bk2", &inputs).unwrap();
+  Bk2Writer::new::<Crystal>().with_equal_length_frames(true).write_bk2("temp/crystal_glitchless_90_efl.bk2", &inputs).unwrap();
 }
 
 
@@ -67,8 +67,8 @@ const CYCLE_OFFSET: u64 = 484500 + (4 << 9);
 fn create_gbi_inputs() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let input_map = {
-    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
-    ftii::to_cycles::<Crystal>(gb, read_bk2_inputs("temp/crystal_glitchless_82.bk2").unwrap())
+    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, -90 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+    ftii::to_cycles::<Crystal>(gb, read_bk2_inputs("temp/crystal_glitchless_90.bk2").unwrap())
   };
 
   let mut cur_cycle = 0;
@@ -85,9 +85,9 @@ fn create_gbi_inputs() {
 
 #[allow(dead_code)]
 fn playback_inputs() {
-  let inputs = read_bk2_inputs("temp/crystal_glitchless_82.bk2").unwrap();
+  let inputs = read_bk2_inputs("temp/crystal_glitchless_90.bk2").unwrap();
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, -82 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
+  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, -100 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
 
   let mut i_offset = 0;
 
@@ -121,10 +121,10 @@ fn playback_inputs() {
     //   gb.set_input(Input::empty());
     //   gb.step();
     // }
-    if i == 394449 { i_offset += 1; println!("skip: {:08X}", gb.get_cycle_count() >> 9); } // skip an input
-    if i == 394453 { i_offset -= 1; println!("unskip: {:08X}", gb.get_cycle_count() >> 9); } // skip an input
+    // if i == 394449 { i_offset += 1; println!("skip: {:08X}", gb.get_cycle_count() >> 9); } // skip an input
+    // if i == 394453 { i_offset -= 1; println!("unskip: {:08X}", gb.get_cycle_count() >> 9); } // skip an input
 
-    if i > 393600 {
+    if i > 604000 {
       std::thread::sleep(std::time::Duration::from_micros(15000));
     }
   }

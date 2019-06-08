@@ -12,7 +12,7 @@ use std::thread;
 
 
 const EQUAL_LENGTH_FRAMES: bool = false;
-const RTC_DIVISOR_OFFSET: i32 = 0;
+pub const RTC_DIVISOR_OFFSET: i32 = -90;
 
 
 pub trait StateValue: Send + 'static {}

@@ -11,6 +11,7 @@ pub struct Bk2Writer {
   sha1: String,
   board_name: String,
   equal_length_frames: bool,
+  rtc_divisor_offset: i32,
 }
 impl Bk2Writer {
   pub fn new<R: BasicRomInfo>() -> Self {
@@ -20,10 +21,14 @@ impl Bk2Writer {
       sha1: R::SHA1.to_owned(),
       board_name: R::BOARD_NAME.to_owned(),
       equal_length_frames: false,
+      rtc_divisor_offset: 0,
     }
   }
   pub fn with_equal_length_frames(self, equal_length_frames: bool) -> Self {
     Bk2Writer { equal_length_frames, ..self }
+  }
+  pub fn with_rtc_divisor_offset(self, rtc_divisor_offset: i32) -> Self {
+    Bk2Writer { rtc_divisor_offset, ..self }
   }
 
   pub fn write_bk2(&self, file_name: &str, inputs: &[Input]) -> zip::result::ZipResult<()> {
@@ -41,6 +46,8 @@ impl Bk2Writer {
     zip.start_file("SyncSettings.json", FileOptions::default())?;
     zip.write_all(br#"{"o":{"$type":"BizHawk.Emulation.Cores.Nintendo.Gameboy.Gameboy+GambatteSyncSettings, BizHawk.Emulation.Cores","ConsoleMode":2,"GBACGB":true,"MulticartCompat":false,"RealTimeRTC":false,"EqualLengthFrames":"#)?;
     zip.write_all(if self.equal_length_frames { b"true" } else { b"false" })?;
+    zip.write_all(br#","RTCDivisorOffset":"#)?;
+    zip.write_all(format!("{}", self.rtc_divisor_offset).as_bytes())?;
     zip.write_all(br#"}}"#)?;
     zip.write_all(b"\r\n")?;
 

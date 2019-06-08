@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use std::fmt::Write;
 use super::OverworldInteractionResult;
 
-const MAX_WALK_STEP_SKIPS: u32 = 1;
+const MAX_WALK_STEP_SKIPS: u32 = 0;
 
 pub struct WalkToSegment {
   dest_x: usize,

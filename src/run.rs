@@ -73,7 +73,7 @@ impl<R: Rom> GbRunner<R> {
         gb.restore(&s);
         tx.send(s.replace_value(gb.create_inputs())).unwrap();
       }).into_iter().map(|s| s.value).min_by_key(Vec::len).unwrap();
-      Bk2Writer::new::<R>().write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
+      Bk2Writer::new::<R>().with_rtc_divisor_offset(RTC_DIVISOR_OFFSET).write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
       log::info!("Inputs contain {} delays", chosen_state.num_delays);
     }
     log::info!("Rendering end states of {:?}", self.sb);
