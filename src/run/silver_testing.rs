@@ -150,7 +150,7 @@ fn run(r: &mut GbRunner<Silver>) {
   r.load("silver_test_before_rival1");
   r.run(SkipTextsSegment::new(7)); // pre-battle texts
   r.run(SkipTextsSegment::new(2)); // trainer wants to battle // trainer sent out
-  r.run_debug(TextSegment::with_metric(Gen2AIChooseMoveMetric {}.debug_print().expect(Move::Growl)).with_allowed_end_inputs(Input::all() - A).with_skip_ends(5)); // chikorita // ! // Go // Totodile // !
+  r.run_debug(TextSegment::with_metric(AIChooseMoveMetric {}.debug_print().expect(Move::Growl)).with_allowed_end_inputs(Input::all() - A).with_skip_ends(5)); // chikorita // ! // Go // Totodile // !
   // println!("Player: {:?}", r.get_state_metric(MoveInfosFn::new(Who::Player)));
   // println!("Player: {:#?}", r.get_state_metric(BattleMonInfoFn::new(Who::Player)));
   // println!("Enemy: {:?}", r.get_state_metric(MoveInfosFn::new(Who::Enemy)));
@@ -171,7 +171,7 @@ fn run(r: &mut GbRunner<Silver>) {
   r.run(MoveSegment::with_metric(A|B, BattleObedienceMetric {}.expect(BattleObedience::Obey))); // confirm
   r.run_debug(TextSegment::with_metric(Gen2MoveSuccessMetric {}.debug_print().expect(FightTurnResult::Failed)).with_skip_ends(3).with_unbounded_buffer()); // mon // used // move // !
   r.run(TextSegment::new().with_allowed_end_inputs(A)); // but it failed!
-  r.run(DelaySegment::new(MoveSegment::with_metric(B, Gen2AIChooseMoveMetric {}.debug_print().expect(Move::Growl)))); // confirm
+  r.run(DelaySegment::new(MoveSegment::with_metric(B, AIChooseMoveMetric {}.debug_print().expect(Move::Growl)))); // confirm
   // Turn 2
   r.run(MoveSegment::new(A)); // Fight
   r.run(MoveSegment::new(NIL)); // neutral

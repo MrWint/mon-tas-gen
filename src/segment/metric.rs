@@ -192,7 +192,7 @@ impl<R> Metric<R> for NullMetric {
 }
 
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DVs {
   pub atk: u8,
   pub def: u8,
@@ -207,6 +207,9 @@ impl DVs {
       spd: ((dvs >> 4) & 0xF) as u8,
       spc: ((dvs >> 0) & 0xF) as u8,
     }
+  }
+  pub fn hp(&self) -> u8 {
+    (self.atk & 1) << 3 | (self.def & 1) << 2 | (self.spd & 1) << 1 | (self.spc & 1)
   }
 }
 #[allow(dead_code)]
@@ -231,6 +234,26 @@ impl<R: JoypadAddresses + Gen2DVAddresses> Metric<R> for Gen2DVMetric {
     let registers = gb.gb.read_registers();
 
     Some(DVs::from_u16_be((registers.b as u16) << 8 | (registers.c as u16)))
+  }
+}
+#[allow(dead_code)]
+pub struct VermilionFirstTrashCanMetric {}
+impl<R: JoypadAddresses + VermilionTrashCanAddresses> Metric<R> for VermilionFirstTrashCanMetric {
+  type ValueType = u8;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::AFTER_FIRST_TRASH_CAN_ADDRESS]) == 0 { return None; }
+    Some(gb.gb.read_memory(R::FIRST_TRASH_CAN_MEM_ADDRESS))
+  }
+}
+#[allow(dead_code)]
+pub struct VermilionSecondTrashCanMetric {}
+impl<R: JoypadAddresses + VermilionTrashCanAddresses> Metric<R> for VermilionSecondTrashCanMetric {
+  type ValueType = u8;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::AFTER_SECOND_TRASH_CAN_ADDRESS]) == 0 { return None; }
+    Some(gb.gb.read_memory(R::SECOND_TRASH_CAN_MEM_ADDRESS))
   }
 }
 #[allow(dead_code)]

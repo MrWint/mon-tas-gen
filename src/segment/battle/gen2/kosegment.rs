@@ -36,7 +36,7 @@ impl WithOutputBufferSize for KOSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
-impl<R: Rom + Gen2FightTurnAddresses + BattleMovesInfoAddresses + BattleMonInfoAddresses + TextAddresses + BattleDetermineMoveOrderAddresses + BattleObedienceAddresses + Gen2AIChooseMoveAddresses + Gen2BattleSpiteAddresses> Segment<R> for KOSegment {
+impl<R: Rom + Gen2FightTurnAddresses + BattleMovesInfoAddresses + BattleMonInfoAddresses + TextAddresses + BattleDetermineMoveOrderAddresses + BattleObedienceAddresses + AIChooseMoveAddresses + Gen2BattleSpiteAddresses> Segment<R> for KOSegment {
   type Key = ();
 
   fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {

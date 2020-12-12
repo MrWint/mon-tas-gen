@@ -43,7 +43,7 @@ impl WithOutputBufferSize for FightTurnSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
-impl<R: Rom + Gen2FightTurnAddresses + BattleMovesInfoAddresses + BattleMonInfoAddresses + TextAddresses + BattleDetermineMoveOrderAddresses + BattleObedienceAddresses + Gen2AIChooseMoveAddresses + Gen2BattleSpiteAddresses> Segment<R> for FightTurnSegment {
+impl<R: Rom + Gen2FightTurnAddresses + BattleMovesInfoAddresses + BattleMonInfoAddresses + TextAddresses + BattleDetermineMoveOrderAddresses + BattleObedienceAddresses + AIChooseMoveAddresses + Gen2BattleSpiteAddresses> Segment<R> for FightTurnSegment {
   type Key = u16;
 
   fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
@@ -329,10 +329,10 @@ struct EnemyExpectedNextMoveMetric {
   is_ko: bool,
   expected_move: Option<Move>,
 }
-impl<R: Rom + Gen2AIChooseMoveAddresses> Metric<R> for EnemyExpectedNextMoveMetric {
+impl<R: Rom + AIChooseMoveAddresses> Metric<R> for EnemyExpectedNextMoveMetric {
   type ValueType = ();
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<()> {
-    if self.is_ko { Some(()) } else { Gen2ExpectedAIChooseMoveMetric { expected_move: self.expected_move }.evaluate(gb) }
+    if self.is_ko { Some(()) } else { ExpectedAIChooseMoveMetric { expected_move: self.expected_move }.evaluate(gb) }
   }
 }

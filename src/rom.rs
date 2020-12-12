@@ -29,6 +29,10 @@ pub trait JoypadAddresses {
   const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)]; // JOYPAD_USE_ADDRESSES which have a discard option. (use add, keep add, discard add)
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)]; // JOYPAD_USE_ADDRESSES which have a ignore mask option. (use add, ignored inputs, skip add)
 }
+pub trait JoypadLowSensitivityAddresses {
+  const JOYPAD_HJOY7_MEM_ADDRESS: u16; // hJoy7
+  const JOYPAD_LAST_MEM_ADDRESS: u16; // hJoyLast
+}
 pub trait RngAddresses {
   const RNG_MEM_ADDRESS: u16;
 }
@@ -63,6 +67,8 @@ pub trait Gen1OverworldAddresses {
   const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32;
   const OVERWORLD_WALKED_ADDRESS: i32;
   const OVERWORLD_NO_ACTION_ADDRESS: i32;
+  const OVERWORLD_TURNFRAME_DIRECTION_MEM_ADDRESS: u16; // wPlayerLastStopDirection
+  const OVERWORLD_TURNFRAME_CHECK_MEM_ADDRESS: u16; // wCheckFor180DegreeTurn
 }
 pub trait Gen2MapEventsAddresses {
   const OVERWORLD_BEFORE_JOYPAD_ADDRESS: i32;
@@ -111,6 +117,29 @@ pub trait Gen2MapEventsAddresses {
 pub trait InputIdentificationAddresses {
   const II_ADDRESSES: &'static [(i32, i32, i32, &'static str)];
 }
+pub trait Gen1MapAddresses {
+  const SURF_STATE_MEM_ADDRESS: u16; // wWalkBikeSurfState (2 = surfing)
+  const MAP_TILESET_MEM_ADDRESS: u16; // wCurMapTileset
+  const TILE_PAIR_COLLISIONS_LAND_ADDRESS: i32; // TilePairCollisionsLand
+  const TILE_PAIR_COLLISIONS_WATER_ADDRESS: i32; // TilePairCollisionsWater
+  const MAP_TILESET_COLLISION_PTR_BANK_OFFSET: i32; // bank * 0x1_0000
+  const MAP_TILESET_COLLISION_PTR_MEM_ADDRESS: u16; // wTilesetCollisionPtr
+  const MAP_TILESET_BANK_MEM_ADDRESS: u16; // wTilesetBank
+  const MAP_TILESET_BLOCKS_PTR_MEM_ADDRESS: u16; // wTilesetBlocksPtr
+  const MAP_WIDTH_MEM_ADDRESS: u16; // wCurMapWidth
+  const MAP_HEIGHT_MEM_ADDRESS: u16; // wCurMapHeight
+  const OVERWORLD_MAP_MEM_ADDRESS: u16; // wOverworldMap
+  const MAP_SPRITE_STATE_DATA_2_MEM_ADDRESS: u16; // wSpriteStateData2
+  const MAP_SPRITE_DATA_MEM_ADDRESS: u16; // wMapSpriteData
+  const MAP_MISSABLE_OBJECT_LIST_MEM_ADDRESS: u16; // wMissableObjectList
+  const MAP_MISSABLE_OBJECT_FLAGS_MEM_ADDRESS: u16; // wMissableObjectFlags
+  const MAP_INDEX_MEM_ADDRESS: u16; // wCurMap
+  const MAP_HEADER_BANKS_ADDRESS: i32; // MapHeaderBanks
+  const MAP_TEXT_PTR_MEM_ADDRESS: u16; // wMapTextPtr
+  const TALK_TO_TRAINER_FUNCTION_ADDRESS: i32; // TalkToTrainer
+  const PLAYER_X_POS_MEM_ADDRESS: u16; // wXCoord
+  const PLAYER_Y_POS_MEM_ADDRESS: u16; // wYCoord
+}
 pub trait Gen2MapAddresses {
   const OVERWORLD_MAP_MEM_ADDRESS: u16; // wOverworldMap
   const MAP_WIDTH_MEM_ADDRESS: u16; // wMapWidth
@@ -140,7 +169,7 @@ pub trait BattleDetermineMoveOrderAddresses {
   const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32; // player goes first
   const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32; // enemy goes first
 }
-pub trait Gen2AIChooseMoveAddresses {
+pub trait AIChooseMoveAddresses {
   const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32; // BattleTurn.not_disconnected
   const CUR_ENEMY_MOVE_MEM_ADDRESS: u16; // wCurEnemyMove
 }
@@ -148,6 +177,55 @@ pub trait BattleObedienceAddresses {
   const CHECK_OBEDIENCE_START_ADDRESS: i32; // Before the obedience check starts
   const CHECK_OBEDIENCE_OBEY_ADDRESS: i32; // Address reached when obeying
   const CHECK_OBEDIENCE_DISOBEY_ADDRESS: i32; // Address reached when disobeying
+}
+pub trait Gen1FightTurnAddresses {
+  const CUR_MOVE_INDEX_MEM_ADDRESS: u16; // wPlayerMoveListIndex
+  const CRITICAL_HIT_MEM_ADDRESS: u16; // wCriticalHitOrOHKO
+  const AFTER_MAX_DAMAGE_CALC_ADDRESS: i32; // RandomizeDamage
+  const CUR_DAMAGE_MEM_ADDRESS: u16; // wDamage
+  const AFTER_PLAYER_HIT_CHECK_ADDRESS: i32; // handleIfPlayerMoveMissed
+  const AFTER_ENEMY_HIT_CHECK_ADDRESS: i32; // handleIfEnemyMoveMissed
+  const ATTACK_MISSED_MEM_ADDRESS: u16; // wMoveMissed
+}
+pub trait Gen1TrainerAIAddresses {
+  const TRAINER_AI_START_ADDRESS: i32; // TrainerAI
+  const TRAINER_AI_NO_ACTION_ADDRESS: i32; // ExecuteEnemyMove
+  const TRAINER_AI_SWITCH_ADDRESS: i32; // SwitchEnemyMon
+  const TRAINER_AI_XITEM_ADDRESS: i32; // AIIncreaseStat
+  const TRAINER_AI_GUARD_SPEC_ADDRESS: i32; // AIUseGuardSpec
+  const TRAINER_AI_FULL_HEAL_ADDRESS: i32; // AIUseFullHeal
+  const TRAINER_AI_POTION_ADDRESS: i32; // AIRecoverHP
+  const TRAINER_AI_FULL_RESTORE_ADDRESS: i32; // AIUseFullRestore
+}
+pub trait Gen1MoveEffectAddresses {
+  const MOVE_EFFECT_START_ADDRESS: i32; // JumpMoveEffect
+  const MOVE_EFFECT_NO_EFFECT_ADDRESS: i32; // JumpMoveEffect + 3
+  const MOVE_EFFECT_SLEEP_SUCCESS_ADDRESS: i32; // SleepEffect.setSleepCounter + 7 (a contains sleep counter)
+  const MOVE_EFFECT_SLEEP_FAILED_ADDRESS: i32; // SleepEffect.didntAffect
+  const MOVE_EFFECT_POISON_SUCCESS_ADDRESS: i32; // PoisonEffect.inflictPoison
+  const MOVE_EFFECT_POISON_FAILED_ADDRESS: i32; // PoisonEffect.didntAffect
+  const MOVE_EFFECT_FREEZE_BURN_PARALYZE_PLAYER_SUCCESS_ADDRESS: i32; // FreezeBurnParalyzeEffect.next1 + 7
+  const MOVE_EFFECT_FREEZE_BURN_PARALYZE_ENEMY_SUCCESS_ADDRESS: i32; // FreezeBurnParalyzeEffect.next2 + 7
+  const MOVE_EFFECT_DEFROSTED_SUCCESS_ADDRESS: i32; // CheckDefrost.common
+  const MOVE_EFFECT_STAT_UP_SUCCESS_ADDRESS: i32; // StatModifierUpEffect.ok
+  const MOVE_EFFECT_STAT_UP_NOTHING_HAPPENED_ADDRESS: i32; // PrintNothingHappenedText
+  const MOVE_EFFECT_STAT_DOWN_SUCCESS_ADDRESS: i32; // StatModifierDownEffect.recalculateStat
+  const MOVE_EFFECT_STAT_DOWN_FAILED_ADDRESS: i32; // MoveMissed
+  const MOVE_EFFECT_STAT_DOWN_NOTHING_HAPPENED_ADDRESS: i32; // CantLowerAnymore + 4
+  const MOVE_EFFECT_BIDE_ADDRESS: i32; // ThrashPetalDanceEffect - 8 (a contains turn counter)
+  const MOVE_EFFECT_THRASH_PETALDANCE_ADDRESS: i32; // SwitchAndTeleportEffect - 8 (a contains turn counter)
+  const MOVE_EFFECT_MULTI_HIT_ADDRESS: i32; // TwoToFiveAttacksEffect.saveNumberOfHits (a contains number of hits)
+  const MOVE_EFFECT_FLINCHED_ADDRESS: i32; // FlinchSideEffect.gotEffectChance + 5
+  const MOVE_EFFECT_TRAPPING_ADDRESS: i32; // TrappingEffect.setTrappingCounter + 1 (a contains turn counter)
+  const MOVE_EFFECT_CONFUSION_SUCCESS_ADDRESS: i32; // ConfusionSideEffectSuccess.confuseTarget + 14 (a contains turn counter)
+  const MOVE_EFFECT_CONFUSION_FAILED_ADDRESS: i32; // ConfusionEffectFailed
+  const MOVE_EFFECT_PARALYZE_SUCCESS_ADDRESS: i32; // ParalyzeEffect_.hitTest + 16
+  const MOVE_EFFECT_PARALYZE_FAILED_ADDRESS: i32; // ParalyzeEffect_.didntAffect
+  const MOVE_EFFECT_PARALYZE_NO_EFFECT_ADDRESS: i32; // ParalyzeEffect_.doesntAffect
+  const MOVE_EFFECT_MIMIC_SUCCESS_ADDRESS: i32; // MimicEffect.playerTurn
+  const MOVE_EFFECT_MIMIC_FAILED_ADDRESS: i32; // MimicEffect.mimicMissed
+  const MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS: i32; // DisableEffect.playerTurnNotLinkBattle
+  const MOVE_EFFECT_DISABLE_FAILED_ADDRESS: i32; // DisableEffect.moveMissed
 }
 pub trait Gen2FightTurnAddresses {
   const NEXT_BATTLE_COMMAND_ADDRESS: i32; // DoMove.ReadMoveEffectCommand (for next command)
@@ -173,11 +251,16 @@ pub trait BattleMovesInfoAddresses {
 pub trait BattleMonInfoAddresses {
   const BATTLE_MON_STRUCT_MEM_ADDRESS: u16; // wBattleMon
   const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16; // wPlayerStatLevels
-  const BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16; // wPlayerStats
+  const GEN1_PARTY_MON_STATS_BASE_MEM_ADDRESS: u16; // wPartyMon1Attack
+  const GEN1_PARTY_MON_STRUCT_LEN: u16; // wPartyMon2 - wPartyMon1
+  const GEN1_PLAYER_MON_NUMBER_MEM_ADDRESS: u16; // wPlayerMonNumber
+  const GEN2_BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16; // wPlayerStats
 
   const ENEMY_MON_STRUCT_MEM_ADDRESS: u16; // wEnemyMon
   const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16; // wEnemyStatLevels
-  const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16; // wEnemyStats
+  const GEN1_BASE_STATS_BASE_ADDRESS: i32; // BaseStats
+  const GEN1_BASE_STATS_LEN: i32; // MonBaseStatsEnd - MonBaseStats
+  const GEN2_ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16; // wEnemyStats
 }
 pub trait BattleCatchMonAddresses {
   const CATCH_SUCCESS_ADDRESS: i32; // Address reached when catching succeeded.
@@ -202,7 +285,12 @@ pub trait RoamMonAddresses {
 pub trait HallOfFameAddresses {
   const HALL_OF_FAME_AFTER_SAVING_ADDRESS: i32; // After save is complete, safe to reset now.
 }
-
+pub trait VermilionTrashCanAddresses {
+  const FIRST_TRASH_CAN_MEM_ADDRESS: u16; // wFirstLockTrashCanIndex
+  const AFTER_FIRST_TRASH_CAN_ADDRESS: i32; // VermilionCity_Script.initCityScript - 1
+  const SECOND_TRASH_CAN_MEM_ADDRESS: u16; // wSecondLockTrashCanIndex
+  const AFTER_SECOND_TRASH_CAN_ADDRESS: i32; // GymTrashScript.trySecondLock - 2
+}
 // Gen 1
 #[allow(dead_code)]
 pub enum Red {}
@@ -236,6 +324,10 @@ macro_rules! impl_red_blue_common_addresses {
       ];
       const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[(0x3_4000, 0x3_401E, 0x3_4034)];
       const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_4000, 0xCD6B, 0x3_4002)]; // wJoyIgnore
+    }
+    impl JoypadLowSensitivityAddresses for $t {
+      const JOYPAD_HJOY7_MEM_ADDRESS: u16 = 0xffb7; // hJoy7
+      const JOYPAD_LAST_MEM_ADDRESS: u16 = 0xffb1; // hJoyLast
     }
     impl RngAddresses for $t {
       const RNG_MEM_ADDRESS: u16 = 0xffd3;
@@ -280,6 +372,8 @@ macro_rules! impl_red_blue_common_addresses {
       const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32 = 0x0_0931; // HandleBlackOut
       const OVERWORLD_WALKED_ADDRESS: i32 = 0x0_06B4; // CheckWarpsNoCollision
       const OVERWORLD_NO_ACTION_ADDRESS: i32 = 0x0_04CD; // OverworldLoopLessDelay.noDirectionButtonsPressed
+      const OVERWORLD_TURNFRAME_DIRECTION_MEM_ADDRESS: u16 = 0xd529; // wPlayerLastStopDirection
+      const OVERWORLD_TURNFRAME_CHECK_MEM_ADDRESS: u16 = 0xcc4b; // wCheckFor180DegreeTurn
     }
     impl Gen1DVAddresses for $t {
       const AFTER_DV_GENERATION_ADDRESSES: &'static [i32] = &[
@@ -329,6 +423,109 @@ macro_rules! impl_red_blue_common_addresses {
       const CATCH_SUCCESS_ADDRESS: i32 = 0x03_578B; // PokeBallEffect.captured
       const CATCH_FAIL_ADDRESS: i32 = 0x03_578D; // PokeBallEffect.failedToCapture
     }
+    impl BattleMovesInfoAddresses for $t {
+      const MOVES_ADDRESS: i32 = 0xe_4000; // Moves
+      const MOVES_ENTRY_LENGTH: i32 = 6; // length of a single move
+
+      const GEN2_BADGES_MEM_ADDRESS: u16 = 0; // unused in gen 1
+      const TYPE_MATCHUPS_ADDRESS: i32 = 0x0f_6474; // TypeEffects
+    }
+    impl BattleMonInfoAddresses for $t {
+      const BATTLE_MON_STRUCT_MEM_ADDRESS: u16 = 0xd014; // wBattleMon
+      const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcd1a; // wPlayerMonStatMods
+      const GEN1_PARTY_MON_STATS_BASE_MEM_ADDRESS: u16 = 0xd18f; // wPartyMon1Attack
+      const GEN1_PARTY_MON_STRUCT_LEN: u16 = 44; // wPartyMon2 - wPartyMon1
+      const GEN1_PLAYER_MON_NUMBER_MEM_ADDRESS: u16 = 0xcc2f; // wPlayerMonNumber
+      const GEN2_BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0; // unused
+
+      const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xcfe5; // wEnemyMon
+      const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcd2e; // wEnemyMonStatMods
+      const GEN1_BASE_STATS_BASE_ADDRESS: i32 = 0xe_43de; // BaseStats
+      const GEN1_BASE_STATS_LEN: i32 = 0x1c; // MonBaseStatsEnd - MonBaseStats
+      const GEN2_ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0; // unused
+    }
+    impl AIChooseMoveAddresses for $t {
+      const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0xf_42a9; // MainInBattleLoop.selectEnemyMove + 3
+      const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xccdd; // wEnemySelectedMove
+    }
+    impl Gen1FightTurnAddresses for $t {
+      const CUR_MOVE_INDEX_MEM_ADDRESS: u16 = 0xcc2e; // wPlayerMoveListIndex
+      const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xd05e; // wCriticalHitOrOHKO
+      const AFTER_MAX_DAMAGE_CALC_ADDRESS: i32 = 0xf_6687; // RandomizeDamage
+      const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xd0d7; // wDamage
+      const AFTER_PLAYER_HIT_CHECK_ADDRESS: i32 = 0xf_5705; // handleIfPlayerMoveMissed
+      const AFTER_ENEMY_HIT_CHECK_ADDRESS: i32 = 0xf_6782; // handleIfEnemyMoveMissed
+      const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xd05f; // wMoveMissed
+    }
+    impl Gen1TrainerAIAddresses for $t {
+      const TRAINER_AI_START_ADDRESS: i32 = 0xe_652e; // TrainerAI
+      const TRAINER_AI_NO_ACTION_ADDRESS: i32 = 0xf_66bc; // ExecuteEnemyMove
+      const TRAINER_AI_SWITCH_ADDRESS: i32 = 0xe_674b; // SwitchEnemyMon
+      const TRAINER_AI_XITEM_ADDRESS: i32 = 0xe_6808; // AIIncreaseStat
+      const TRAINER_AI_GUARD_SPEC_ADDRESS: i32 = 0xe_67b5; // AIUseGuardSpec
+      const TRAINER_AI_FULL_HEAL_ADDRESS: i32 = 0xe_6786; // AIUseFullHeal
+      const TRAINER_AI_POTION_ADDRESS: i32 = 0xe_66da; // AIRecoverHP
+      const TRAINER_AI_FULL_RESTORE_ADDRESS: i32 = 0xe_66a0; // AIUseFullRestore
+    }
+    impl Gen1MoveEffectAddresses for $t {
+      const MOVE_EFFECT_START_ADDRESS: i32 = 0xf_7132; // JumpMoveEffect
+      const MOVE_EFFECT_NO_EFFECT_ADDRESS: i32 = 0xf_7135; // JumpMoveEffect + 3
+      const MOVE_EFFECT_SLEEP_SUCCESS_ADDRESS: i32 = 0xf_7231+7; // SleepEffect.setSleepCounter + 7 (a contains sleep counter)
+      const MOVE_EFFECT_SLEEP_FAILED_ADDRESS: i32 = 0xf_7242; // SleepEffect.didntAffect
+      const MOVE_EFFECT_POISON_SUCCESS_ADDRESS: i32 = 0xf_7295; // PoisonEffect.inflictPoison
+      const MOVE_EFFECT_POISON_FAILED_ADDRESS: i32 = 0xf_72d7; // PoisonEffect.didntAffect
+      const MOVE_EFFECT_FREEZE_BURN_PARALYZE_PLAYER_SUCCESS_ADDRESS: i32 = 0xf_733c+7; // FreezeBurnParalyzeEffect.next1 + 7
+      const MOVE_EFFECT_FREEZE_BURN_PARALYZE_ENEMY_SUCCESS_ADDRESS: i32 = 0xf_73bf+7; // FreezeBurnParalyzeEffect.next2 + 7
+      const MOVE_EFFECT_DEFROSTED_SUCCESS_ADDRESS: i32 = 0xf_7420; // CheckDefrost.common
+      const MOVE_EFFECT_STAT_UP_SUCCESS_ADDRESS: i32 = 0xf_745a; // StatModifierUpEffect.ok
+      const MOVE_EFFECT_STAT_UP_NOTHING_HAPPENED_ADDRESS: i32 = 0xf_7522; // PrintNothingHappenedText
+      const MOVE_EFFECT_STAT_DOWN_SUCCESS_ADDRESS: i32 = 0xf_75ef; // StatModifierDownEffect.recalculateStat
+      const MOVE_EFFECT_STAT_DOWN_FAILED_ADDRESS: i32 = 0xf_765a; // MoveMissed
+      const MOVE_EFFECT_STAT_DOWN_NOTHING_HAPPENED_ADDRESS: i32 = 0xf_7650+4; // CantLowerAnymore + 4
+      const MOVE_EFFECT_BIDE_ADDRESS: i32 = 0xf_7717-8; // ThrashPetalDanceEffect - 8 (a contains turn counter)
+      const MOVE_EFFECT_THRASH_PETALDANCE_ADDRESS: i32 = 0xf_7739-8; // SwitchAndTeleportEffect - 8 (a contains turn counter)
+      const MOVE_EFFECT_MULTI_HIT_ADDRESS: i32 = 0xf_7853; // TwoToFiveAttacksEffect.saveNumberOfHits (a contains number of hits)
+      const MOVE_EFFECT_FLINCHED_ADDRESS: i32 = 0xf_7879+5; // FlinchSideEffect.gotEffectChance + 5
+      const MOVE_EFFECT_TRAPPING_ADDRESS: i32 = 0xf_793e+1; // TrappingEffect.setTrappingCounter + 1 (a contains turn counter)
+      const MOVE_EFFECT_CONFUSION_SUCCESS_ADDRESS: i32 = 0xf_7986+14; // ConfusionSideEffectSuccess.confuseTarget + 14 (a contains turn counter)
+      const MOVE_EFFECT_CONFUSION_FAILED_ADDRESS: i32 = 0xf_79a6; // ConfusionEffectFailed
+      const MOVE_EFFECT_PARALYZE_SUCCESS_ADDRESS: i32 = 0x14_662a+16; // ParalyzeEffect_.hitTest + 16
+      const MOVE_EFFECT_PARALYZE_FAILED_ADDRESS: i32 = 0x14_6659; // ParalyzeEffect_.didntAffect
+      const MOVE_EFFECT_PARALYZE_NO_EFFECT_ADDRESS: i32 = 0x14_6666; // ParalyzeEffect_.doesntAffect
+      const MOVE_EFFECT_MIMIC_SUCCESS_ADDRESS: i32 = 0xf_7a5f; // MimicEffect.playerTurn
+      const MOVE_EFFECT_MIMIC_FAILED_ADDRESS: i32 = 0xf_7a74; // MimicEffect.mimicMissed
+      const MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS: i32 = 0xf_7ae1; // DisableEffect.playerTurnNotLinkBattle
+      const MOVE_EFFECT_DISABLE_FAILED_ADDRESS: i32 = 0xf_7b06; // DisableEffect.moveMissed
+    }
+    impl Gen1MapAddresses for $t {
+      const SURF_STATE_MEM_ADDRESS: u16 = 0xd700; // wWalkBikeSurfState (2 = surfing)
+      const MAP_TILESET_MEM_ADDRESS: u16 = 0xd367; // wCurMapTileset
+      const TILE_PAIR_COLLISIONS_LAND_ADDRESS: i32 = 0x0_0c7e; // TilePairCollisionsLand
+      const TILE_PAIR_COLLISIONS_WATER_ADDRESS: i32 = 0x0_0ca0; // TilePairCollisionsWater
+      const MAP_TILESET_COLLISION_PTR_BANK_OFFSET: i32 = 0; // bank * 0x1_0000
+      const MAP_TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd530; // wTilesetCollisionPtr
+      const MAP_TILESET_BANK_MEM_ADDRESS: u16 = 0xd52b; // wTilesetBank
+      const MAP_TILESET_BLOCKS_PTR_MEM_ADDRESS: u16 = 0xd52c; // wTilesetBlocksPtr
+      const MAP_WIDTH_MEM_ADDRESS: u16 = 0xd369; // wCurMapWidth
+      const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd368; // wCurMapHeight
+      const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc6e8; // wOverworldMap
+      const MAP_SPRITE_STATE_DATA_2_MEM_ADDRESS: u16 = 0xc200; // wSpriteStateData2
+      const MAP_SPRITE_DATA_MEM_ADDRESS: u16 = 0xd4e4; // wMapSpriteData
+      const MAP_MISSABLE_OBJECT_LIST_MEM_ADDRESS: u16 = 0xd5ce; // wMissableObjectList
+      const MAP_MISSABLE_OBJECT_FLAGS_MEM_ADDRESS: u16 = 0xd5a6; // wMissableObjectFlags
+      const MAP_INDEX_MEM_ADDRESS: u16 = 0xd35e; // wCurMap
+      const MAP_HEADER_BANKS_ADDRESS: i32 = 0x03_423d; // MapHeaderBanks
+      const MAP_TEXT_PTR_MEM_ADDRESS: u16 = 0xd36c; // wMapTextPtr
+      const TALK_TO_TRAINER_FUNCTION_ADDRESS: i32 = 0x31cc; // TalkToTrainer
+      const PLAYER_X_POS_MEM_ADDRESS: u16 = 0xd362; // wXCoord
+      const PLAYER_Y_POS_MEM_ADDRESS: u16 = 0xd361; // wYCoord
+    }
+    impl VermilionTrashCanAddresses for $t {
+      const FIRST_TRASH_CAN_MEM_ADDRESS: u16 = 0xd743; // wFirstLockTrashCanIndex
+      const AFTER_FIRST_TRASH_CAN_ADDRESS: i32 = 0x6_57cb-1; // VermilionCity_Script.initCityScript - 1
+      const SECOND_TRASH_CAN_MEM_ADDRESS: u16 = 0xd744; // wSecondLockTrashCanIndex
+      const AFTER_SECOND_TRASH_CAN_ADDRESS: i32 = 0x17_5e53-2; // GymTrashScript.trySecondLock - 2
+    }
     )+
   }
 }
@@ -355,6 +552,10 @@ impl JoypadAddresses for Yellow {
   ];
   const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[(0x3_402D, 0x3_404D, 0x3_4063)];
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_402D, 0xCD6B, 0x3_402F)]; // wJoyIgnore
+}
+impl JoypadLowSensitivityAddresses for Yellow {
+  const JOYPAD_HJOY7_MEM_ADDRESS: u16 = 0xffb7; // hJoy7
+  const JOYPAD_LAST_MEM_ADDRESS: u16 = 0xffb1; // hJoyLast
 }
 impl RngAddresses for Yellow {
   const RNG_MEM_ADDRESS: u16 = 0xffd3;
@@ -399,6 +600,8 @@ impl Gen1OverworldAddresses for Yellow {
   const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32 = 0x0_0762; // HandleBlackOut
   const OVERWORLD_WALKED_ADDRESS: i32 = 0x0_04BD; // CheckWarpsNoCollision
   const OVERWORLD_NO_ACTION_ADDRESS: i32 = 0x0_02F8; // OverworldLoopLessDelay.noDirectionButtonsPressed
+  const OVERWORLD_TURNFRAME_DIRECTION_MEM_ADDRESS: u16 = 0xd528; // wPlayerLastStopDirection
+  const OVERWORLD_TURNFRAME_CHECK_MEM_ADDRESS: u16 = 0xcc4b; // wCheckFor180DegreeTurn
 }
 impl Gen1DVAddresses for Yellow {
       const AFTER_DV_GENERATION_ADDRESSES: &'static [i32] = &[
@@ -457,6 +660,109 @@ impl BattleObedienceAddresses for Yellow {
 impl BattleCatchMonAddresses for Yellow {
   const CATCH_SUCCESS_ADDRESS: i32 = 0x03_54D4; // PokeBallEffect.captured
   const CATCH_FAIL_ADDRESS: i32 = 0x03_54D6; // PokeBallEffect.failedToCapture
+}
+impl BattleMovesInfoAddresses for Yellow {
+  const MOVES_ADDRESS: i32 = 0xe_4000; // Moves
+  const MOVES_ENTRY_LENGTH: i32 = 6; // length of a single move
+
+  const GEN2_BADGES_MEM_ADDRESS: u16 = 0; // unused in gen 1
+  const TYPE_MATCHUPS_ADDRESS: i32 = 0x0f_65fa; // TypeEffects
+}
+impl BattleMonInfoAddresses for Yellow {
+  const BATTLE_MON_STRUCT_MEM_ADDRESS: u16 = 0xd013; // wBattleMon
+  const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcd1a; // wPlayerMonStatMods
+  const GEN1_PARTY_MON_STATS_BASE_MEM_ADDRESS: u16 = 0xd18e; // wPartyMon1Attack
+  const GEN1_PARTY_MON_STRUCT_LEN: u16 = 44; // wPartyMon2 - wPartyMon1
+  const GEN1_PLAYER_MON_NUMBER_MEM_ADDRESS: u16 = 0xcc2f; // wPlayerMonNumber
+  const GEN2_BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0; // unused
+
+  const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xcfe4; // wEnemyMon
+  const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcd2e; // wEnemyMonStatMods
+  const GEN1_BASE_STATS_BASE_ADDRESS: i32 = 0xe_43de; // BaseStats
+  const GEN1_BASE_STATS_LEN: i32 = 0x1c; // MonBaseStatsEnd - MonBaseStats
+  const GEN2_ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0; // unused
+}
+impl AIChooseMoveAddresses for Yellow {
+  const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0xf_42bf; // MainInBattleLoop.selectEnemyMove + 3
+  const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xccdd; // wEnemySelectedMove
+}
+impl Gen1TrainerAIAddresses for Yellow {
+  const TRAINER_AI_START_ADDRESS: i32 = 0xe_65b2; // TrainerAI
+  const TRAINER_AI_NO_ACTION_ADDRESS: i32 = 0xf_6842; // ExecuteEnemyMove
+  const TRAINER_AI_SWITCH_ADDRESS: i32 = 0xe_67e1; // SwitchEnemyMon
+  const TRAINER_AI_XITEM_ADDRESS: i32 = 0xe_689e; // AIIncreaseStat
+  const TRAINER_AI_GUARD_SPEC_ADDRESS: i32 = 0xe_684b; // AIUseGuardSpec
+  const TRAINER_AI_FULL_HEAL_ADDRESS: i32 = 0xe_681c; // AIUseFullHeal
+  const TRAINER_AI_POTION_ADDRESS: i32 = 0xe_6770; // AIRecoverHP
+  const TRAINER_AI_FULL_RESTORE_ADDRESS: i32 = 0xe_6736; // AIUseFullRestore
+}
+impl Gen1FightTurnAddresses for Yellow {
+  const CUR_MOVE_INDEX_MEM_ADDRESS: u16 = 0xcc2e; // wPlayerMoveListIndex
+  const CRITICAL_HIT_MEM_ADDRESS: u16 = 0xd05d; // wCriticalHitOrOHKO
+  const AFTER_MAX_DAMAGE_CALC_ADDRESS: i32 = 0xf_680d; // RandomizeDamage
+  const CUR_DAMAGE_MEM_ADDRESS: u16 = 0xd0d6; // wDamage
+  const AFTER_PLAYER_HIT_CHECK_ADDRESS: i32 = 0xf_5877; // handleIfPlayerMoveMissed
+  const AFTER_ENEMY_HIT_CHECK_ADDRESS: i32 = 0xf_6908; // handleIfEnemyMoveMissed
+  const ATTACK_MISSED_MEM_ADDRESS: u16 = 0xd05e; // wMoveMissed
+}
+impl Gen1MoveEffectAddresses for Yellow {
+  const MOVE_EFFECT_START_ADDRESS: i32 = 0xf_70a7; // JumpMoveEffect
+  const MOVE_EFFECT_NO_EFFECT_ADDRESS: i32 = 0xf_70a7+3; // JumpMoveEffect + 3
+  const MOVE_EFFECT_SLEEP_SUCCESS_ADDRESS: i32 = 0xf_71a6+7; // SleepEffect.setSleepCounter + 7 (a contains sleep counter)
+  const MOVE_EFFECT_SLEEP_FAILED_ADDRESS: i32 = 0xf_71c5; // SleepEffect.didntAffect
+  const MOVE_EFFECT_POISON_SUCCESS_ADDRESS: i32 = 0xf_7218; // PoisonEffect.inflictPoison
+  const MOVE_EFFECT_POISON_FAILED_ADDRESS: i32 = 0xf_725a; // PoisonEffect.didntAffect
+  const MOVE_EFFECT_FREEZE_BURN_PARALYZE_PLAYER_SUCCESS_ADDRESS: i32 = 0xf_72d1+7; // FreezeBurnParalyzeEffect.next1 + 7
+  const MOVE_EFFECT_FREEZE_BURN_PARALYZE_ENEMY_SUCCESS_ADDRESS: i32 = 0xf_734b+7; // FreezeBurnParalyzeEffect.next2 + 7
+  const MOVE_EFFECT_DEFROSTED_SUCCESS_ADDRESS: i32 = 0xf_73d6; // CheckDefrost.common
+  const MOVE_EFFECT_STAT_UP_SUCCESS_ADDRESS: i32 = 0xf_7410; // StatModifierUpEffect.ok
+  const MOVE_EFFECT_STAT_UP_NOTHING_HAPPENED_ADDRESS: i32 = 0xf_74d8; // PrintNothingHappenedText
+  const MOVE_EFFECT_STAT_DOWN_SUCCESS_ADDRESS: i32 = 0xf_75a5; // StatModifierDownEffect.recalculateStat
+  const MOVE_EFFECT_STAT_DOWN_FAILED_ADDRESS: i32 = 0xf_7610; // MoveMissed
+  const MOVE_EFFECT_STAT_DOWN_NOTHING_HAPPENED_ADDRESS: i32 = 0xf_7606+4; // CantLowerAnymore + 4
+  const MOVE_EFFECT_BIDE_ADDRESS: i32 = 0xf_76cd-8; // ThrashPetalDanceEffect - 8 (a contains turn counter)
+  const MOVE_EFFECT_THRASH_PETALDANCE_ADDRESS: i32 = 0xf_76ef-8; // SwitchAndTeleportEffect - 8 (a contains turn counter)
+  const MOVE_EFFECT_MULTI_HIT_ADDRESS: i32 = 0xf_7809; // TwoToFiveAttacksEffect.saveNumberOfHits (a contains number of hits)
+  const MOVE_EFFECT_FLINCHED_ADDRESS: i32 = 0xf_7837+5; // FlinchSideEffect.gotEffectChance + 5
+  const MOVE_EFFECT_TRAPPING_ADDRESS: i32 = 0xf_7919+1; // TrappingEffect.setTrappingCounter + 1 (a contains turn counter)
+  const MOVE_EFFECT_CONFUSION_SUCCESS_ADDRESS: i32 = 0xf_7961+14; // ConfusionSideEffectSuccess.confuseTarget + 14 (a contains turn counter)
+  const MOVE_EFFECT_CONFUSION_FAILED_ADDRESS: i32 = 0xf_7981; // ConfusionEffectFailed
+  const MOVE_EFFECT_PARALYZE_SUCCESS_ADDRESS: i32 = 0x14_658b+16; // ParalyzeEffect_.hitTest + 16
+  const MOVE_EFFECT_PARALYZE_FAILED_ADDRESS: i32 = 0x14_65ba; // ParalyzeEffect_.didntAffect
+  const MOVE_EFFECT_PARALYZE_NO_EFFECT_ADDRESS: i32 = 0x14_65c7; // ParalyzeEffect_.doesntAffect
+  const MOVE_EFFECT_MIMIC_SUCCESS_ADDRESS: i32 = 0xf_7a3a; // MimicEffect.playerTurn
+  const MOVE_EFFECT_MIMIC_FAILED_ADDRESS: i32 = 0xf_7a4f; // MimicEffect.mimicMissed
+  const MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS: i32 = 0xf_7abc; // DisableEffect.playerTurnNotLinkBattle
+  const MOVE_EFFECT_DISABLE_FAILED_ADDRESS: i32 = 0xf_7ae1; // DisableEffect.moveMissed
+}
+impl Gen1MapAddresses for Yellow {
+  const SURF_STATE_MEM_ADDRESS: u16 = 0xd6ff; // wWalkBikeSurfState (2 = surfing)
+  const MAP_TILESET_MEM_ADDRESS: u16 = 0xd366; // wCurMapTileset
+  const TILE_PAIR_COLLISIONS_LAND_ADDRESS: i32 = 0x0_0ada; // TilePairCollisionsLand
+  const TILE_PAIR_COLLISIONS_WATER_ADDRESS: i32 = 0x0_0afc; // TilePairCollisionsWater
+  const MAP_TILESET_COLLISION_PTR_BANK_OFFSET: i32 = 0x1_0000; // bank * 0x1_0000
+  const MAP_TILESET_COLLISION_PTR_MEM_ADDRESS: u16 = 0xd52f; // wTilesetCollisionPtr
+  const MAP_TILESET_BANK_MEM_ADDRESS: u16 = 0xd52a; // wTilesetBank
+  const MAP_TILESET_BLOCKS_PTR_MEM_ADDRESS: u16 = 0xd52b; // wTilesetBlocksPtr
+  const MAP_WIDTH_MEM_ADDRESS: u16 = 0xd368; // wCurMapWidth
+  const MAP_HEIGHT_MEM_ADDRESS: u16 = 0xd367; // wCurMapHeight
+  const OVERWORLD_MAP_MEM_ADDRESS: u16 = 0xc6e8; // wOverworldMap
+  const MAP_SPRITE_STATE_DATA_2_MEM_ADDRESS: u16 = 0xc200; // wSpriteStateData2
+  const MAP_SPRITE_DATA_MEM_ADDRESS: u16 = 0xd4e3; // wMapSpriteData
+  const MAP_MISSABLE_OBJECT_LIST_MEM_ADDRESS: u16 = 0xd5cd; // wMissableObjectList
+  const MAP_MISSABLE_OBJECT_FLAGS_MEM_ADDRESS: u16 = 0xd5a5; // wMissableObjectFlags
+  const MAP_INDEX_MEM_ADDRESS: u16 = 0xd35d; // wCurMap
+  const MAP_HEADER_BANKS_ADDRESS: i32 = 0x3f_43e4; // MapHeaderBanks
+  const MAP_TEXT_PTR_MEM_ADDRESS: u16 = 0xd36b; // wMapTextPtr
+  const TALK_TO_TRAINER_FUNCTION_ADDRESS: i32 = 0x3168; // TalkToTrainer
+  const PLAYER_X_POS_MEM_ADDRESS: u16 = 0xd361; // wXCoord
+  const PLAYER_Y_POS_MEM_ADDRESS: u16 = 0xd360; // wYCoord
+}
+impl VermilionTrashCanAddresses for Yellow {
+  const FIRST_TRASH_CAN_MEM_ADDRESS: u16 = 0xd742; // wFirstLockTrashCanIndex
+  const AFTER_FIRST_TRASH_CAN_ADDRESS: i32 = 0x6_5884-1; // VermilionCity_Script.initCityScript - 1
+  const SECOND_TRASH_CAN_MEM_ADDRESS: u16 = 0xd743; // wSecondLockTrashCanIndex
+  const AFTER_SECOND_TRASH_CAN_ADDRESS: i32 = 0x17_5e98-2; // GymTrashScript.trySecondLock - 2
 }
 
 // Gen 2
@@ -600,7 +906,7 @@ macro_rules! impl_gold_silver_common_addresses {
       const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_43a8; // DetermineMoveOrder.player_first
       const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_43aa; // DetermineMoveOrder.enemy_first
     }
-    impl Gen2AIChooseMoveAddresses for $t {
+    impl AIChooseMoveAddresses for $t {
       const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0x0F_4148; // BattleTurn.not_disconnected
       const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xCBC2; // wCurEnemyMove
     }
@@ -633,11 +939,16 @@ macro_rules! impl_gold_silver_common_addresses {
     impl BattleMonInfoAddresses for $t {
       const BATTLE_MON_STRUCT_MEM_ADDRESS: u16 = 0xCB0C; // wBattleMon
       const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcbaa; // wPlayerStatLevels
-      const BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xcb94; // wPlayerStats
+      const GEN1_PARTY_MON_STATS_BASE_MEM_ADDRESS: u16 = 0; // unused
+      const GEN1_PARTY_MON_STRUCT_LEN: u16 = 0; // unused
+      const GEN1_PLAYER_MON_NUMBER_MEM_ADDRESS: u16 = 0; // unused
+      const GEN2_BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xcb94; // wPlayerStats
 
       const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xD0EF; // wEnemyMon
       const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xcbb2; // wEnemyStatLevels
-      const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xcb9f; // wEnemyStats
+      const GEN1_BASE_STATS_BASE_ADDRESS: i32 = 0; // unused
+      const GEN1_BASE_STATS_LEN: i32 = 0; // unused
+      const GEN2_ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xcb9f; // wEnemyStats
     }
     impl Gen2BattleSwitchMonAddresses for $t {
       const SWITCH_DECIDED_ADDRESS: i32 = 0x0f_55c3; // LoadEnemyMonToSwitchTo.skip_unown
@@ -885,7 +1196,7 @@ impl BattleDetermineMoveOrderAddresses for Crystal {
   const MOVE_ORDER_PLAYER_FIRST_ADDRESS: i32 = 0x0F_43F1; // DetermineMoveOrder.player_first
   const MOVE_ORDER_ENEMY_FIRST_ADDRESS: i32 = 0x0F_43F3; // DetermineMoveOrder.enemy_first
 }
-impl Gen2AIChooseMoveAddresses for Crystal {
+impl AIChooseMoveAddresses for Crystal {
   const AFTER_AI_CHOOSE_MOVE_ADDRESS: i32 = 0x0F_4174; // BattleTurn.not_disconnected
   const CUR_ENEMY_MOVE_MEM_ADDRESS: u16 = 0xC6E4; // wCurEnemyMove
 }
@@ -918,11 +1229,16 @@ impl BattleMovesInfoAddresses for Crystal {
 impl BattleMonInfoAddresses for Crystal {
   const BATTLE_MON_STRUCT_MEM_ADDRESS: u16 = 0xC62C; // wBattleMon
   const BATTLE_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xC6CC; // wPlayerStatLevels
-  const BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xC6B6; // wPlayerStats
+  const GEN1_PARTY_MON_STATS_BASE_MEM_ADDRESS: u16 = 0; // unused
+  const GEN1_PARTY_MON_STRUCT_LEN: u16 = 0; // unused
+  const GEN1_PLAYER_MON_NUMBER_MEM_ADDRESS: u16 = 0; // unused
+  const GEN2_BATTLE_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xC6B6; // wPlayerStats
 
   const ENEMY_MON_STRUCT_MEM_ADDRESS: u16 = 0xD206; // wEnemyMon
   const ENEMY_MON_STAT_LEVELS_MEM_ADDRESS: u16 = 0xC6D4; // wEnemyStatLevels
-  const ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xC6C1; // wEnemyStats
+  const GEN1_BASE_STATS_BASE_ADDRESS: i32 = 0; // unused
+  const GEN1_BASE_STATS_LEN: i32 = 0; // unused
+  const GEN2_ENEMY_MON_ORIG_STATS_MEM_ADDRESS: u16 = 0xC6C1; // wEnemyStats
 }
 impl BattleCatchMonAddresses for Crystal {
   const CATCH_SUCCESS_ADDRESS: i32 = 0x03_699C; // PokeBallEffect.catch_without_fail

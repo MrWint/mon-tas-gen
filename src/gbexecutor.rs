@@ -110,7 +110,7 @@ impl<R, F: FnOnce(&mut Gb<R>) + Send> FnBox<R> for F {
 }
 
 struct GbPool<R: Rom> {
-  jobs: Sender<Box<FnBox<R>>>,
+  jobs: Sender<Box<dyn FnBox<R>>>,
 }
 
 const STACK_SIZE: usize = 2 * 1024 * 1024;
@@ -127,7 +127,7 @@ impl<R: Rom> GbPool<R> {
     let num_threads = num_cpus::get();
     let sdl = if has_screen { Some(Sdl::init_sdl(num_threads as u32 /* num screens */, 1 /* scale */)) } else { None };
 
-    let (tx, rx) = channel::<Box<FnBox<R>>>();
+    let (tx, rx) = channel::<Box<dyn FnBox<R>>>();
 
     let job_receiver = Arc::new(Mutex::new(rx));
 

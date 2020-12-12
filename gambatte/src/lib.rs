@@ -133,7 +133,7 @@ pub struct Gambatte {
   overflow_samples: u32,
   cycle_count: u64,
   #[cfg(feature = "track-inputs")] inputs: HashMap<u32, Input>,
-  screen_update_callback: Box<ScreenUpdateCallback>, // trait object to avoid generics.
+  screen_update_callback: Box<dyn ScreenUpdateCallback>, // trait object to avoid generics.
 
   frame_start_gambatte_state: Option<Vec<u8>>,
   frame_start_overflow_samples: u32,

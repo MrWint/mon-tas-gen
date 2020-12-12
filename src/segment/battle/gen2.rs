@@ -23,30 +23,6 @@ mod starttrainerbattlesegment;
 pub use self::starttrainerbattlesegment::StartTrainerBattleSegment;
 
 
-pub struct Gen2AIChooseMoveMetric {}
-impl<R: JoypadAddresses + Gen2AIChooseMoveAddresses> Metric<R> for Gen2AIChooseMoveMetric {
-  type ValueType = Move;
-
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    if gb.run_until_or_next_input_use(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
-    Some(Move::from_index(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS)).unwrap())
-  }
-}
-pub struct Gen2ExpectedAIChooseMoveMetric {
-  expected_move: Option<Move>,
-}
-impl<R: Rom + Gen2AIChooseMoveAddresses> Metric<R> for Gen2ExpectedAIChooseMoveMetric {
-  type ValueType = ();
-
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    Gen2AIChooseMoveMetric {}.filter(|&m| if let Some(mov) = self.expected_move {
-      m == mov
-    } else {
-      ![Move::QuickAttack, Move::MachPunch, Move::ExtremeSpeed, Move::Endure, Move::Protect, Move::Detect].contains(&m)
-    }).into_unit().evaluate(gb)
-  }
-}
-
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum FightTurnResult {
   OutOfPP,

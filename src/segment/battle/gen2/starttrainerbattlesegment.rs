@@ -1,5 +1,6 @@
 use crate::rom::*;
 use crate::segment::*;
+use crate::segment::battle::*;
 use crate::segment::battle::gen2::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
@@ -25,7 +26,7 @@ impl WithOutputBufferSize for StartTrainerBattleSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
-impl<R: Rom + TextAddresses + Gen2AIChooseMoveAddresses> Segment<R> for StartTrainerBattleSegment {
+impl<R: Rom + TextAddresses + AIChooseMoveAddresses> Segment<R> for StartTrainerBattleSegment {
   type Key = ();
 
   fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, mut sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
@@ -36,7 +37,7 @@ impl<R: Rom + TextAddresses + Gen2AIChooseMoveAddresses> Segment<R> for StartTra
     let sb = TextSegment::new().with_buffer_size(self.buffer_size).execute(gbe, sb); // trainer sent out
     let sb = DelaySegment::new(
         MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).seq(
-        TextSegment::with_metric(Gen2ExpectedAIChooseMoveMetric { expected_move: self.expected_move }).with_unbounded_buffer().with_allowed_end_inputs(Input::B).with_skip_ends(5))
+        TextSegment::with_metric(ExpectedAIChooseMoveMetric { expected_move: self.expected_move }).with_unbounded_buffer().with_allowed_end_inputs(Input::B).with_skip_ends(5))
       ).with_buffer_size(self.buffer_size).execute(gbe, sb); // mon // ! // Go // mon // !
 
     Some(((), sb)).into_iter().collect()

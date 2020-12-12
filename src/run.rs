@@ -47,8 +47,18 @@ impl<R: Rom> GbRunner<R> {
     });
   }
   #[allow(dead_code)]
+  fn run_merge_debug<S: Segment<R>>(&mut self, segment: S) {
+    with_log_level(Debug, || {
+      self.run_merge(segment);
+    });
+  }
+  #[allow(dead_code)]
   fn get_state_metric<V: StateValue + PartialEq + std::fmt::Debug, S: StateFn<R, V> + Send + Sync>(&mut self, state_fn: S) -> V {
     self.gbe.execute_state(&self.sb, state_fn).get_value_assert_all_equal()
+  }
+  #[allow(dead_code)]
+  fn get_state_metric_fn<V: StateValue + PartialEq + std::fmt::Debug, S: Fn(&montas::gb::Gb<R>) -> V + Send + Sync>(&mut self, state_fn: S) -> V {
+    self.gbe.execute_state_fn(&self.sb, state_fn).get_value_assert_all_equal()
   }
 
   #[allow(dead_code)]
@@ -104,6 +114,7 @@ impl<R: Rom> GbRunner<R> {
 
 
 
+pub mod blue_glitchless;
 pub mod blue_testing;
 pub mod crystal_desync;
 pub mod crystal_glitchless;

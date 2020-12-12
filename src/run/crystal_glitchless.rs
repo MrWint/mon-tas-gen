@@ -18,7 +18,7 @@ pub fn start() {
   r.debug_segment_end("temp/crystal_glitchless_90");
 }
 
-const CHOOSE_TOTODILE: bool = false;
+// const CHOOSE_TOTODILE: bool = false;
 
 fn run(r: &mut GbRunner<Crystal>) {
   // r.run(MoveSegment::new(A));

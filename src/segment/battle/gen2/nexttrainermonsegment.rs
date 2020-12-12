@@ -39,7 +39,7 @@ impl WithOutputBufferSize for NextTrainerMonSegment {
   fn with_buffer_size(self, buffer_size: usize) -> Self { Self { buffer_size, ..self } }
 }
 
-impl<R: Rom + TextAddresses + Gen2BattleSwitchMonAddresses + Gen2AIChooseMoveAddresses + BattleMovesInfoAddresses + BattleMonInfoAddresses> Segment<R> for NextTrainerMonSegment {
+impl<R: Rom + TextAddresses + Gen2BattleSwitchMonAddresses + AIChooseMoveAddresses + BattleMovesInfoAddresses + BattleMonInfoAddresses> Segment<R> for NextTrainerMonSegment {
   type Key = ();
 
   fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
@@ -68,7 +68,7 @@ impl<R: Rom + TextAddresses + Gen2BattleSwitchMonAddresses + Gen2AIChooseMoveAdd
     let sb = TextSegment::new().with_buffer_size(self.buffer_size).execute(gbe, sb); // sent out
     let sb = DelaySegment::new(
         MoveSegment::new(Input::A | Input::B).with_buffer_size(self.buffer_size).seq(
-        TextSegment::with_metric(Gen2ExpectedAIChooseMoveMetric { expected_move: self.expected_move }).with_allowed_end_inputs(Input::B).with_skip_ends(1).with_unbounded_buffer()) // mon
+        TextSegment::with_metric(ExpectedAIChooseMoveMetric { expected_move: self.expected_move }).with_allowed_end_inputs(Input::B).with_skip_ends(1).with_unbounded_buffer()) // mon
       ).with_buffer_size(self.buffer_size).execute(gbe, sb);
 
     Some(((), sb)).into_iter().collect()

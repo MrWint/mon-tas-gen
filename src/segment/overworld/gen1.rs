@@ -4,7 +4,16 @@ use crate::rom::*;
 use crate::segment::metric::*;
 use gambatte::Input;
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+mod map;
+pub use self::map::Map;
+mod overworldmovesegment;
+pub use self::overworldmovesegment::OverworldMoveSegment;
+mod walkstepsegment;
+pub use self::walkstepsegment::WalkStepSegment;
+mod walktosegment;
+pub use self::walktosegment::WalkToSegment;
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum OverworldInteractionResult {
   NoOverworldInput,
   WarpTo { map: u8, entrance: u8 },
@@ -20,13 +29,22 @@ pub enum OverworldInteractionResult {
   Unknown,
 }
 
-fn dir_to_input(dir: u8) -> Input {
+pub fn dir_to_input(dir: u8) -> Input {
   match dir {
     8 => Input::UP,
     4 => Input::DOWN,
     2 => Input::LEFT,
     1 => Input::RIGHT,
     _ => panic!("got invalid direction {}", dir),
+  }
+}
+pub fn input_to_dir(input: Input) -> u8 {
+  match input {
+    Input::UP => 8,
+    Input::DOWN => 4,
+    Input::LEFT => 2,
+    Input::RIGHT => 1,
+    _ => panic!("got invalid direction {:?}", input),
   }
 }
 

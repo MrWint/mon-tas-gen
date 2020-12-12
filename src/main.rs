@@ -31,15 +31,16 @@ fn main() {
   // if true {return;}
 
 
-  create_gbi_inputs();
+  // create_gbi_inputs();
   // playback_inputs();
   // playback_test();
   // playback_demos();
   // convert_efl();
 
-  // crate::run::blue_testing::start();
+  crate::run::blue_glitchless::start();
   // crate::run::crystal_desync::start();
   // crate::run::crystal_glitchless::start();
+  // crate::run::blue_testing::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();
 }
@@ -89,7 +90,7 @@ fn playback_inputs() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, -100 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
 
-  let mut i_offset = 0;
+  let i_offset = 0;
 
   // let mut last_hit_frame = 0;
   // let mut last_hit_tima = 0;

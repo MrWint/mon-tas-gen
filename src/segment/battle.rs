@@ -1,4 +1,7 @@
+pub mod gen1;
 pub mod gen2;
+
+use std::cmp::{max, min};
 
 use crate::constants::*;
 use crate::gb::*;
@@ -45,6 +48,33 @@ impl<R: JoypadAddresses + BattleObedienceAddresses> Metric<R> for BattleObedienc
   }
 }
 
+pub struct AIChooseMoveMetric {}
+impl<R: JoypadAddresses + AIChooseMoveAddresses> Metric<R> for AIChooseMoveMetric {
+  type ValueType = Move;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.run_until_or_next_input_use(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
+    Move::from_index(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS))
+  }
+}
+pub struct ExpectedAIChooseMoveMetric {
+  pub expected_move: Option<Move>,
+}
+impl<R: Rom + AIChooseMoveAddresses> Metric<R> for ExpectedAIChooseMoveMetric {
+  type ValueType = ();
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    AIChooseMoveMetric {}.filter(|&m| {
+      log::debug!("Enemy selected move: {:?}", m);
+      if let Some(mov) = self.expected_move {
+        m == mov
+      } else {
+        ![Move::QuickAttack, Move::MachPunch, Move::ExtremeSpeed, Move::Endure, Move::Protect, Move::Detect].contains(&m)
+      }
+    }).into_unit().evaluate(gb)
+  }
+}
+
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Who {
   Enemy,
@@ -80,7 +110,7 @@ pub struct MoveInfo {
 
 fn truncate_hl_bc(atk: u16, def: u16) -> (u8, u8) {
   if atk >= 0x100 || def >= 0x100 {
-    (std::cmp::max(atk >> 2, 1) as u8, std::cmp::max(def >> 2, 1) as u8)
+    (max(atk >> 2, 1) as u8, max(def >> 2, 1) as u8)
   } else { (atk as u8, def as u8) }
 }
 
@@ -127,13 +157,13 @@ impl<R: Rom + BattleMovesInfoAddresses + BattleMonInfoAddresses> StateFn<R, Vec<
       let calc_damage = |lvl: u32, atk: u8, mut def: u8, crit_multiplier: u32| {
         if power == 0 { return (0, false); }
 
-        if mov == Move::SelfDestruct || mov == Move::Explosion { def = std::cmp::max(def >> 1, 1); } // Explosion moves halve enemy defense
+        if mov == Move::SelfDestruct || mov == Move::Explosion { def = max(def >> 1, 1); } // Explosion moves halve enemy defense
 
         let mut damage = (lvl * 2 / 5 + 2) * u32::from(power) * u32::from(atk) / u32::from(def) / 50;
         if self_info.held_item.into_iter().any(|item| item.held_boost_type().into_iter().any(|t| t == typ)) {
           damage = damage * 110 / 100;
         }
-        damage = std::cmp::min(damage * crit_multiplier, 997) + 2;
+        damage = min(damage * crit_multiplier, 997) + 2;
 
         if mov == Move::Struggle { return (damage, false); } // no stab or type effectiveness when using Struggle
 
@@ -157,7 +187,7 @@ impl<R: Rom + BattleMovesInfoAddresses + BattleMonInfoAddresses> StateFn<R, Vec<
           if typ == at && opp_info.types.contains(&dt) {
             if R::is_gen1() { is_effective = true; }
             total_effectivity = total_effectivity * eff / 10;
-            damage = if damage == 0 || eff == 0 { 0 } else { std::cmp::max(damage * eff / 10, 1) };
+            damage = if damage == 0 || eff == 0 { 0 } else { max(damage * eff / 10, 1) };
           }
         }
         if R::is_gen2() && total_effectivity != 10 { is_effective = true; }
@@ -259,13 +289,16 @@ impl<R: Rom + BattleMonInfoAddresses> StateFn<R, BattleMonInfo> for BattleMonInf
       };
       // 25-28 are PPs
 
-      let orig_stats = {
-        let stats_base_mem_address = self.who.choose(R::BATTLE_MON_ORIG_STATS_MEM_ADDRESS, R::ENEMY_MON_ORIG_STATS_MEM_ADDRESS);
-        let atk = gb.gb.read_memory_word_be(stats_base_mem_address + 0);
-        let def = gb.gb.read_memory_word_be(stats_base_mem_address + 2);
-        let spd = gb.gb.read_memory_word_be(stats_base_mem_address + 4);
-        let spc = gb.gb.read_memory_word_be(stats_base_mem_address + 6);
-        Stats { atk, def, spd, spc_atk: spc, spc_def: spc }
+      let orig_stats = match self.who {
+        Who::Player => {
+          let stats_base_mem_address = R::GEN1_PARTY_MON_STATS_BASE_MEM_ADDRESS + R::GEN1_PARTY_MON_STRUCT_LEN * u16::from(gb.gb.read_memory(R::GEN1_PLAYER_MON_NUMBER_MEM_ADDRESS));
+          let atk = gb.gb.read_memory_word_be(stats_base_mem_address + 0);
+          let def = gb.gb.read_memory_word_be(stats_base_mem_address + 2);
+          let spd = gb.gb.read_memory_word_be(stats_base_mem_address + 4);
+          let spc = gb.gb.read_memory_word_be(stats_base_mem_address + 6);
+          Stats { atk, def, spd, spc_atk: spc, spc_def: spc }
+        },
+        Who::Enemy => gen1_calc_enemy_stats(gb, species, level, dvs),
       };
 
       let stat_levels = {
@@ -304,12 +337,12 @@ impl<R: Rom + BattleMonInfoAddresses> StateFn<R, BattleMonInfo> for BattleMonInf
       let types = (0..2).filter_map(|i| Type::from_index(gb.gb.read_memory(mon_struct_base_mem_address + 30 + i))).collect();
 
       let orig_stats = {
-        let stats_base_mem_address = self.who.choose(R::BATTLE_MON_ORIG_STATS_MEM_ADDRESS, R::ENEMY_MON_ORIG_STATS_MEM_ADDRESS);
+        let stats_base_mem_address = self.who.choose(R::GEN2_BATTLE_MON_ORIG_STATS_MEM_ADDRESS, R::GEN2_ENEMY_MON_ORIG_STATS_MEM_ADDRESS);
         let atk = gb.gb.read_memory_word_be(stats_base_mem_address + 0);
         let def = gb.gb.read_memory_word_be(stats_base_mem_address + 2);
         let spd = gb.gb.read_memory_word_be(stats_base_mem_address + 4);
         let spc_atk = gb.gb.read_memory_word_be(stats_base_mem_address + 6);
-        let spc_def = gb.gb.read_memory_word_be(stats_base_mem_address + if R::is_gen1() { 6 } else { 8 });
+        let spc_def = gb.gb.read_memory_word_be(stats_base_mem_address + 8);
         Stats { atk, def, spd, spc_atk, spc_def }
       };
 
@@ -327,6 +360,47 @@ impl<R: Rom + BattleMonInfoAddresses> StateFn<R, BattleMonInfo> for BattleMonInf
 
       BattleMonInfo { species, held_item, moves, dvs, happiness, level, status, hp, max_hp, stats, types, orig_stats, stat_levels }
     }
+  }
+}
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct BaseStats {
+  pub hp: u8,
+  pub atk: u8,
+  pub def: u8,
+  pub spd: u8,
+  pub spc: u8,
+}
+fn gen1_get_base_stats<R: BattleMonInfoAddresses>(gb: &Gb<R>, species: Pokemon) -> BaseStats {
+  if species == Pokemon::Mew {
+    BaseStats {
+      hp: 100,
+      atk: 100,
+      def: 100,
+      spd: 100,
+      spc: 100,
+    }
+  } else {
+    let base_stats_address = R::GEN1_BASE_STATS_BASE_ADDRESS + (species.to_i32().unwrap() - 1) * R::GEN1_BASE_STATS_LEN + 1;
+    BaseStats {
+      hp: gb.gb.read_rom(base_stats_address + 0),
+      atk: gb.gb.read_rom(base_stats_address + 1),
+      def: gb.gb.read_rom(base_stats_address + 2),
+      spd: gb.gb.read_rom(base_stats_address + 3),
+      spc: gb.gb.read_rom(base_stats_address + 4),
+    }
+  }
+}
+
+/// ignores stat exp, suitable for enemy mons
+fn gen1_calc_enemy_stats<R: BattleMonInfoAddresses>(gb: &Gb<R>, species: Pokemon, level: u8, dvs: DVs) -> Stats {
+  let base_stats = gen1_get_base_stats(gb, species);
+  Stats {
+    atk: min(((u16::from(base_stats.atk) + u16::from(dvs.atk)) * 2 * u16::from(level)) / 100 + 5, 999),
+    def: min(((u16::from(base_stats.def) + u16::from(dvs.def)) * 2 * u16::from(level)) / 100 + 5, 999),
+    spd: min(((u16::from(base_stats.spd) + u16::from(dvs.spd)) * 2 * u16::from(level)) / 100 + 5, 999),
+    spc_atk: min(((u16::from(base_stats.spc) + u16::from(dvs.spc)) * 2 * u16::from(level)) / 100 + 5, 999),
+    spc_def: min(((u16::from(base_stats.spc) + u16::from(dvs.spc)) * 2 * u16::from(level)) / 100 + 5, 999),
   }
 }
 

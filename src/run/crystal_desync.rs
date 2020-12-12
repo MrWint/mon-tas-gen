@@ -17,7 +17,7 @@ pub fn start() {
   r.debug_segment_end("temp/crystal_desync");
 }
 
-const CHOOSE_TOTODILE: bool = false;
+// const CHOOSE_TOTODILE: bool = false;
 
 fn run(r: &mut GbRunner<Crystal>) {
   // r.run(MoveSegment::new(NIL));
