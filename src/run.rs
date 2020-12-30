@@ -118,5 +118,6 @@ pub mod blue_glitchless;
 pub mod blue_testing;
 pub mod crystal_desync;
 pub mod crystal_glitchless;
+pub mod multi_testing;
 pub mod silver_testing;
 pub mod yellow_testing;

@@ -36,11 +36,13 @@ fn main() {
   // playback_test();
   // playback_demos();
   // convert_efl();
+  // multi_gb_test();
 
-  crate::run::blue_glitchless::start();
+  // crate::run::blue_glitchless::start();
   // crate::run::crystal_desync::start();
   // crate::run::crystal_glitchless::start();
   // crate::run::blue_testing::start();
+  crate::run::multi_testing::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();
 }
@@ -162,6 +164,30 @@ fn playback_test() {
   let inputs = read_bk2_inputs("temp/silver_test.bk2").unwrap();
   for input in inputs {
     gb.set_input(input); gb.step();
+    std::thread::sleep(std::time::Duration::from_millis(1));
+  }
+}
+
+#[allow(dead_code)]
+fn multi_gb_test() {
+  let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+  let mut gb = montas::multi::Gb::<Blue>::create(false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  gb.input(Input::START);
+  std::thread::sleep(std::time::Duration::from_millis(1000));
+  gb.step();
+  gb.input(Input::A);
+  std::thread::sleep(std::time::Duration::from_millis(1000));
+  gb.step();
+  gb.input(Input::START);
+  std::thread::sleep(std::time::Duration::from_millis(1000));
+  gb.step();
+  gb.input(Input::A);
+  std::thread::sleep(std::time::Duration::from_millis(1000));
+  gb.step();
+  std::thread::sleep(std::time::Duration::from_millis(1000));
+  for _ in 0..1000 {
+    gb.input(Input::empty());
+    gb.step();
     std::thread::sleep(std::time::Duration::from_millis(1));
   }
 }

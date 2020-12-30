@@ -285,9 +285,12 @@ impl <R: JoypadAddresses> Gb<R> {
               break;
             }
           }
-          for &(use_add, keep_add, discard_add) in R::JOYPAD_USE_DISCARD_ADDRESSES {
+          for &(use_add, flag_mem_add, flag_bit, discard_add) in R::JOYPAD_USE_DISCARD_ADDRESSES {
             if hit == use_add {
-              if self.gb.run_until(&[keep_add, discard_add]) == discard_add { continue 'check_for_input_uses_until_next_input; }
+              if (self.gb.read_memory(flag_mem_add) >> flag_bit) & 1 != 0 {
+                self.gb.run_until(&[discard_add]);
+                continue 'check_for_input_uses_until_next_input;
+              }
               break;
             }
           }

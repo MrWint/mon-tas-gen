@@ -25,13 +25,17 @@ pub trait JoypadAddresses {
   const JOYPAD_READ_FIRST_ADDRESS: i32; // address in VBlank reading the first joypad nybble
   const JOYPAD_READ_LAST_ADDRESS: i32; // address in VBlank reading the last joypad nybble
   const JOYPAD_READ_LOCKED_ADDRESS: i32; // address in VBlank after reading both nybbles is done and the values are locked. Assumed to be after reading hi/lo without any branches or interrupts
+  const JOYPAD_INPUT_MEM_ADDRESS: u16; // address the input read in VBlank is stored in
   const JOYPAD_USE_ADDRESSES: &'static [i32]; // addresses of usages of joypad inputs, if none of these are hit inbetween VBlank reads, the input is assumed to be irrelevant
-  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)]; // JOYPAD_USE_ADDRESSES which have a discard option. (use add, keep add, discard add)
+  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)]; // JOYPAD_USE_ADDRESSES which have a discard option. (use add, discard flag, flag bit, discard add)
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)]; // JOYPAD_USE_ADDRESSES which have a ignore mask option. (use add, ignored inputs, skip add)
 }
 pub trait JoypadLowSensitivityAddresses {
+  const JOYPAD_HJOY6_MEM_ADDRESS: u16; // hJoy6
   const JOYPAD_HJOY7_MEM_ADDRESS: u16; // hJoy7
   const JOYPAD_LAST_MEM_ADDRESS: u16; // hJoyLast
+  const JOYPAD_FRAME_COUNTER_MEM_ADDRESS: u16; // hFrameCounter
+  const JOYPAD_FRAME_COUNTER_CHECK_ADDRESS: i32; // JoypadLowSensitivity.noNewlyPressedButtons
 }
 pub trait RngAddresses {
   const RNG_MEM_ADDRESS: u16;
@@ -319,15 +323,19 @@ macro_rules! impl_red_blue_common_addresses {
       const JOYPAD_READ_FIRST_ADDRESS: i32 = Self::JOYPAD_READ_HI_ADDRESS;
       const JOYPAD_READ_LAST_ADDRESS: i32 = Self::JOYPAD_READ_LO_ADDRESS;
       const JOYPAD_READ_LOCKED_ADDRESS: i32 = 0x0_018F;
+      const JOYPAD_INPUT_MEM_ADDRESS: u16 = 0xfff8; // hJoyInput
       const JOYPAD_USE_ADDRESSES: &'static [i32] = &[
         0x3_4000, // _Joypad
       ];
-      const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[(0x3_4000, 0x3_401E, 0x3_4034)];
+      const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[(0x3_4000, 0xd730, 5, 0x3_4034)];
       const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_4000, 0xCD6B, 0x3_4002)]; // wJoyIgnore
     }
     impl JoypadLowSensitivityAddresses for $t {
+      const JOYPAD_HJOY6_MEM_ADDRESS: u16 = 0xffb6; // hJoy6
       const JOYPAD_HJOY7_MEM_ADDRESS: u16 = 0xffb7; // hJoy7
       const JOYPAD_LAST_MEM_ADDRESS: u16 = 0xffb1; // hJoyLast
+      const JOYPAD_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5; // hFrameCounter
+      const JOYPAD_FRAME_COUNTER_CHECK_ADDRESS: i32 = 0x0_3849; // JoypadLowSensitivity.noNewlyPressedButtons
     }
     impl RngAddresses for $t {
       const RNG_MEM_ADDRESS: u16 = 0xffd3;
@@ -547,15 +555,19 @@ impl JoypadAddresses for Yellow {
   const JOYPAD_READ_FIRST_ADDRESS: i32 = Self::JOYPAD_READ_HI_ADDRESS;
   const JOYPAD_READ_LAST_ADDRESS: i32 = Self::JOYPAD_READ_LO_ADDRESS;
   const JOYPAD_READ_LOCKED_ADDRESS: i32 = 0x3_4022;
+  const JOYPAD_INPUT_MEM_ADDRESS: u16 = 0xfff5; // hJoyInput
   const JOYPAD_USE_ADDRESSES: &'static [i32] = &[
     0x3_402D, // _Joypad
   ];
-  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[(0x3_402D, 0x3_404D, 0x3_4063)];
+  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[(0x3_402D, 0xd72f, 5, 0x3_4063)];
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_402D, 0xCD6B, 0x3_402F)]; // wJoyIgnore
 }
 impl JoypadLowSensitivityAddresses for Yellow {
+  const JOYPAD_HJOY6_MEM_ADDRESS: u16 = 0xffb6; // hJoy6
   const JOYPAD_HJOY7_MEM_ADDRESS: u16 = 0xffb7; // hJoy7
   const JOYPAD_LAST_MEM_ADDRESS: u16 = 0xffb1; // hJoyLast
+  const JOYPAD_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5; // hFrameCounter
+  const JOYPAD_FRAME_COUNTER_CHECK_ADDRESS: i32 = 0x0_3836; // JoypadLowSensitivity.noNewlyPressedButtons
 }
 impl RngAddresses for Yellow {
   const RNG_MEM_ADDRESS: u16 = 0xffd3;
@@ -793,10 +805,11 @@ macro_rules! impl_gold_silver_common_addresses {
       const JOYPAD_READ_FIRST_ADDRESS: i32 = Self::JOYPAD_READ_HI_ADDRESS;
       const JOYPAD_READ_LAST_ADDRESS: i32 = Self::JOYPAD_READ_LO_ADDRESS;
       const JOYPAD_READ_LOCKED_ADDRESS: i32 = 0x0_090F;
+      const JOYPAD_INPUT_MEM_ADDRESS: u16 = 0xffa6; // hJoypadDown
       const JOYPAD_USE_ADDRESSES: &'static [i32] = &[
         0x0_0940, // in GetJoypad
       ];
-      const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[];
+      const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[];
       const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[];
     }
     impl RngAddresses for $t {
@@ -997,6 +1010,7 @@ impl JoypadAddresses for Crystal {
   const JOYPAD_READ_FIRST_ADDRESS: i32 = Self::JOYPAD_READ_HI_ADDRESS;
   const JOYPAD_READ_LAST_ADDRESS: i32 = Self::JOYPAD_READ_LO_ADDRESS;
   const JOYPAD_READ_LOCKED_ADDRESS: i32 = 0x0_095E;
+  const JOYPAD_INPUT_MEM_ADDRESS: u16 = 0xffa4; // hJoypadDown
   const JOYPAD_USE_ADDRESSES: &'static [i32] = &[
     0x0_098F, // in GetJoypad
     0x42_58FD, // Credits_HandleAButton
@@ -1008,7 +1022,7 @@ impl JoypadAddresses for Crystal {
     0x24_6903, // in SlotsAction_WaitReel2
     0x24_692D, // in SlotsAction_WaitReel3
   ];
-  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, i32, i32)] = &[];
+  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[];
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[];
 }
 impl RngAddresses for Crystal {
