@@ -61,23 +61,22 @@ impl<R: Rom> ListPlan<R> {
       cur_item: 0,
     }
   }
-  pub fn append_sentinel(&mut self) {
-    self.plans.push(Box::new(NullPlan));
-  }
 }
 impl<R: Rom> Plan<R> for ListPlan<R> {
   type Value = ();
 
   fn get_inputs(&self, gb: &mut Gb<R>, state: &GbState) -> Inputs {
+    assert!(self.cur_item < self.plans.len());
     self.plans[self.cur_item].get_inputs(gb, state)
   }
   fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+    assert!(self.cur_item < self.plans.len());
     if let Some((new_state, result)) = self.plans[self.cur_item].execute_input(gb, state, input) {
       if result.is_some() {
-        if self.cur_item + 1 >= self.plans.len() {
+        self.cur_item += 1;
+        if self.cur_item >= self.plans.len() {
           return Some((new_state, Some(())));
         }
-        self.cur_item += 1;
         self.plans[self.cur_item].reset();
       }
       Some((new_state, None))
@@ -88,13 +87,18 @@ impl<R: Rom> PlanBase for ListPlan<R> {
   fn save(&self) -> PlanState {
     PlanState::ListState {
       cur_item: self.cur_item,
-      sub_plan: Rc::new(self.plans[self.cur_item].save()),
+      sub_plan: if self.cur_item >= self.plans.len() { None } else { Some(Rc::new(self.plans[self.cur_item].save())) },
     }
   }
   fn restore(&mut self, state: &PlanState) {
     if let PlanState::ListState { cur_item, sub_plan } = state {
+      assert!(*cur_item < self.plans.len());
       self.cur_item = *cur_item;
-      self.plans[*cur_item].restore(sub_plan);
+      if let Some(sub_plan) = sub_plan {
+        self.plans[*cur_item].restore(sub_plan);
+      } else {
+        self.plans[*cur_item].reset();
+      }
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
   fn reset(&mut self) {
@@ -102,9 +106,10 @@ impl<R: Rom> PlanBase for ListPlan<R> {
     self.plans[0].reset();
   }
   fn is_safe(&self) -> bool {
-    self.plans[self.cur_item].is_safe()
+    self.cur_item >= self.plans.len() || self.plans[self.cur_item].is_safe()
   }
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
+    assert!(self.cur_item < self.plans.len());
     self.plans[self.cur_item].canonicalize_input(input)
   }
 }
@@ -112,7 +117,7 @@ impl<R: Rom> PlanBase for ListPlan<R> {
 #[derive(Clone, Debug, Eq, Serialize, Deserialize)]
 pub enum PlanState {
   EmptyState,
-  ListState { cur_item: usize, sub_plan: Rc<PlanState> },
+  ListState { cur_item: usize, sub_plan: Option<Rc<PlanState>> },
   SkipIntroState { inputs_until_auto_pass: u32, }
 }
 impl PartialEq for PlanState {

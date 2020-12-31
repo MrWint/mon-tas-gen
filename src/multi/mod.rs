@@ -16,7 +16,7 @@ pub trait IMultiGbExecutor {
   fn save(&self) -> MultiStateItem;
   fn load_plan(&mut self, state: &PlanState);
   fn get_inputs(&mut self, state: &GbState) -> Inputs;
-  fn execute_input(&mut self, state: &GbState, input: Input) -> Option<MultiStateItem>;
+  fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)>;
 }
 pub struct MultiGbExecutor<R: Rom> {
   gb: Gb<R>,
@@ -24,7 +24,6 @@ pub struct MultiGbExecutor<R: Rom> {
 }
 impl<R: Rom> MultiGbExecutor<R> {
   pub fn new(gb: Gb<R>, mut plan: ListPlan<R>) -> Self {
-    plan.append_sentinel(); // Make sure the plan never ends.
     plan.reset();
     Self {
       gb,
@@ -43,11 +42,12 @@ impl<R: Rom> IMultiGbExecutor for MultiGbExecutor<R> {
   fn get_inputs(&mut self, state: &GbState) -> Inputs {
     self.plan.get_inputs(&mut self.gb, state)
   }
-  fn execute_input(&mut self, state: &GbState, input: Input) -> Option<MultiStateItem> {
+  fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)> {
     let input = state.remove_ignored_inputs(input);
     if let Some((gb_state, value)) = self.plan.execute_input(&mut self.gb, state, input) {
+
       assert!(value.is_none()); // End sentinel guarantees that the plan never completes.
-      Some(MultiStateItem::new(gb_state, self.plan.save(), self.plan.is_safe()))
+      Some((MultiStateItem::new(gb_state, self.plan.save(), self.plan.is_safe()), value.is_some()))
     } else { None }
   }
 }
@@ -56,6 +56,7 @@ pub struct MultiGbRunner {
   instances: Vec<Box<dyn IMultiGbExecutor>>,
   states: MultiStateBuffer,
   states_unsafe: MultiStateBuffer,
+  final_states: MultiStateBuffer,
 }
 impl MultiGbRunner {
   pub fn new(instances: Vec<Box<dyn IMultiGbExecutor>>) -> Self {
@@ -65,6 +66,7 @@ impl MultiGbRunner {
       instances,
       states: MultiStateBuffer::new(),
       states_unsafe: MultiStateBuffer::new(),
+      final_states: MultiStateBuffer::new(),
     };
     result.add_state(initial_state);
     result
@@ -142,6 +144,7 @@ impl MultiGbRunner {
     'next_input: for (prev_input, cur_input) in combined_inputs.iter().map(|(p, c)| (p.get_input(), c.get_input())) {
       log::debug!("performing inputs {:?} and {:?}", prev_input, cur_input);
       let mut multi_state_items = vec![];
+      let mut is_done = false;
       for i in 0..s.instances.len() {
         let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
         let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
@@ -159,7 +162,8 @@ impl MultiGbRunner {
           if instance_input == inputs::LO_INPUTS { continue 'next_input; } // Don't use reset inputs
 
           self.instances[i].load_plan(&s.instances[i].plan_state); // reload plan (may have been altered in previous loop iterations)
-          if let Some(multi_state_item) = self.instances[i].execute_input(&s.instances[i].gb_state, instance_input) {
+          if let Some((multi_state_item, instance_is_done)) = self.instances[i].execute_input(&s.instances[i].gb_state, instance_input) {
+            is_done |= instance_is_done;
             multi_state_items.push(multi_state_item);
           } else { continue 'next_input; }
         } else {
@@ -176,7 +180,12 @@ impl MultiGbRunner {
       if use_hi {
         new_inputs.set_input_hi(input_frame, cur_input);
       }
-      self.add_state(MultiState::new(multi_state_items, new_inputs))
+      let multi_state = MultiState::new(multi_state_items, new_inputs);
+      if is_done {
+        self.final_states.add_state(multi_state);
+      } else {
+        self.add_state(multi_state);
+      }
     }
   }
   fn add_state(&mut self, state: MultiState) {
