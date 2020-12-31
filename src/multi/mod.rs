@@ -1,4 +1,6 @@
 mod gb;
+use std::mem::MaybeUninit;
+
 pub use gb::*;
 mod input;
 pub use input::*;
@@ -52,16 +54,46 @@ impl<R: Rom> IMultiGbExecutor for MultiGbExecutor<R> {
   }
 }
 
-pub struct MultiGbRunner {
-  instances: Vec<Box<dyn IMultiGbExecutor>>,
-  states: MultiStateBuffer,
-  states_unsafe: MultiStateBuffer,
-  final_states: MultiStateBuffer,
+pub trait CollectIntoArray {
+  type Item;
+
+  fn collect_into_array<const N: usize>(self) -> [Self::Item; N];
 }
-impl MultiGbRunner {
-  pub fn new(instances: Vec<Box<dyn IMultiGbExecutor>>) -> Self {
+impl<I: Iterator> CollectIntoArray for I {
+  type Item = I::Item;
+
+  fn collect_into_array<const N: usize>(mut self) -> [Self::Item; N] {
+    // Create an uninitialized array of `MaybeUninit`. The `assume_init` is
+    // safe because the type we are claiming to have initialized here is a
+    // bunch of `MaybeUninit`s, which do not require initialization.
+    let mut data: [MaybeUninit<Self::Item>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+
+    // Dropping a `MaybeUninit` does nothing. Thus using raw pointer
+    // assignment instead of `ptr::write` does not cause the old
+    // uninitialized value to be dropped. Also if there is a panic during
+    // this loop, we have a memory leak, but there is no memory safety
+    // issue.
+    for i in 0..N {
+      if let Some(item) = self.next() {
+        data[i] = MaybeUninit::new(item);
+      } else { panic!("Iterator did not have enough elements") }
+    }
+
+    // Everything is initialized. Transmute the array to the initialized type.
+    unsafe { std::mem::transmute_copy::<_, [Self::Item; N]>(&data) }
+  }
+}
+
+pub struct MultiGbRunner<const N: usize> {
+  instances: [Box<dyn IMultiGbExecutor>; N],
+  states: MultiStateBuffer<N>,
+  states_unsafe: MultiStateBuffer<N>,
+  final_states: MultiStateBuffer<N>,
+}
+impl<const N: usize> MultiGbRunner<N> {
+  pub fn new(instances: [Box<dyn IMultiGbExecutor>; N]) -> Self {
     assert!(!instances.is_empty());
-    let initial_state = MultiState::new(instances.iter().map(|instance| instance.save()).collect(), InputLog::new());
+    let initial_state = MultiState::new(instances.iter().map(|instance| instance.save()).collect_into_array(), InputLog::new());
     let mut result = Self {
       instances,
       states: MultiStateBuffer::new(),
@@ -88,8 +120,7 @@ impl MultiGbRunner {
       }
     }
   }
-  fn step_state(&mut self, s: MultiState) {
-    assert_eq!(self.instances.len(), s.instances.len());
+  fn step_state(&mut self, s: MultiState<N>) {
     // Choose input frame to fill
     let input_frame = s.get_next_input_frame();
     // Start with any input
@@ -109,7 +140,7 @@ impl MultiGbRunner {
     combined_inputs = combined_inputs & (prev_frame_set_inputs, InputDesc::any());
 
     // Apply any restrictions based on the plans
-    for i in 0..s.instances.len() {
+    for i in 0..N {
       let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
       let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
       assert!(input_frame_lo >= input_frame || input_frame_hi >= input_frame); // No instance is left behind
@@ -143,9 +174,9 @@ impl MultiGbRunner {
     // Go through any input that fulfills all conditions
     'next_input: for (prev_input, cur_input) in combined_inputs.iter().map(|(p, c)| (p.get_input(), c.get_input())) {
       log::debug!("performing inputs {:?} and {:?}", prev_input, cur_input);
-      let mut multi_state_items = vec![];
+      let mut multi_state_items: [MaybeUninit<MultiStateItem>; N] = unsafe { MaybeUninit::uninit().assume_init() };
       let mut is_done = false;
-      for i in 0..s.instances.len() {
+      for i in 0..N {
         let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
         let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
         if input_frame_lo <= input_frame && input_frame_hi <= input_frame {
@@ -164,13 +195,12 @@ impl MultiGbRunner {
           self.instances[i].load_plan(&s.instances[i].plan_state); // reload plan (may have been altered in previous loop iterations)
           if let Some((multi_state_item, instance_is_done)) = self.instances[i].execute_input(&s.instances[i].gb_state, instance_input) {
             is_done |= instance_is_done;
-            multi_state_items.push(multi_state_item);
+            multi_state_items[i] = MaybeUninit::new(multi_state_item);
           } else { continue 'next_input; }
         } else {
-          multi_state_items.push(s.instances[i].clone());
+          multi_state_items[i] = MaybeUninit::new(s.instances[i].clone());
         }
       }
-      assert_eq!(multi_state_items.len(), s.instances.len());
       let mut new_inputs = s.inputs.clone();
       new_inputs.set_input_lo(input_frame - 1, prev_input);
       new_inputs.set_input_hi(input_frame - 1, prev_input);
@@ -180,7 +210,7 @@ impl MultiGbRunner {
       if use_hi {
         new_inputs.set_input_hi(input_frame, cur_input);
       }
-      let multi_state = MultiState::new(multi_state_items, new_inputs);
+      let multi_state = MultiState::new(unsafe { std::mem::transmute_copy(&multi_state_items) }, new_inputs);
       if is_done {
         self.final_states.add_state(multi_state);
       } else {
@@ -188,7 +218,7 @@ impl MultiGbRunner {
       }
     }
   }
-  fn add_state(&mut self, state: MultiState) {
+  fn add_state(&mut self, state: MultiState<N>) {
     if state.is_safe() {
       self.states.add_state(state);
     } else {

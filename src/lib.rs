@@ -1,5 +1,6 @@
 #![feature(ptr_internals)]
 
+pub mod big_array;
 pub mod constants;
 pub mod ftii;
 pub mod gb;

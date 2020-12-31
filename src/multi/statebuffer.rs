@@ -4,6 +4,7 @@ use std::cmp::{max, Ordering};
 use std::collections::hash_map::{HashMap, Entry};
 use std::iter::FromIterator;
 use super::*;
+use crate::big_array::BigArray;
 
 pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
 
@@ -26,14 +27,15 @@ impl MultiStateItem {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct MultiState {
+pub struct MultiState<const N: usize> {
   /// List of states for the individual instances.
-  pub instances: Vec<MultiStateItem>,
+  #[serde(with = "BigArray")]
+  pub instances: [MultiStateItem; N],
   /// List of inputs that led to this state.
   pub inputs: InputLog,
 }
-impl MultiState {
-  pub fn new(instances: Vec<MultiStateItem>, inputs: InputLog) -> Self {
+impl<const N: usize> MultiState<N> {
+  pub fn new(instances: [MultiStateItem; N], inputs: InputLog) -> Self {
     for s in instances.iter() {
       assert!(s.gb_state.is_at_input(), "Invalid state added to MultiState!");
     }
@@ -56,7 +58,6 @@ impl MultiState {
   }
   /// Checks whether the current state is strictly earlier than the given state.
   pub fn compare_plans(&self, other: &Self) -> Option<Ordering> {
-    assert_eq!(self.instances.len(), other.instances.len());
     let mut has_ahead_instance = false;
     let mut has_behind_instance = false;
     for (i, oi) in self.instances.iter().zip(other.instances.iter()) {
@@ -80,16 +81,16 @@ impl MultiState {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct MultiStateBuffer {
-  states: HashMap<u64, MultiState>,
+pub struct MultiStateBuffer<const N: usize> {
+  states: HashMap<u64, MultiState<N>>,
   // for each state, count number of states more advanced than this, and frame count
   metrics: HashMap<u64, (u32, u32)>,
   max_size: usize,
 }
-impl Default for MultiStateBuffer {
+impl<const N: usize> Default for MultiStateBuffer<N> {
   fn default() -> Self { Self::with_max_size(MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE) }
 }
-impl MultiStateBuffer {
+impl<const N: usize> MultiStateBuffer<N> {
   pub fn new() -> Self { Default::default() }
   pub fn with_max_size(max_size: usize) -> Self {
     MultiStateBuffer {
@@ -99,14 +100,14 @@ impl MultiStateBuffer {
     }
   }
 
-  pub fn from_iter_sized<I: IntoIterator<Item=MultiState>>(iter: I, max_size: usize) -> Self {
+  pub fn from_iter_sized<I: IntoIterator<Item=MultiState<N>>>(iter: I, max_size: usize) -> Self {
     let mut sb = MultiStateBuffer::with_max_size(max_size);
     sb.add_all(iter);
     sb
   }
 
   /// Adds a state to the buffer.
-  pub fn add_state(&mut self, s: MultiState) {
+  pub fn add_state(&mut self, s: MultiState<N>) {
     if self.states.capacity() == 0 {
       self.states.reserve(self.max_size + 1); // Reserve one additional element to hold excess before pruning.
       self.metrics.reserve(self.max_size + 1); // Reserve one additional element to hold excess before pruning.
@@ -131,7 +132,7 @@ impl MultiStateBuffer {
     }
   }
   /// Adds multiple states to the buffer.
-  pub fn add_all<I: IntoIterator<Item=MultiState>>(&mut self, iter: I) {
+  pub fn add_all<I: IntoIterator<Item=MultiState<N>>>(&mut self, iter: I) {
     for s in iter.into_iter() { self.add_state(s); }
   }
   fn metrics_add(&mut self, rng_fingerprint: u64, frame_count: u32) {
@@ -149,7 +150,7 @@ impl MultiStateBuffer {
     }
     self.metrics.insert(rng_fingerprint, (num_better_states, frame_count));
   }
-  fn metrics_remove(&mut self, rng_fingerprint: u64, s: MultiState) {
+  fn metrics_remove(&mut self, rng_fingerprint: u64, s: MultiState<N>) {
     let (old_num_better_states, _) = self.metrics.remove(&rng_fingerprint).unwrap();
     let mut num_better_states = 0;
     for (rng, os) in self.states.iter() {
@@ -186,29 +187,29 @@ impl MultiStateBuffer {
   pub fn get_max_size(&self) -> usize {
     self.max_size
   }
-  pub fn iter<'a>(&'a self) -> std::collections::hash_map::Values<'a, u64, MultiState> {
+  pub fn iter<'a>(&'a self) -> std::collections::hash_map::Values<'a, u64, MultiState<N>> {
     self.into_iter()
   }
 }
-impl FromIterator<MultiState> for MultiStateBuffer {
-  fn from_iter<I: IntoIterator<Item=MultiState>>(iter: I) -> Self {
+impl<const N: usize> FromIterator<MultiState<N>> for MultiStateBuffer<N> {
+  fn from_iter<I: IntoIterator<Item=MultiState<N>>>(iter: I) -> Self {
     let mut sb = MultiStateBuffer::new();
     sb.add_all(iter);
     sb
   }
 }
 
-impl IntoIterator for MultiStateBuffer {
-  type Item = MultiState;
-  type IntoIter = std::iter::Map<std::collections::hash_map::IntoIter<u64, MultiState>, fn((u64, MultiState)) -> MultiState>;
+impl<const N: usize> IntoIterator for MultiStateBuffer<N> {
+  type Item = MultiState<N>;
+  type IntoIter = std::iter::Map<std::collections::hash_map::IntoIter<u64, MultiState<N>>, fn((u64, MultiState<N>)) -> MultiState<N>>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.states.into_iter().map(|(_, s)| s)
   }
 }
-impl<'a> IntoIterator for &'a MultiStateBuffer {
-  type Item = &'a MultiState;
-  type IntoIter = std::collections::hash_map::Values<'a, u64, MultiState>;
+impl<'a, const N: usize> IntoIterator for &'a MultiStateBuffer<N> {
+  type Item = &'a MultiState<N>;
+  type IntoIter = std::collections::hash_map::Values<'a, u64, MultiState<N>>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.states.values()

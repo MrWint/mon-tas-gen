@@ -12,7 +12,7 @@ pub fn start() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 1 /* scale */);
   let blue_gb = Gb::<Blue>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, SdlScreen::new(sdl, 0));
   let blue_executor = MultiGbExecutor::new(blue_gb, blue_plan());
-  let mut r = MultiGbRunner::new(vec![Box::new(blue_executor)]);
+  let mut r = MultiGbRunner::new([Box::new(blue_executor)]);
 
   std::thread::sleep(std::time::Duration::from_millis(1000));
   r.step();
