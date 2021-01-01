@@ -22,8 +22,6 @@ pub trait Plan<R: Rom>: PlanBase {
   /// Type of the resulting values of this plan.
   type Value;
 
-  /// Returns possible inputs from the current state. Each input description denotes a potentially different acceptable outcome.
-  fn get_inputs(&self, gb: &mut Gb<R>, state: &GbState) -> Inputs;
   /// Executes the given input on the given state. If successful, returns a new state and updates the internal state, potentially finishing and returning a value.
   /// If the plan returns, the internal state is no longer guaranteed to be consistent.
   /// The execution step may skip multiple input uses, as long as all of them happen on the same input frame and use the same given input.
@@ -33,7 +31,6 @@ pub struct NullPlan;
 impl<R: Rom> Plan<R> for NullPlan {
   type Value = ();
 
-  fn get_inputs(&self, _gb: &mut Gb<R>, _state: &GbState) -> Inputs { Inputs::any() }
   fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     gb.restore(state);
     gb.input(input);
@@ -65,10 +62,6 @@ impl<R: Rom> ListPlan<R> {
 impl<R: Rom> Plan<R> for ListPlan<R> {
   type Value = ();
 
-  fn get_inputs(&self, gb: &mut Gb<R>, state: &GbState) -> Inputs {
-    assert!(self.cur_item < self.plans.len());
-    self.plans[self.cur_item].get_inputs(gb, state)
-  }
   fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     assert!(self.cur_item < self.plans.len());
     if let Some((new_state, result)) = self.plans[self.cur_item].execute_input(gb, state, input) {

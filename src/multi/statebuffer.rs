@@ -118,7 +118,7 @@ impl<const N: usize> MultiStateBuffer<N> {
       Entry::Occupied(mut entry) => {
         let other_frame_count = entry.get().inputs.len_max();
         if other_frame_count > frame_count {
-          log::debug!("Replacing state with RNG fingerprint {} ({} -> {} frames)", rng_fingerprint, other_frame_count, frame_count);
+          log::debug!("Replacing state with RNG fingerprint {:x} ({} -> {} frames)", rng_fingerprint, other_frame_count, frame_count);
           let old_state = entry.insert(s);
           self.metrics_remove(rng_fingerprint, old_state);
           self.metrics_add(rng_fingerprint, frame_count);
@@ -168,7 +168,7 @@ impl<const N: usize> MultiStateBuffer<N> {
   fn prune(&mut self) {
     assert!(self.states.len() <= self.max_size + 1);
     if self.states.len() > self.max_size {
-      let (&tbr_key, (num_better_states, _)) = self.metrics.iter().max().unwrap();
+      let (&tbr_key, (num_better_states, _)) = self.metrics.iter().max_by_key(|e| e.1).unwrap();
       log::debug!("Pruning state with {} better states", num_better_states);
       let old_state = self.states.remove(&tbr_key).unwrap();
       self.metrics_remove(tbr_key, old_state);

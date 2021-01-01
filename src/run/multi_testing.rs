@@ -14,19 +14,21 @@ pub fn start() {
   let blue_executor = MultiGbExecutor::new(blue_gb, blue_plan());
   let mut r = MultiGbRunner::new([Box::new(blue_executor)]);
 
+  while !r.has_finished_states() {
+    // std::thread::sleep(std::time::Duration::from_millis(1000));
+    r.step();
+  }
   std::thread::sleep(std::time::Duration::from_millis(1000));
-  r.step();
-  std::thread::sleep(std::time::Duration::from_millis(1000));
-  r.step();
-  std::thread::sleep(std::time::Duration::from_millis(1000));
-  r.step();
-  std::thread::sleep(std::time::Duration::from_millis(1000));
-  r.step();
-  std::thread::sleep(std::time::Duration::from_millis(1000));
-  r.step();
-  std::thread::sleep(std::time::Duration::from_millis(1000));
-  r.step();
-  std::thread::sleep(std::time::Duration::from_millis(1000));
+  // r.step();
+  // std::thread::sleep(std::time::Duration::from_millis(1000));
+  // r.step();
+  // std::thread::sleep(std::time::Duration::from_millis(1000));
+  // r.step();
+  // std::thread::sleep(std::time::Duration::from_millis(1000));
+  // r.step();
+  // std::thread::sleep(std::time::Duration::from_millis(1000));
+  // r.step();
+  // std::thread::sleep(std::time::Duration::from_millis(1000));
 }
 
 fn blue_plan() -> ListPlan<Blue> {
@@ -34,6 +36,7 @@ fn blue_plan() -> ListPlan<Blue> {
     Box::new(SkipIntroPlan::new().with_auto_pass_after(214)), // Logo
     Box::new(SkipIntroPlan::new().with_auto_pass_after(322)), // Intro cutscene
     Box::new(SkipIntroPlan::new().with_no_up_select_b()), // main menu
+    Box::new(IdentifyInputPlan),
     Box::new(IdentifyInputPlan),
   ])
 }

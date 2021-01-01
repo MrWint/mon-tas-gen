@@ -1,5 +1,5 @@
 mod gb;
-use std::mem::MaybeUninit;
+use std::{collections::HashSet, mem::MaybeUninit};
 
 pub use gb::*;
 mod input;
@@ -17,7 +17,7 @@ use gambatte::*;
 pub trait IMultiGbExecutor {
   fn save(&self) -> MultiStateItem;
   fn load_plan(&mut self, state: &PlanState);
-  fn get_inputs(&mut self, state: &GbState) -> Inputs;
+  fn canonicalize_input(&self, state: &GbState, input: Input) -> Option<Input>;
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)>;
 }
 pub struct MultiGbExecutor<R: Rom> {
@@ -41,14 +41,16 @@ impl<R: Rom> IMultiGbExecutor for MultiGbExecutor<R> {
   fn load_plan(&mut self, state: &PlanState) {
     self.plan.restore(state);
   }
-  fn get_inputs(&mut self, state: &GbState) -> Inputs {
-    self.plan.get_inputs(&mut self.gb, state)
+  fn canonicalize_input(&self, state: &GbState, input: Input) -> Option<Input> {
+    if input == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs
+    let input = state.remove_ignored_inputs(input);
+    self.plan.canonicalize_input(input)
   }
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)> {
+    if input == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs
     let input = state.remove_ignored_inputs(input);
     if let Some((gb_state, value)) = self.plan.execute_input(&mut self.gb, state, input) {
 
-      assert!(value.is_none()); // End sentinel guarantees that the plan never completes.
       Some((MultiStateItem::new(gb_state, self.plan.save(), self.plan.is_safe()), value.is_some()))
     } else { None }
   }
@@ -109,9 +111,10 @@ impl<const N: usize> MultiGbRunner<N> {
     log::debug!("Step with buffer {} safe and {} unsafe states", self.states.len(), self.states_unsafe.len());
     let states = if self.states_unsafe.is_empty() { &mut self.states } else { &mut self.states_unsafe };
     let min_frame = states.iter().map(|s| s.get_next_input_frame()).min().expect("Can't step: state buffer is empty");
-    log::debug!("performing step at frame {}", min_frame);
     let old_states = std::mem::take(states);
     drop(states); // Stop the mut borrow.
+    let num_processed_states = old_states.iter().filter(|s| s.get_next_input_frame() == min_frame).count();
+    log::debug!("performing step at frame {} moving {} of {} states", min_frame, num_processed_states, old_states.len());
     for state in old_states.into_iter() {
       if state.get_next_input_frame() == min_frame {
         self.step_state(state);
@@ -123,91 +126,112 @@ impl<const N: usize> MultiGbRunner<N> {
   fn step_state(&mut self, s: MultiState<N>) {
     // Choose input frame to fill
     let input_frame = s.get_next_input_frame();
-    // Start with any input
-    let mut combined_inputs = SplitInputs::any();
-    let mut use_lo = false;
-    let mut use_hi = false;
     assert!(s.inputs.len_lo() <= input_frame && s.inputs.len_hi() <= input_frame); // Both nybbles are still undecided for this frame.
+    // Start with any input
+    let mut input_iter = InputIterator::new();
+    let mut prev_hi_determined = false;
+    let mut set_prev_hi = false;
+    let mut set_hi = false;
 
-    // Apply any already decided nybble of the previous frame
-    let mut prev_frame_set_inputs = InputDesc::any();
-    if let Some(lo_input) = s.inputs.get_input_lo(input_frame - 1) {
-      prev_frame_set_inputs = (prev_frame_set_inputs & InputDesc::new(lo_input, inputs::HI_INPUTS)).unwrap();
-    }
+    // Apply any already decided hi nybble of the previous frame
     if let Some(hi_input) = s.inputs.get_input_hi(input_frame - 1) {
-      prev_frame_set_inputs = (prev_frame_set_inputs & InputDesc::new(hi_input, inputs::LO_INPUTS)).unwrap();
+      prev_hi_determined =true;
+      input_iter.prev_input |= hi_input;
     }
-    combined_inputs = combined_inputs & (prev_frame_set_inputs, InputDesc::any());
 
-    // Apply any restrictions based on the plans
+    // Check which nybbles are affected
     for i in 0..N {
       let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
       let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
-      assert!(input_frame_lo >= input_frame || input_frame_hi >= input_frame); // No instance is left behind
+      assert!(input_frame_lo >= input_frame_hi); // Assumption based on which order the nybbles are read in.
+      assert!(input_frame_lo <= input_frame_hi + 1); // Nybble reads can't be more than one frame apart.
+      assert!(input_frame_lo >= input_frame); // No instance is left behind
+      if input_frame_hi < input_frame { // -1/0 case
+        if !prev_hi_determined { set_prev_hi = true; }
+      } else if input_frame_lo == input_frame { // 0/0 case
+        set_hi = true;
+      }
       if input_frame_lo == input_frame || input_frame_hi == input_frame { // If this instance affects the input frame
-        self.instances[i].load_plan(&s.instances[i].plan_state);
-        let inputs = self.instances[i].get_inputs(&s.instances[i].gb_state);
-        let mut split_inputs = if input_frame_lo < input_frame {
-          assert_eq!(input_frame_lo + 1, input_frame);
-          use_hi = true;
-          inputs.split_lo_hi()
-        } else if input_frame_lo > input_frame {
-          assert_eq!(input_frame_lo - 1, input_frame);
-          inputs.split_only_hi()
-        } else if input_frame_hi < input_frame {
-          assert_eq!(input_frame_hi + 1, input_frame);
-          use_lo = true;
-          inputs.split_hi_lo()
-        } else if input_frame_hi > input_frame {
-          assert_eq!(input_frame_hi - 1, input_frame);
-          inputs.split_only_lo()
-        } else {
-          use_lo = true;
-          use_hi = true;
-          inputs.split()
-        };
-        // Restrict past inputs if they are already decided.
-        split_inputs = split_inputs & (prev_frame_set_inputs, InputDesc::any());
-        combined_inputs = combined_inputs.combine(&split_inputs);
+        self.instances[i].load_plan(&s.instances[i].plan_state); // pre-load all plan instances, they will be used multiple times later.
       }
     }
-    // Go through any input that fulfills all conditions
-    'next_input: for (prev_input, cur_input) in combined_inputs.iter().map(|(p, c)| (p.get_input(), c.get_input())) {
+    input_iter.use_hi = set_hi;
+    input_iter.use_prev_hi = set_prev_hi;
+
+    let mut processed_canonical_inputs = HashSet::new();
+    // Go through reasonable input combinations
+    'next_input: for (prev_input, cur_input) in input_iter {
+      if set_hi { // If hi bit is being set, check for possible conflicts with 0/1 cases
+        let hi = cur_input & inputs::HI_INPUTS;
+        for i in 0..N {
+          let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
+          let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
+          if input_frame_hi == input_frame && input_frame_lo > input_frame { // 0/1 case
+            // Plan is guaranteed to be already loaded.
+            if (0..16).map(Input::from_bits_truncate).find_map(|lo| self.instances[i].canonicalize_input(&s.instances[i].gb_state, hi | lo)).is_none() {
+              continue 'next_input; // There is no hope for these inputs.
+            }
+          }
+        }
+      }
+      // Determine canonical inputs
+      let mut canonical_inputs = [Input::empty(); N];
+      for i in 0..N {
+        let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
+        let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
+        canonical_inputs[i] = if input_frame_lo == input_frame {  // -1/0 or 0/0 case
+          let instance_input = if input_frame_hi < input_frame { // -1/0 case
+            (prev_input & inputs::HI_INPUTS) | (cur_input & inputs::LO_INPUTS)
+          } else { // 0/0 case
+            cur_input
+          };
+          // Plan is guaranteed to be already loaded.
+          if let Some(canonical_input) = self.instances[i].canonicalize_input(&s.instances[i].gb_state, instance_input) {
+            canonical_input
+          } else {
+            continue 'next_input; // There is no hope for these inputs.
+          }
+        } else {
+          Input::empty() // Ignore unused instances
+        };
+      }
+      if !processed_canonical_inputs.insert(canonical_inputs) {
+        continue 'next_input; // Combination of canonical states was already processed.
+      }
       log::debug!("performing inputs {:?} and {:?}", prev_input, cur_input);
       let mut multi_state_items: [MaybeUninit<MultiStateItem>; N] = unsafe { MaybeUninit::uninit().assume_init() };
       let mut is_done = false;
       for i in 0..N {
         let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
         let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
-        if input_frame_lo <= input_frame && input_frame_hi <= input_frame {
+        if input_frame_lo == input_frame { // -1/0 or 0/0 case
           // Next input use is fully defined now, execute and move on
-          let instance_input = if input_frame_lo < input_frame {
-            assert_eq!(input_frame_lo + 1, input_frame);
-            (cur_input & inputs::HI_INPUTS) | (prev_input & inputs::LO_INPUTS)
-          } else if input_frame_hi < input_frame {
-            assert_eq!(input_frame_hi + 1, input_frame);
-            (cur_input & inputs::LO_INPUTS) | (prev_input & inputs::HI_INPUTS)
-          } else {
+          let instance_input = if input_frame_hi < input_frame { // -1/0 case
+            (prev_input & inputs::HI_INPUTS) | (cur_input & inputs::LO_INPUTS)
+          } else { // 0/0 case
             cur_input
           };
-          if instance_input == inputs::LO_INPUTS { continue 'next_input; } // Don't use reset inputs
-
-          self.instances[i].load_plan(&s.instances[i].plan_state); // reload plan (may have been altered in previous loop iterations)
           if let Some((multi_state_item, instance_is_done)) = self.instances[i].execute_input(&s.instances[i].gb_state, instance_input) {
+            self.instances[i].load_plan(&s.instances[i].plan_state); // reload plan so it can be used again in later iterations.
             is_done |= instance_is_done;
             multi_state_items[i] = MaybeUninit::new(multi_state_item);
-          } else { continue 'next_input; }
+          } else {
+            // Drop allocated items to prevent memory leak.
+            for elem in &mut multi_state_items[0..i] {
+              unsafe { std::ptr::drop_in_place(elem.as_mut_ptr()); }
+            }
+            continue 'next_input;
+          }
         } else {
           multi_state_items[i] = MaybeUninit::new(s.instances[i].clone());
         }
       }
       let mut new_inputs = s.inputs.clone();
-      new_inputs.set_input_lo(input_frame - 1, prev_input);
-      new_inputs.set_input_hi(input_frame - 1, prev_input);
-      if use_lo {
-        new_inputs.set_input_lo(input_frame, cur_input);
+      if set_prev_hi {
+        new_inputs.set_input_hi(input_frame - 1, prev_input);
       }
-      if use_hi {
+      new_inputs.set_input_lo(input_frame, cur_input);
+      if set_hi {
         new_inputs.set_input_hi(input_frame, cur_input);
       }
       let multi_state = MultiState::new(unsafe { std::mem::transmute_copy(&multi_state_items) }, new_inputs);
@@ -225,11 +249,56 @@ impl<const N: usize> MultiGbRunner<N> {
       self.states_unsafe.add_state(state);
     }
   }
+
+  pub fn has_finished_states(&self) -> bool {
+    !self.final_states.is_empty()
+  }
   
   pub fn save(&self, _file_name: &str) {
     todo!()
   }
   pub fn load(&mut self, _file_name: &str) {
     todo!()
+  }
+}
+
+
+struct InputIterator {
+  use_prev_hi: bool,
+  use_hi: bool,
+  prev_input: Input,
+  cur_input: Input,
+  done: bool,
+}
+impl InputIterator {
+  fn new() -> Self {
+    InputIterator {
+      use_prev_hi: false,
+      use_hi: false,
+      prev_input: Input::empty(),
+      cur_input: Input::empty(),
+      done: false,
+    }
+  }
+}
+impl Iterator for InputIterator {
+  type Item = (Input, Input);
+
+  fn next(&mut self) -> Option<(Input, Input)> {
+    if self.done { return None; }
+    let result = Some((self.prev_input, self.cur_input));
+    if !self.use_hi && self.cur_input.contains(inputs::LO_INPUTS) {
+      self.cur_input -= inputs::LO_INPUTS;
+    } else {
+      self.cur_input = Input::from_bits_truncate(self.cur_input.bits().wrapping_add(1));
+      if !self.cur_input.is_empty() { return result; }
+    }
+    if self.use_prev_hi {
+      self.prev_input = Input::from_bits_truncate(self.prev_input.bits().wrapping_add(16));
+      self.done = self.prev_input.bits() < 16;
+    } else {
+      self.done = true;
+    }
+    result
   }
 }

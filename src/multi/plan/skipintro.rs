@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
@@ -50,17 +48,6 @@ impl PlanBase for SkipIntroPlan {
 impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for SkipIntroPlan {
   type Value = ();
 
-  fn get_inputs(&self, _gb: &mut Gb<R>, _s: &GbState) -> Inputs {
-    let mut inputs = HashSet::new();
-
-    if self.allow_up_select_b {
-      // Propose U|SELECT|B to progress (other inputs not allowed).
-      inputs.insert(InputDesc::new(U | SELECT | B, Input::empty()));
-    }
-
-    inputs.insert(InputDesc::any()); // Any input is fine, even if it doesn't progress.
-    Inputs::new(inputs)
-  }
   fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     if !self.allow_up_select_b && input.contains(U | SELECT | B) {
       // U|SELECT|B is not allowed, pressing it would enter the clear save dialog.

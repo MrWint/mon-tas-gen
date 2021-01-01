@@ -13,7 +13,6 @@ impl PlanBase for IdentifyInputPlan {
 impl<R: Rom + InputIdentificationAddresses> Plan<R> for IdentifyInputPlan {
   type Value = ();
 
-  fn get_inputs(&self, _gb: &mut Gb<R>, _s: &GbState) -> Inputs { Inputs::any() }
   fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     let post_addresses: Vec<_> = R::II_ADDRESSES.iter().map(|(_, _, post, _)| *post).collect();
     gb.restore(s);
