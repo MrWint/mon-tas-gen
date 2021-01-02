@@ -44,6 +44,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for SkipIntroPlan {
     self.hjoy5_state = HJoy5State::from_gb_state(gb, state);
   }
   fn is_safe(&self) -> bool { true }
+  fn get_blockable_inputs(&self) -> Input { A | START }
 
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
     if !self.allow_up_select_b && input.contains(U | SELECT | B) {

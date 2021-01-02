@@ -27,6 +27,7 @@ impl<R: MultiRom + InputIdentificationAddresses> Plan<R> for IdentifyInputPlan {
   fn restore(&mut self, _state: &PlanState) { }
   fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) { }
   fn is_safe(&self) -> bool { true }
+  fn get_blockable_inputs(&self) -> Input { Input::empty() }
   fn canonicalize_input(&self, _input: Input) -> Option<Input> { Some(Input::empty()) }
   fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     if let Some(name) = identify_input_with(gb, s, input) {

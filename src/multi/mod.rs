@@ -52,7 +52,8 @@ impl<R: MultiRom + InputIdentificationAddresses> IMultiGbExecutor for MultiGbExe
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)> {
     if input == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs
     let input = state.remove_ignored_inputs(input);
-    if let Some((gb_state, value)) = self.plan.execute_input(&mut self.gb, state, input) {
+    if let Some((mut gb_state, value)) = self.plan.execute_input(&mut self.gb, state, input) {
+      gb_state.blocked_inputs &= self.plan.get_blockable_inputs();
 
       Some((MultiStateItem::new(gb_state, self.plan.save(), self.plan.is_safe()), value.is_some()))
     } else { None }

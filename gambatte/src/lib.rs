@@ -256,7 +256,7 @@ impl Gambatte {
     if self.frame_start_joypad_state & 0xf == 0xf // not already pressed
         && self.frame_start_joypad_state & 0x30 != 0x30 // lines not disabled
         && ifreg & 0x10 != 0x10 { // interrupt not already requested
-      log::log!(if self.frame < 300 /* before first realistic input */ { log::Level::Debug } else { log::Level::Info }, "at frame {} with potential start-of-frame joypad interrupt ({:x})", self.frame, self.frame_start_joypad_state);
+      log::log!(if self.frame < 300 /* before first realistic input */ { log::Level::Trace } else { log::Level::Info }, "at frame {} with potential start-of-frame joypad interrupt ({:x})", self.frame, self.frame_start_joypad_state);
 
       self.frame_start_gambatte_state = Some(self.save_gambatte_state());
       self.frame_start_cycle_count = self.cycle_count;

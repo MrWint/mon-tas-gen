@@ -1,12 +1,13 @@
 use serde_derive::{Serialize, Deserialize};
 
 use std::cmp::{max, Ordering};
-use std::collections::hash_map::{HashMap, Entry};
+use std::collections::hash_map::HashMap;
 use std::iter::FromIterator;
 use super::*;
 use crate::big_array::BigArray;
 
-pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
+pub const MULTI_STATE_BUFFER_SINGLE_RNG_MAX_SIZE: usize = 4; // how many states with the same RNG value are kept at most.
+pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 64;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct MultiStateItem {
@@ -78,13 +79,30 @@ impl<const N: usize> MultiState<N> {
   pub fn get_next_input_frame(&self) -> u32 {
     self.instances.iter().map(|instance| max(instance.gb_state.get_input_frame_lo(), instance.gb_state.get_input_frame_hi())).min().unwrap()
   }
+
+  fn get_blocked_inputs(&self) -> BlockedInputs<N> {
+    let mut result = BlockedInputs([Input::empty(); N]);
+    for i in 0..N {
+      result.0[i] = self.instances[i].gb_state.blocked_inputs;
+    }
+    result
+  }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct BlockedInputs<const N: usize>(#[serde(with = "BigArray")] [Input; N]);
+impl<const N: usize> BlockedInputs<N> {
+  fn contains(&self, other: &BlockedInputs<N>) -> bool {
+    self.0.iter().zip(other.0.iter()).all(|(&s, &o)| s.contains(o))
+  }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct MultiStateBuffer<const N: usize> {
-  states: HashMap<u64, MultiState<N>>,
+  blocked_inputs: HashMap<u64, Vec<BlockedInputs<N>>>,
+  states: HashMap<(u64, BlockedInputs<N>), MultiState<N>>,
   // for each state, count number of states more advanced than this, and frame count
-  metrics: HashMap<u64, (u32, u32)>,
+  metrics: HashMap<(u64, BlockedInputs<N>), (u32, u32)>,
   max_size: usize,
 }
 impl<const N: usize> Default for MultiStateBuffer<N> {
@@ -94,6 +112,7 @@ impl<const N: usize> MultiStateBuffer<N> {
   pub fn new() -> Self { Default::default() }
   pub fn with_max_size(max_size: usize) -> Self {
     MultiStateBuffer {
+      blocked_inputs: HashMap::with_capacity(0), // don't allocate.
       states: HashMap::with_capacity(0), // don't allocate.
       metrics: HashMap::with_capacity(0), // don't allocate.
       max_size,
@@ -113,65 +132,84 @@ impl<const N: usize> MultiStateBuffer<N> {
       self.metrics.reserve(self.max_size + 1); // Reserve one additional element to hold excess before pruning.
     }
     let rng_fingerprint = s.get_rng_fingerprint();
-    let frame_count = s.inputs.len_max();
-    match self.states.entry(rng_fingerprint) {
-      Entry::Occupied(mut entry) => {
-        let other_frame_count = entry.get().inputs.len_max();
-        if other_frame_count > frame_count {
-          log::debug!("Replacing state with RNG fingerprint {:x} ({} -> {} frames)", rng_fingerprint, other_frame_count, frame_count);
-          let old_state = entry.insert(s);
-          self.metrics_remove(rng_fingerprint, old_state);
-          self.metrics_add(rng_fingerprint, frame_count);
-        }
-      }
-      Entry::Vacant(entry) => {
-        entry.insert(s);
-        self.metrics_add(rng_fingerprint, frame_count);
-        self.prune();
+    let blocked_inputs = s.get_blocked_inputs();
+    let frame_count = s.get_next_input_frame();
+    let blocked_input_list = self.blocked_inputs.entry(rng_fingerprint).or_insert(Vec::new());
+    { // Compare to existing states with the same rng fingerprint
+      let mut i = 0;
+      while i < blocked_input_list.len() {
+        if blocked_inputs.contains(&blocked_input_list[i]) { // current state is worse than stored (or equal), drop
+          log::trace!("For RNG fingerprint {:x}, dropping new blocked inputs {:?} which are worse than {:?}", rng_fingerprint, blocked_inputs, blocked_input_list[i]);
+          return;
+        } else if blocked_input_list[i].contains(&blocked_inputs) { // Stored state is worse than current state, remove
+          let old_blocked_input = blocked_input_list.swap_remove(i);
+          log::trace!("For RNG fingerprint {:x}, removing blocked inputs {:?} which are worse than new {:?}", rng_fingerprint, old_blocked_input, blocked_inputs);
+          let tbr_key = (rng_fingerprint, old_blocked_input);
+          let old_state = self.states.remove(&tbr_key).unwrap();
+          { // Update metrics
+            let (old_num_better_states, _) = self.metrics.remove(&tbr_key).unwrap();
+            let mut num_better_states = 0;
+            for (key, os) in self.states.iter() {
+              match old_state.compare_plans(os) {
+                Some(Ordering::Less) => num_better_states += 1,
+                Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 -= 1,
+                _ => {}
+              }
+            }
+            assert!(old_num_better_states == num_better_states);
+          }
+        } else { i += 1; }
       }
     }
+    if blocked_input_list.len() >= MULTI_STATE_BUFFER_SINGLE_RNG_MAX_SIZE {
+      // There is no room to add this
+      log::trace!("Too many states with RNG fingerprint {:x}, dropping state with blocked inputs {:?}", rng_fingerprint, blocked_inputs);
+      return;
+    }
+    blocked_input_list.push(blocked_inputs.clone());
+    drop(blocked_input_list); // Stop mut borrow
+    let inserted_key = (rng_fingerprint, blocked_inputs);
+    { // Update metrics
+      let mut num_better_states = 0;
+      for (key, os) in self.states.iter() {
+        match s.compare_plans(os) {
+          Some(Ordering::Less) => num_better_states += 1,
+          Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 += 1,
+          _ => {}
+        }
+      }
+      self.metrics.insert(inserted_key.clone(), (num_better_states, frame_count));
+    }
+    self.states.insert(inserted_key, s);
+    self.prune();
   }
   /// Adds multiple states to the buffer.
   pub fn add_all<I: IntoIterator<Item=MultiState<N>>>(&mut self, iter: I) {
     for s in iter.into_iter() { self.add_state(s); }
   }
-  fn metrics_add(&mut self, rng_fingerprint: u64, frame_count: u32) {
-    let s = self.states.get(&rng_fingerprint).unwrap();
-
-    let mut num_better_states = 0;
-    for (rng, os) in self.states.iter() {
-      if rng_fingerprint != *rng {
-        match s.compare_plans(os) {
-          Some(Ordering::Less) => num_better_states += 1,
-          Some(Ordering::Greater) => self.metrics.get_mut(rng).unwrap().0 += 1,
-          _ => {}
-        }
-      }
-    }
-    self.metrics.insert(rng_fingerprint, (num_better_states, frame_count));
-  }
-  fn metrics_remove(&mut self, rng_fingerprint: u64, s: MultiState<N>) {
-    let (old_num_better_states, _) = self.metrics.remove(&rng_fingerprint).unwrap();
-    let mut num_better_states = 0;
-    for (rng, os) in self.states.iter() {
-      if rng_fingerprint != *rng {
-        match s.compare_plans(os) {
-          Some(Ordering::Less) => num_better_states += 1,
-          Some(Ordering::Greater) => self.metrics.get_mut(rng).unwrap().0 -= 1,
-          _ => {}
-        }
-      }
-    }
-    assert!(old_num_better_states == num_better_states);
-  }
   /// Removes states until it doesn't exceed ```max_size``` anymore.
   fn prune(&mut self) {
     assert!(self.states.len() <= self.max_size + 1);
     if self.states.len() > self.max_size {
-      let (&tbr_key, (num_better_states, _)) = self.metrics.iter().max_by_key(|e| e.1).unwrap();
+      let (tbr_key, (num_better_states, _)) = self.metrics.iter().max_by_key(|e| e.1).unwrap();
+      let tbr_key = tbr_key.clone();
       log::debug!("Pruning state with {} better states", num_better_states);
       let old_state = self.states.remove(&tbr_key).unwrap();
-      self.metrics_remove(tbr_key, old_state);
+      { // Update metrics
+        let (old_num_better_states, _) = self.metrics.remove(&tbr_key).unwrap();
+        let mut num_better_states = 0;
+        for (key, os) in self.states.iter() {
+          match old_state.compare_plans(os) {
+            Some(Ordering::Less) => num_better_states += 1,
+            Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 -= 1,
+            _ => {}
+          }
+        }
+        assert!(old_num_better_states == num_better_states);
+      }
+      let blocked_input_list = self.blocked_inputs.get_mut(&tbr_key.0).unwrap();
+      let blocked_input_list_pos = blocked_input_list.iter().position(|x| *x == tbr_key.1).unwrap();
+      blocked_input_list.swap_remove(blocked_input_list_pos);
     }
   }
 
@@ -187,7 +225,7 @@ impl<const N: usize> MultiStateBuffer<N> {
   pub fn get_max_size(&self) -> usize {
     self.max_size
   }
-  pub fn iter<'a>(&'a self) -> std::collections::hash_map::Values<'a, u64, MultiState<N>> {
+  pub fn iter<'a>(&'a self) -> std::collections::hash_map::Values<'a, (u64, BlockedInputs<N>), MultiState<N>> {
     self.into_iter()
   }
 }
@@ -201,7 +239,7 @@ impl<const N: usize> FromIterator<MultiState<N>> for MultiStateBuffer<N> {
 
 impl<const N: usize> IntoIterator for MultiStateBuffer<N> {
   type Item = MultiState<N>;
-  type IntoIter = std::iter::Map<std::collections::hash_map::IntoIter<u64, MultiState<N>>, fn((u64, MultiState<N>)) -> MultiState<N>>;
+  type IntoIter = std::iter::Map<std::collections::hash_map::IntoIter<(u64, BlockedInputs<N>), MultiState<N>>, fn(((u64, BlockedInputs<N>), MultiState<N>)) -> MultiState<N>>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.states.into_iter().map(|(_, s)| s)
@@ -209,7 +247,7 @@ impl<const N: usize> IntoIterator for MultiStateBuffer<N> {
 }
 impl<'a, const N: usize> IntoIterator for &'a MultiStateBuffer<N> {
   type Item = &'a MultiState<N>;
-  type IntoIter = std::collections::hash_map::Values<'a, u64, MultiState<N>>;
+  type IntoIter = std::collections::hash_map::Values<'a, (u64, BlockedInputs<N>), MultiState<N>>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.states.values()

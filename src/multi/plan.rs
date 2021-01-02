@@ -16,6 +16,8 @@ pub trait Plan<R: Rom> {
   fn restore(&mut self, state: &PlanState);
   /// Checks whether the current state is considered safe, i.e. there is guaranteed to be a sequence of inputs which completes it.
   fn is_safe(&self) -> bool;
+  /// Returns the set of buttons which can be blocked from being pressed by the previous input.
+  fn get_blockable_inputs(&self) -> Input;
   /// Analyzed the initial state and initialize the internal plan state to allow completion.
   /// Called before any canonicalize_input or execute_input calls are made.
   fn initialize(&mut self, gb: &mut Gb<R>, state: &GbState);
@@ -33,6 +35,7 @@ impl<R: MultiRom> Plan<R> for NullPlan {
   fn save(&self) -> PlanState { PlanState::EmptyState }
   fn restore(&mut self, _state: &PlanState) { }
   fn is_safe(&self) -> bool { true }
+  fn get_blockable_inputs(&self) -> Input { Input::empty() }
   fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) { }
   fn canonicalize_input(&self, _input: Input) -> Option<Input> { Some(Input::empty()) }
   fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
@@ -89,6 +92,9 @@ impl<R: Rom> Plan<R> for ListPlan<R> {
   }
   fn is_safe(&self) -> bool {
     self.cur_item >= self.plans.len() || self.plans[self.cur_item].is_safe()
+  }
+  fn get_blockable_inputs(&self) -> Input {
+    if self.cur_item < self.plans.len() { self.plans[self.cur_item].get_blockable_inputs() } else { Input::all() }
   }
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
     assert!(self.cur_item_is_initialized);

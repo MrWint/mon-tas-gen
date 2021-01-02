@@ -14,7 +14,7 @@ pub struct GbState {
 
   // derived state for StateBuffer decisions
   pub rng_state: u32,
-  pub last_input: Input,
+  pub blocked_inputs: Input,
 
   // additional semantic information and stats
   pub num_delays: u32,
@@ -96,7 +96,7 @@ impl <R: RngAddresses + JoypadLowSensitivityAddresses> Gb<R> {
       input_use_address: self.input_use_address,
       ignored_inputs: self.ignored_inputs,
       // save derived state
-      last_input: if self.is_at_input() { Input::from_bits_truncate(self.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS)) } else { Input::empty() },
+      blocked_inputs: if self.is_at_input() { Input::from_bits_truncate(self.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS)) } else { Input::empty() },
       rng_state: if self.is_at_input() { self.get_rng_state() } else { 0 },
       num_delays: self.num_delays,
     }
