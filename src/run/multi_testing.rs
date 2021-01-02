@@ -36,7 +36,5 @@ fn blue_plan() -> ListPlan<Blue> {
     Box::new(SkipIntroPlan::new().with_auto_pass_after(214)), // Logo
     Box::new(SkipIntroPlan::new().with_auto_pass_after(322)), // Intro cutscene
     Box::new(SkipIntroPlan::new().with_no_up_select_b()), // main menu
-    Box::new(IdentifyInputPlan),
-    Box::new(IdentifyInputPlan),
   ])
 }

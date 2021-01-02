@@ -14,7 +14,7 @@ pub struct GbState {
 
   // derived state for StateBuffer decisions
   pub rng_state: u32,
-  pub cycle_count: u64,
+  pub last_input: Input,
 
   // additional semantic information and stats
   pub num_delays: u32,
@@ -86,7 +86,7 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
     pgb
   }
 }
-impl <R: RngAddresses> Gb<R> {
+impl <R: RngAddresses + JoypadLowSensitivityAddresses> Gb<R> {
   /// Saves the current execution state to a State object.
   pub fn save(&self) -> GbState {
     GbState {
@@ -96,7 +96,7 @@ impl <R: RngAddresses> Gb<R> {
       input_use_address: self.input_use_address,
       ignored_inputs: self.ignored_inputs,
       // save derived state
-      cycle_count: self.gb.get_cycle_count(),
+      last_input: if self.is_at_input() { Input::from_bits_truncate(self.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS)) } else { Input::empty() },
       rng_state: if self.is_at_input() { self.get_rng_state() } else { 0 },
       num_delays: self.num_delays,
     }
@@ -186,9 +186,9 @@ impl <R: JoypadAddresses> Gb<R> {
   }
   // proceeds to the next decision point and count the previous input as delay
   pub fn delay_step(&mut self) {
-    let previous_input_frame = *self.cur_input_frame[..].iter().min().unwrap();
+    let previous_input_frame = *self.cur_input_frame[..].iter().max().unwrap();
     self.step();
-    self.num_delays += *self.cur_input_frame[..].iter().min().unwrap() - previous_input_frame;
+    self.num_delays += *self.cur_input_frame[..].iter().max().unwrap() - previous_input_frame;
   }
 
   // Restores a saved execution state object.

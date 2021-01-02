@@ -6,31 +6,35 @@ use super::*;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-pub trait PlanBase {
+pub trait Plan<R: Rom> {
+  /// Type of the resulting values of this plan.
+  type Value;
+
   /// Saves current plan state
   fn save(&self) -> PlanState;
   /// Restores saved plan state
   fn restore(&mut self, state: &PlanState);
-  /// Resets plan state to initial value
-  fn reset(&mut self);
   /// Checks whether the current state is considered safe, i.e. there is guaranteed to be a sequence of inputs which completes it.
   fn is_safe(&self) -> bool;
+  /// Analyzed the initial state and initialize the internal plan state to allow completion.
+  /// Called before any canonicalize_input or execute_input calls are made.
+  fn initialize(&mut self, gb: &mut Gb<R>, state: &GbState);
+  /// Normalizes the input to one that has the same effect, used to deduplicate inputs with the same outcome.
   fn canonicalize_input(&self, input: Input) -> Option<Input>;
-}
-
-pub trait Plan<R: Rom>: PlanBase {
-  /// Type of the resulting values of this plan.
-  type Value;
-
   /// Executes the given input on the given state. If successful, returns a new state and updates the internal state, potentially finishing and returning a value.
   /// If the plan returns, the internal state is no longer guaranteed to be consistent.
   /// The execution step may skip multiple input uses, as long as all of them happen on the same input frame and use the same given input.
   fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<Self::Value>)>;
 }
 pub struct NullPlan;
-impl<R: Rom> Plan<R> for NullPlan {
+impl<R: MultiRom> Plan<R> for NullPlan {
   type Value = ();
 
+  fn save(&self) -> PlanState { PlanState::EmptyState }
+  fn restore(&mut self, _state: &PlanState) { }
+  fn is_safe(&self) -> bool { true }
+  fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) { }
+  fn canonicalize_input(&self, _input: Input) -> Option<Input> { Some(Input::empty()) }
   fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     gb.restore(state);
     gb.input(input);
@@ -38,17 +42,11 @@ impl<R: Rom> Plan<R> for NullPlan {
     Some((gb.save(), None))
   }
 }
-impl PlanBase for NullPlan {
-  fn save(&self) -> PlanState { PlanState::EmptyState }
-  fn restore(&mut self, _state: &PlanState) { }
-  fn reset(&mut self) { }
-  fn is_safe(&self) -> bool { true }
-  fn canonicalize_input(&self, _input: Input) -> Option<Input> { Some(Input::empty()) }
-}
 
 pub struct ListPlan<R: Rom> {
   plans: Vec<Box<dyn Plan<R, Value=()>>>,
   cur_item: usize,
+  cur_item_is_initialized: bool,
 }
 impl<R: Rom> ListPlan<R> {
   pub fn new(plans: Vec<Box<dyn Plan<R, Value=()>>>) -> Self {
@@ -56,27 +54,17 @@ impl<R: Rom> ListPlan<R> {
     Self {
       plans,
       cur_item: 0,
+      cur_item_is_initialized: false,
     }
   }
+  fn initialize_cur_item(&mut self, gb: &mut Gb<R>, state: &GbState) {
+    self.plans[self.cur_item].initialize(gb, state);
+    self.cur_item_is_initialized = true;
+}
 }
 impl<R: Rom> Plan<R> for ListPlan<R> {
   type Value = ();
 
-  fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
-    assert!(self.cur_item < self.plans.len());
-    if let Some((new_state, result)) = self.plans[self.cur_item].execute_input(gb, state, input) {
-      if result.is_some() {
-        self.cur_item += 1;
-        if self.cur_item >= self.plans.len() {
-          return Some((new_state, Some(())));
-        }
-        self.plans[self.cur_item].reset();
-      }
-      Some((new_state, None))
-    } else { None }
-  }
-}
-impl<R: Rom> PlanBase for ListPlan<R> {
   fn save(&self) -> PlanState {
     PlanState::ListState {
       cur_item: self.cur_item,
@@ -89,21 +77,39 @@ impl<R: Rom> PlanBase for ListPlan<R> {
       self.cur_item = *cur_item;
       if let Some(sub_plan) = sub_plan {
         self.plans[*cur_item].restore(sub_plan);
+        self.cur_item_is_initialized = true;
       } else {
-        self.plans[*cur_item].reset();
+        self.cur_item_is_initialized = false;
       }
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
-  fn reset(&mut self) {
+  fn initialize(&mut self, gb: &mut Gb<R>, state: &GbState) {
     self.cur_item = 0;
-    self.plans[0].reset();
+    self.initialize_cur_item(gb, state);
   }
   fn is_safe(&self) -> bool {
     self.cur_item >= self.plans.len() || self.plans[self.cur_item].is_safe()
   }
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
-    assert!(self.cur_item < self.plans.len());
+    assert!(self.cur_item_is_initialized);
     self.plans[self.cur_item].canonicalize_input(input)
+  }
+  fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+    assert!(self.cur_item < self.plans.len());
+    if !self.cur_item_is_initialized {
+      self.initialize_cur_item(gb, state);
+    }
+    if let Some((new_state, result)) = self.plans[self.cur_item].execute_input(gb, state, input) {
+      if result.is_some() {
+        self.cur_item += 1;
+        if self.cur_item >= self.plans.len() {
+          self.cur_item_is_initialized = false;
+          return Some((new_state, Some(())));
+        }
+        self.initialize_cur_item(gb, &new_state);
+      }
+      Some((new_state, None))
+    } else { None }
   }
 }
 
@@ -111,7 +117,7 @@ impl<R: Rom> PlanBase for ListPlan<R> {
 pub enum PlanState {
   EmptyState,
   ListState { cur_item: usize, sub_plan: Option<Rc<PlanState>> },
-  SkipIntroState { inputs_until_auto_pass: u32, }
+  SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, }
 }
 impl PartialEq for PlanState {
   fn eq(&self, other: &Self) -> bool {
@@ -136,8 +142,8 @@ impl PartialOrd for PlanState {
           }
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
-      PlanState::SkipIntroState { inputs_until_auto_pass } => {
-        if let PlanState::SkipIntroState { inputs_until_auto_pass: other_inputs_until_auto_pass } = other {
+      PlanState::SkipIntroState { inputs_until_auto_pass, hjoy5_state: _ } => {
+        if let PlanState::SkipIntroState { inputs_until_auto_pass: other_inputs_until_auto_pass, hjoy5_state: _ } = other {
           other_inputs_until_auto_pass.partial_cmp(inputs_until_auto_pass)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },

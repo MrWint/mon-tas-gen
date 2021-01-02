@@ -6,6 +6,7 @@ use gambatte::inputs::*;
 pub struct SkipIntroPlan {
   // instance state
   inputs_until_auto_pass: u32,
+  hjoy5_state: HJoy5State,
 
   // config state
   initial_inputs_until_auto_pass: u32,
@@ -14,24 +15,34 @@ pub struct SkipIntroPlan {
 impl SkipIntroPlan {
   pub fn new() -> Self {
     Self {
+      // Set instance state to dummy values, will be initialize()'d later.
       inputs_until_auto_pass: std::u32::MAX,
+      hjoy5_state: HJoy5State::unknown(),
+
+      // Default config state.
       initial_inputs_until_auto_pass: std::u32::MAX,
       allow_up_select_b: true,
     }
   }
-  pub fn with_auto_pass_after(self, inputs_until_auto_pass: u32) -> Self { Self { inputs_until_auto_pass, initial_inputs_until_auto_pass: inputs_until_auto_pass, ..self } }
+  pub fn with_auto_pass_after(self, initial_inputs_until_auto_pass: u32) -> Self { Self { initial_inputs_until_auto_pass, ..self } }
   pub fn with_no_up_select_b(self) -> Self { Self { allow_up_select_b: false, ..self } }
 }
-impl PlanBase for SkipIntroPlan {
+impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for SkipIntroPlan {
+  type Value = ();
+
   fn save(&self) -> PlanState {
-    PlanState::SkipIntroState { inputs_until_auto_pass: self.inputs_until_auto_pass }
+    PlanState::SkipIntroState { inputs_until_auto_pass: self.inputs_until_auto_pass, hjoy5_state: self.hjoy5_state }
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::SkipIntroState { inputs_until_auto_pass } = state {
+    if let PlanState::SkipIntroState { inputs_until_auto_pass, hjoy5_state } = state {
       self.inputs_until_auto_pass = *inputs_until_auto_pass;
+      self.hjoy5_state = *hjoy5_state;
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
-  fn reset(&mut self) { self.inputs_until_auto_pass = self.initial_inputs_until_auto_pass; }
+  fn initialize(&mut self, gb: &mut Gb<R>, state: &GbState) {
+    self.inputs_until_auto_pass = self.initial_inputs_until_auto_pass;
+    self.hjoy5_state = HJoy5State::from_gb_state(gb, state);
+  }
   fn is_safe(&self) -> bool { true }
 
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
@@ -42,12 +53,9 @@ impl PlanBase for SkipIntroPlan {
     if input == U | SELECT | B {
       return Some(input);
     }
-    Some(input & (A | START))
+    let hjoy5 = self.hjoy5_state.get_hjoy5(input);
+    Some(hjoy5 & (A | START))
   }
-}
-impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for SkipIntroPlan {
-  type Value = ();
-
   fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     if !self.allow_up_select_b && input.contains(U | SELECT | B) {
       // U|SELECT|B is not allowed, pressing it would enter the clear save dialog.
@@ -59,13 +67,17 @@ impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for SkipIntroPlan {
       gb.step();
       return Some((gb.save(), Some(())));
     }
-    let h_joy5 = HJoy5Metric.evaluate(gb).expect("Not at JoypadLowSensitivity input.");
-    gb.step();
-    if h_joy5.intersects(A | START) || self.inputs_until_auto_pass <= 1 {
+    let hjoy5 = self.hjoy5_state.get_hjoy5(input);
+    if hjoy5.intersects(A | START) || self.inputs_until_auto_pass <= 1 {
+      gb.step();
       Some((gb.save(), Some(())))
     } else {
+      // Stay in intro, update instance state.
+      gb.delay_step();
+      let new_state = gb.save();
       self.inputs_until_auto_pass -= 1;
-      Some((gb.save(), None))
+      self.hjoy5_state = HJoy5State::from_gb(gb);
+      Some((new_state, None))
     }
   }
 }

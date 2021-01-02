@@ -19,14 +19,17 @@ pub trait IMultiGbExecutor {
   fn load_plan(&mut self, state: &PlanState);
   fn canonicalize_input(&self, state: &GbState, input: Input) -> Option<Input>;
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)>;
+  fn debug_identify_input(&mut self, state: &GbState, instance: usize);
 }
-pub struct MultiGbExecutor<R: Rom> {
+pub struct MultiGbExecutor<R: MultiRom> {
   gb: Gb<R>,
   plan: ListPlan<R>,
 }
-impl<R: Rom> MultiGbExecutor<R> {
-  pub fn new(gb: Gb<R>, mut plan: ListPlan<R>) -> Self {
-    plan.reset();
+impl<R: MultiRom> MultiGbExecutor<R> {
+  pub fn new(mut gb: Gb<R>, mut plan: ListPlan<R>) -> Self {
+    let initial_state = &gb.save();
+    plan.initialize(&mut gb, initial_state);
+    gb.restore(&initial_state);
     Self {
       gb,
       plan,
@@ -34,7 +37,7 @@ impl<R: Rom> MultiGbExecutor<R> {
   }
 }
 
-impl<R: Rom> IMultiGbExecutor for MultiGbExecutor<R> {
+impl<R: MultiRom + InputIdentificationAddresses> IMultiGbExecutor for MultiGbExecutor<R> {
   fn save(&self) -> MultiStateItem {
     MultiStateItem::new(self.gb.save(), self.plan.save(), self.plan.is_safe())
   }
@@ -53,6 +56,14 @@ impl<R: Rom> IMultiGbExecutor for MultiGbExecutor<R> {
 
       Some((MultiStateItem::new(gb_state, self.plan.save(), self.plan.is_safe()), value.is_some()))
     } else { None }
+  }
+  fn debug_identify_input(&mut self, state: &GbState, instance: usize) {
+    let frame = state.get_input_frame_lo();
+    if let Some(name) = identify_input(&mut self.gb, state) {
+      log::info!("Instance {} finished with next input {} at frame {}", instance, name, frame);
+    } else {
+      log::info!("Instance {} finished with next input not identified at frame {}", instance, frame);
+    }
   }
 }
 
@@ -126,17 +137,23 @@ impl<const N: usize> MultiGbRunner<N> {
   fn step_state(&mut self, s: MultiState<N>) {
     // Choose input frame to fill
     let input_frame = s.get_next_input_frame();
-    assert!(s.inputs.len_lo() <= input_frame && s.inputs.len_hi() <= input_frame); // Both nybbles are still undecided for this frame.
+    assert!(s.inputs.len_hi() <= input_frame); // Hi nybble is still undecided for this frame.
+    assert!(s.inputs.len_lo() <= input_frame + 1); // Lo nybble is still undecided for the next frame at least (may be determined for current frame if a -1/0 case became a 0/0 last iteration).
     // Start with any input
     let mut input_iter = InputIterator::new();
     let mut prev_hi_determined = false;
+    let mut lo_determined = false;
     let mut set_prev_hi = false;
     let mut set_hi = false;
 
     // Apply any already decided hi nybble of the previous frame
     if let Some(hi_input) = s.inputs.get_input_hi(input_frame - 1) {
-      prev_hi_determined =true;
+      prev_hi_determined = true;
       input_iter.prev_input |= hi_input;
+    }
+    if let Some(lo_input) = s.inputs.get_input_lo(input_frame) {
+      lo_determined = true;
+      input_iter.cur_input |= lo_input;
     }
 
     // Check which nybbles are affected
@@ -146,6 +163,7 @@ impl<const N: usize> MultiGbRunner<N> {
       assert!(input_frame_lo >= input_frame_hi); // Assumption based on which order the nybbles are read in.
       assert!(input_frame_lo <= input_frame_hi + 1); // Nybble reads can't be more than one frame apart.
       assert!(input_frame_lo >= input_frame); // No instance is left behind
+      assert!(!lo_determined || input_frame_hi >= input_frame); // -1/0 case is impossible if current lo is already determined, these would have been processed in the last step.
       if input_frame_hi < input_frame { // -1/0 case
         if !prev_hi_determined { set_prev_hi = true; }
       } else if input_frame_lo == input_frame { // 0/0 case
@@ -155,6 +173,8 @@ impl<const N: usize> MultiGbRunner<N> {
         self.instances[i].load_plan(&s.instances[i].plan_state); // pre-load all plan instances, they will be used multiple times later.
       }
     }
+    assert!(!lo_determined || (set_hi && !set_prev_hi)); // No -1/0 cases exist if lo is already determined
+    input_iter.use_lo = !lo_determined;
     input_iter.use_hi = set_hi;
     input_iter.use_prev_hi = set_prev_hi;
 
@@ -202,19 +222,27 @@ impl<const N: usize> MultiGbRunner<N> {
       let mut multi_state_items: [MaybeUninit<MultiStateItem>; N] = unsafe { MaybeUninit::uninit().assume_init() };
       let mut is_done = false;
       for i in 0..N {
-        let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
-        let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
-        if input_frame_lo == input_frame { // -1/0 or 0/0 case
+        let mut cur_instance = s.instances[i].clone();
+        loop {
+          let input_frame_lo = cur_instance.gb_state.get_input_frame_lo();
+          let input_frame_hi = cur_instance.gb_state.get_input_frame_hi();
+          if input_frame_lo > input_frame { break; } // not -1/0 nor 0/0 case
+          if !set_hi && input_frame_hi == input_frame { break; } // not -1/0 case, cur hi will not be set so we're done
           // Next input use is fully defined now, execute and move on
           let instance_input = if input_frame_hi < input_frame { // -1/0 case
             (prev_input & inputs::HI_INPUTS) | (cur_input & inputs::LO_INPUTS)
           } else { // 0/0 case
             cur_input
           };
-          if let Some((multi_state_item, instance_is_done)) = self.instances[i].execute_input(&s.instances[i].gb_state, instance_input) {
-            self.instances[i].load_plan(&s.instances[i].plan_state); // reload plan so it can be used again in later iterations.
-            is_done |= instance_is_done;
-            multi_state_items[i] = MaybeUninit::new(multi_state_item);
+          if let Some((multi_state_item, instance_is_done)) = self.instances[i].execute_input(&cur_instance.gb_state, instance_input) {
+            self.instances[i].load_plan(&cur_instance.plan_state); // reload plan so it can be used again in later iterations.
+            cur_instance = multi_state_item;
+            if instance_is_done {
+              is_done = true;
+              self.instances[i].debug_identify_input(&cur_instance.gb_state, i);
+              assert!(cur_instance.gb_state.get_input_frame_lo() > input_frame_lo || (!set_hi && cur_instance.gb_state.get_input_frame_hi() == input_frame), "Unsavable final state with multiple input uses in its input frame.");
+              break;
+            }
           } else {
             // Drop allocated items to prevent memory leak.
             for elem in &mut multi_state_items[0..i] {
@@ -222,15 +250,16 @@ impl<const N: usize> MultiGbRunner<N> {
             }
             continue 'next_input;
           }
-        } else {
-          multi_state_items[i] = MaybeUninit::new(s.instances[i].clone());
         }
+        multi_state_items[i] = MaybeUninit::new(cur_instance);
       }
       let mut new_inputs = s.inputs.clone();
       if set_prev_hi {
         new_inputs.set_input_hi(input_frame - 1, prev_input);
       }
-      new_inputs.set_input_lo(input_frame, cur_input);
+      if !lo_determined {
+        new_inputs.set_input_lo(input_frame, cur_input);
+      }
       if set_hi {
         new_inputs.set_input_hi(input_frame, cur_input);
       }
@@ -265,6 +294,7 @@ impl<const N: usize> MultiGbRunner<N> {
 
 struct InputIterator {
   use_prev_hi: bool,
+  use_lo: bool,
   use_hi: bool,
   prev_input: Input,
   cur_input: Input,
@@ -274,6 +304,7 @@ impl InputIterator {
   fn new() -> Self {
     InputIterator {
       use_prev_hi: false,
+      use_lo: true,
       use_hi: false,
       prev_input: Input::empty(),
       cur_input: Input::empty(),
@@ -287,11 +318,12 @@ impl Iterator for InputIterator {
   fn next(&mut self) -> Option<(Input, Input)> {
     if self.done { return None; }
     let result = Some((self.prev_input, self.cur_input));
-    if !self.use_hi && self.cur_input.contains(inputs::LO_INPUTS) {
+    if !self.use_hi && self.cur_input.contains(inputs::LO_INPUTS) { // !use_hi implies use_lo
       self.cur_input -= inputs::LO_INPUTS;
     } else {
-      self.cur_input = Input::from_bits_truncate(self.cur_input.bits().wrapping_add(1));
-      if !self.cur_input.is_empty() { return result; }
+      let increment = if self.use_lo { 1 } else { 16 };
+      self.cur_input = Input::from_bits_truncate(self.cur_input.bits().wrapping_add(increment));
+      if self.cur_input.bits() >= increment { return result; }
     }
     if self.use_prev_hi {
       self.prev_input = Input::from_bits_truncate(self.prev_input.bits().wrapping_add(16));
