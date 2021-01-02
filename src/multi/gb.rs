@@ -125,6 +125,14 @@ impl <R> Gb<R> {
   pub fn is_at_input(&self) -> bool {
     self.input_use_address != 0
   }
+  #[inline]
+  pub fn get_input_frame_lo(&self) -> u32 {
+    self.cur_input_frame[0]
+  }
+  #[inline]
+  pub fn get_input_frame_hi(&self) -> u32 {
+    self.cur_input_frame[1]
+  }
 }
 impl <R: JoypadAddresses> Gb<R> {
   /// Performs an input at a decision point. Returns actual input pressed, in case some were ignored.

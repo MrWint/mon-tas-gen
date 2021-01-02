@@ -34,6 +34,14 @@ pub trait JoypadAddresses {
   const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)]; // JOYPAD_USE_ADDRESSES which have a discard option. (use add, discard flag, flag bit, discard add)
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)]; // JOYPAD_USE_ADDRESSES which have a ignore mask option. (use add, ignored inputs, skip add)
 }
+pub trait HandleMenuInputAddresses {
+  const MENU_WRAPPING_ENABLED_MEM_ADDRESS: u16; // wMenuWrappingEnabled
+  const CURRENT_MENU_ITEM_MEM_ADDRESS: u16; // wCurrentMenuItem
+  const MAX_MENU_ITEM_MEM_ADDRESS: u16; // wMaxMenuItem
+  const MENU_WATCHED_KEYS_MEM_ADDRESS: u16; // wMenuWatchedKeys
+  const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16; // wMenuWatchMovingOutOfBounds
+  const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16; // wMenuJoypadPollCount
+}
 pub trait JoypadLowSensitivityAddresses {
   const JOYPAD_HJOY6_MEM_ADDRESS: u16; // hJoy6
   const JOYPAD_HJOY7_MEM_ADDRESS: u16; // hJoy7
@@ -341,6 +349,14 @@ macro_rules! impl_red_blue_common_addresses {
       const JOYPAD_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5; // hFrameCounter
       const JOYPAD_FRAME_COUNTER_CHECK_ADDRESS: i32 = 0x0_3849; // JoypadLowSensitivity.noNewlyPressedButtons
     }
+    impl HandleMenuInputAddresses for $t {
+      const MENU_WRAPPING_ENABLED_MEM_ADDRESS: u16 = 0xcc4a; // wMenuWrappingEnabled
+      const CURRENT_MENU_ITEM_MEM_ADDRESS: u16 = 0xcc26; // wCurrentMenuItem
+      const MAX_MENU_ITEM_MEM_ADDRESS: u16 = 0xcc28; // wMaxMenuItem
+      const MENU_WATCHED_KEYS_MEM_ADDRESS: u16 = 0xcc29; // wMenuWatchedKeys
+      const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
+      const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
+    }
     impl RngAddresses for $t {
       const RNG_MEM_ADDRESS: u16 = 0xffd3;
     }
@@ -572,6 +588,14 @@ impl JoypadLowSensitivityAddresses for Yellow {
   const JOYPAD_LAST_MEM_ADDRESS: u16 = 0xffb1; // hJoyLast
   const JOYPAD_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5; // hFrameCounter
   const JOYPAD_FRAME_COUNTER_CHECK_ADDRESS: i32 = 0x0_3836; // JoypadLowSensitivity.noNewlyPressedButtons
+}
+impl HandleMenuInputAddresses for Yellow {
+  const MENU_WRAPPING_ENABLED_MEM_ADDRESS: u16 = 0xcc4a; // wMenuWrappingEnabled
+  const CURRENT_MENU_ITEM_MEM_ADDRESS: u16 = 0xcc26; // wCurrentMenuItem
+  const MAX_MENU_ITEM_MEM_ADDRESS: u16 = 0xcc28; // wMaxMenuItem
+  const MENU_WATCHED_KEYS_MEM_ADDRESS: u16 = 0xcc29; // wMenuWatchedKeys
+  const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
+  const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
 }
 impl RngAddresses for Yellow {
   const RNG_MEM_ADDRESS: u16 = 0xffd3;

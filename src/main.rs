@@ -1,8 +1,7 @@
-mod bk2;
 mod logger;
 mod run;
 
-use crate::bk2::{Bk2Writer, read_bk2_inputs};
+use montas::bk2::{Bk2Writer, read_bk2_inputs};
 use gambatte::*;
 use log::{LevelFilter::*};
 #[allow(unused_imports)] use montas::constants::*;

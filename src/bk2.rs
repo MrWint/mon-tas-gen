@@ -1,5 +1,5 @@
 use gambatte::*;
-use montas::rom::*;
+use crate::rom::*;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::io::Write;

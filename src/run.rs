@@ -1,6 +1,6 @@
-use crate::bk2::Bk2Writer;
 use gambatte::Input;
 use log::{LevelFilter::*};
+use montas::bk2::Bk2Writer;
 use montas::gbexecutor::*;
 use montas::rom::*;
 use montas::segment::*;

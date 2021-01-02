@@ -123,7 +123,8 @@ impl<R: Rom> Plan<R> for ListPlan<R> {
 pub enum PlanState {
   EmptyState,
   ListState { cur_item: usize, sub_plan: Option<Rc<PlanState>> },
-  SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, }
+  SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, },
+  MainMenuState { handle_menu_input_state: HandleMenuInputState, },
 }
 impl PartialEq for PlanState {
   fn eq(&self, other: &Self) -> bool {
@@ -153,11 +154,18 @@ impl PartialOrd for PlanState {
           other_inputs_until_auto_pass.partial_cmp(inputs_until_auto_pass)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
+      PlanState::MainMenuState { handle_menu_input_state: _ } => {
+        if let PlanState::MainMenuState { handle_menu_input_state: _ } = other {
+          Some(Ordering::Equal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
     }
   }
 }
 
 mod identifyinput;
 pub use identifyinput::*;
+mod mainmenu;
+pub use mainmenu::*;
 mod skipintro;
 pub use skipintro::*;

@@ -64,7 +64,7 @@ impl InputLog {
     }
   }
   #[allow(dead_code)]
-  pub fn create_inputs(&mut self) -> Vec<Input> {
+  pub fn create_inputs(&self) -> Vec<Input> {
     let input_len = self.inputs.iter().filter_map(|(f, i)| if i.is_empty() { None } else { Some(*f) }).max().unwrap_or(0) as usize + 1;
     let mut result = Vec::with_capacity(input_len);
     result.resize(input_len, Input::empty());

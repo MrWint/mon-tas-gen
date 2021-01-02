@@ -11,6 +11,7 @@ pub use plan::*;
 mod statebuffer;
 pub use statebuffer::*;
 
+use crate::bk2::*;
 use crate::rom::*;
 use gambatte::*;
 
@@ -20,6 +21,7 @@ pub trait IMultiGbExecutor {
   fn canonicalize_input(&self, state: &GbState, input: Input) -> Option<Input>;
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)>;
   fn debug_identify_input(&mut self, state: &GbState, instance: usize);
+  fn debug_render_end_states(&mut self, state: &GbState);
 }
 pub struct MultiGbExecutor<R: MultiRom> {
   gb: Gb<R>,
@@ -65,6 +67,19 @@ impl<R: MultiRom + InputIdentificationAddresses> IMultiGbExecutor for MultiGbExe
     } else {
       log::info!("Instance {} finished with next input not identified at frame {}", instance, frame);
     }
+  }
+  fn debug_render_end_states(&mut self, state: &GbState) {
+    self.gb.restore(state);
+    for _ in 0..10 {
+      self.gb.input(Input::empty());
+      self.gb.step();
+      std::thread::sleep(std::time::Duration::from_millis(200));
+    }
+    for _ in 0..1000 {
+      self.gb.input(Input::empty());
+      self.gb.step();
+    }
+    std::thread::sleep(std::time::Duration::from_millis(200));
   }
 }
 
@@ -289,6 +304,21 @@ impl<const N: usize> MultiGbRunner<N> {
   }
   pub fn load(&mut self, _file_name: &str) {
     todo!()
+  }
+
+  pub fn debug_segment_end(&mut self, file_name: &str) {
+    {
+      let chosen_state = self.final_states.iter().min_by_key(|s| s.inputs.len_max()).unwrap();
+      let inputs = chosen_state.inputs.create_inputs();
+      log::info!("Creating sample input file {} with {} inputs", file_name, inputs.len());
+      Bk2Writer::new::<Blue>().write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
+    }
+    log::info!("Rendering end states");
+    for s in self.final_states.iter() {
+      for i in 0..N {
+        self.instances[i].debug_render_end_states(&s.instances[i].gb_state);
+      }
+    }
   }
 }
 
