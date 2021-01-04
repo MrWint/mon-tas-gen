@@ -366,13 +366,13 @@ macro_rules! impl_red_blue_common_addresses {
       const TEXT_AFTER_JOYPAD_ADDRESS: i32 = 0x0_38F9;
       const TEXT_PRINT_LETTER_DELAY_DONE_ADDRESS: i32 = 0x0_390F;
       const TEXT_END_NOINPUT_ADDRESSES: &'static [i32] = &[
-        // 0x0_1AAD, // Char57; Address of the character $57 handler, used to end the text without any input required
+        // 0x0_1AAD, // <DONE> Char57; Address of the character $57 handler, used to end the text without any input required
         0x0_1B55, // NextTextCommand; called when the next text command is being processed.
       ];
       const TEXT_END_WITHINPUT_ADDRESSES: &'static [i32] = &[
-        0x0_1AF8, // Char4B; Address of the character $4B handler, used to scroll text up after a button press
-        0x0_1AB4, // Char51; Address of the character $51 handler, used start a new paragraph of text
-        0x0_1A95, // Char58; Address of the character $58 handler, used to wait for a button press before ending the text
+        0x0_1AF8, // <_CONT> Char4B; Address of the character $4B handler, used to scroll text up after a button press
+        0x0_1AB4, // <PARA> Char51; Address of the character $51 handler, used start a new paragraph of text
+        0x0_1A95, // <PROMPT> Char58; Address of the character $58 handler, used to wait for a button press before ending the text
       ];
       const TEXT_DELAY_FRAME_COUNTER_MEM_ADDRESS: u16 = 0xffd5;
       const TEXT_SAFE_CONFLICTING_INPUT_ADDRESSES: &'static [i32] = &[

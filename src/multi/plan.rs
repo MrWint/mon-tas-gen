@@ -63,7 +63,13 @@ impl<R: Rom> ListPlan<R> {
   fn initialize_cur_item(&mut self, gb: &mut Gb<R>, state: &GbState) {
     self.plans[self.cur_item].initialize(gb, state);
     self.cur_item_is_initialized = true;
-}
+  }
+  pub fn ensure_cur_item_initialized(&mut self, gb: &mut Gb<R>, state: &GbState) {
+    if !self.cur_item_is_initialized {
+      self.plans[self.cur_item].initialize(gb, state);
+      self.cur_item_is_initialized = true;
+    }
+  }
 }
 impl<R: Rom> Plan<R> for ListPlan<R> {
   type Value = ();
@@ -102,9 +108,7 @@ impl<R: Rom> Plan<R> for ListPlan<R> {
   }
   fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
     assert!(self.cur_item < self.plans.len());
-    if !self.cur_item_is_initialized {
-      self.initialize_cur_item(gb, state);
-    }
+    self.ensure_cur_item_initialized(gb, state);
     if let Some((new_state, result)) = self.plans[self.cur_item].execute_input(gb, state, input) {
       if result.is_some() {
         self.cur_item += 1;
@@ -125,6 +129,9 @@ pub enum PlanState {
   ListState { cur_item: usize, sub_plan: Option<Rc<PlanState>> },
   SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, },
   MainMenuState { handle_menu_input_state: HandleMenuInputState, },
+  TextState { printed_characters: u32, ends_to_be_skipped: u32, },
+  TextScrollWaitState { hjoy5_state: HJoy5State, },
+  SkipTextsState { num_texts_remaining: u32, at_wait: bool, inner_plan: Rc<PlanState> },
 }
 impl PartialEq for PlanState {
   fn eq(&self, other: &Self) -> bool {
@@ -159,6 +166,31 @@ impl PartialOrd for PlanState {
           Some(Ordering::Equal)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
+      PlanState::TextState { printed_characters, ends_to_be_skipped } => {
+        if let PlanState::TextState { printed_characters: other_printed_characters, ends_to_be_skipped: other_ends_to_be_skipped } = other {
+          if ends_to_be_skipped != other_ends_to_be_skipped {
+            other_ends_to_be_skipped.partial_cmp(ends_to_be_skipped)
+          } else {
+            printed_characters.partial_cmp(other_printed_characters)
+          }
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::TextScrollWaitState { hjoy5_state: _ } => {
+        if let PlanState::TextScrollWaitState { hjoy5_state: _ } = other {
+          Some(Ordering::Equal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::SkipTextsState { num_texts_remaining, at_wait, inner_plan } => {
+        if let PlanState::SkipTextsState { num_texts_remaining: other_num_texts_remaining, at_wait: other_at_wait, inner_plan: other_inner_plan } = other {
+          if num_texts_remaining != other_num_texts_remaining {
+            other_num_texts_remaining.partial_cmp(num_texts_remaining)
+          } else if at_wait != other_at_wait {
+            at_wait.partial_cmp(other_at_wait)
+          } else {
+            inner_plan.partial_cmp(other_inner_plan)
+          }
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
     }
   }
 }
@@ -169,3 +201,9 @@ mod mainmenu;
 pub use mainmenu::*;
 mod skipintro;
 pub use skipintro::*;
+mod skiptexts;
+pub use skiptexts::*;
+mod text;
+pub use text::*;
+mod textscrollwait;
+pub use textscrollwait::*;

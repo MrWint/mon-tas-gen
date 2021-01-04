@@ -11,15 +11,17 @@ pub fn start() {
 
   let sdl = Sdl::init_sdl(2 /* num screens */, 1 /* scale */);
   let blue_gb = Gb::<Blue>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, SdlScreen::new(sdl.clone(), 0));
-  let blue_executor = MultiGbExecutor::new(blue_gb, blue_plan());
+  let _blue_executor = MultiGbExecutor::new(blue_gb, blue_plan());
   let red_gb = Gb::<Red>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, SdlScreen::new(sdl, 1));
-  let red_executor = MultiGbExecutor::new(red_gb, red_plan());
-  let mut r = MultiGbRunner::new([Box::new(blue_executor), Box::new(red_executor)]);
+  let _red_executor = MultiGbExecutor::new(red_gb, red_plan());
+  let mut r = MultiGbRunner::new([
+    Box::new(_blue_executor),
+    Box::new(_red_executor),
+  ]);
 
-  while !r.has_finished_states() {
-    // std::thread::sleep(std::time::Duration::from_millis(1000));
-    r.step();
-  }
+  // r.load("multi_test2");
+  r.run();
+  // r.save("multi_test");
   std::thread::sleep(std::time::Duration::from_millis(1000));
 
   r.debug_segment_end("temp/multi_testing");
@@ -31,6 +33,7 @@ fn blue_plan() -> ListPlan<Blue> {
     Box::new(SkipIntroPlan::new().with_auto_pass_after(322)), // Intro cutscene
     Box::new(SkipIntroPlan::new().with_no_up_select_b()), // main menu
     Box::new(MainMenuPlan::new()), // main menu
+    Box::new(SkipTextsPlan::new(13)), // oak speech
   ])
 }
 
@@ -40,5 +43,6 @@ fn red_plan() -> ListPlan<Red> {
     Box::new(SkipIntroPlan::new().with_auto_pass_after(322)), // Intro cutscene
     Box::new(SkipIntroPlan::new().with_no_up_select_b()), // main menu
     Box::new(MainMenuPlan::new()), // main menu
+    Box::new(SkipTextsPlan::new(13)), // oak speech
   ])
 }

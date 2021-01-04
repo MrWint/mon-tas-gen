@@ -17,7 +17,7 @@ use gambatte::*;
 
 pub trait IMultiGbExecutor {
   fn save(&self) -> MultiStateItem;
-  fn load_plan(&mut self, state: &PlanState);
+  fn load_plan(&mut self, plan_state: &PlanState, gb_state: &GbState);
   fn canonicalize_input(&self, state: &GbState, input: Input) -> Option<Input>;
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)>;
   fn debug_identify_input(&mut self, state: &GbState, instance: usize);
@@ -43,8 +43,9 @@ impl<R: MultiRom + InputIdentificationAddresses> IMultiGbExecutor for MultiGbExe
   fn save(&self) -> MultiStateItem {
     MultiStateItem::new(self.gb.save(), self.plan.save(), self.plan.is_safe())
   }
-  fn load_plan(&mut self, state: &PlanState) {
-    self.plan.restore(state);
+  fn load_plan(&mut self, plan_state: &PlanState, gb_state: &GbState) {
+    self.plan.restore(plan_state);
+    self.plan.ensure_cur_item_initialized(&mut self.gb, gb_state);
   }
   fn canonicalize_input(&self, state: &GbState, input: Input) -> Option<Input> {
     if input == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs
@@ -133,15 +134,26 @@ impl<const N: usize> MultiGbRunner<N> {
     result
   }
 
+  pub fn run(&mut self) {
+    while !self.has_finished_states() {
+      self.step();
+    }
+  }
+
+  pub fn run_until(&mut self, end_frame: u32) {
+    while !self.has_finished_states() && self.states.iter().map(|s| s.get_next_input_frame()).min().unwrap_or(0) <= end_frame {
+      self.step();
+    }
+  }
+
   /// Progress all states with the fewest number of frames, prioritizing unsafe states.
   pub fn step(&mut self) {
-    log::debug!("Step with buffer {} safe and {} unsafe states", self.states.len(), self.states_unsafe.len());
     let states = if self.states_unsafe.is_empty() { &mut self.states } else { &mut self.states_unsafe };
     let min_frame = states.iter().map(|s| s.get_next_input_frame()).min().expect("Can't step: state buffer is empty");
     let old_states = std::mem::take(states);
     drop(states); // Stop the mut borrow.
     let num_processed_states = old_states.iter().filter(|s| s.get_next_input_frame() == min_frame).count();
-    log::debug!("performing step at frame {} moving {} of {} states", min_frame, num_processed_states, old_states.len());
+    log::debug!("performing step at frame {} with {} safe and {} unsafe states, moving {} of {} states", min_frame, self.states.len(), self.states_unsafe.len(), num_processed_states, old_states.len());
     for state in old_states.into_iter() {
       if state.get_next_input_frame() == min_frame {
         self.step_state(state);
@@ -186,7 +198,7 @@ impl<const N: usize> MultiGbRunner<N> {
         set_hi = true;
       }
       if input_frame_lo == input_frame || input_frame_hi == input_frame { // If this instance affects the input frame
-        self.instances[i].load_plan(&s.instances[i].plan_state); // pre-load all plan instances, they will be used multiple times later.
+        self.instances[i].load_plan(&s.instances[i].plan_state, &s.instances[i].gb_state); // pre-load all plan instances, they will be used multiple times later.
       }
     }
     assert!(!lo_determined || (set_hi && !set_prev_hi)); // No -1/0 cases exist if lo is already determined
@@ -234,7 +246,7 @@ impl<const N: usize> MultiGbRunner<N> {
       if !processed_canonical_inputs.insert(canonical_inputs) {
         continue 'next_input; // Combination of canonical states was already processed.
       }
-      log::debug!("performing inputs {:?} and {:?}", prev_input, cur_input);
+      log::trace!("performing inputs {:?} and {:?}", prev_input, cur_input);
       let mut multi_state_items: [MaybeUninit<MultiStateItem>; N] = unsafe { MaybeUninit::uninit().assume_init() };
       let mut is_done = false;
       for i in 0..N {
@@ -251,7 +263,7 @@ impl<const N: usize> MultiGbRunner<N> {
             cur_input
           };
           if let Some((multi_state_item, instance_is_done)) = self.instances[i].execute_input(&cur_instance.gb_state, instance_input) {
-            self.instances[i].load_plan(&cur_instance.plan_state); // reload plan so it can be used again in later iterations.
+            self.instances[i].load_plan(&cur_instance.plan_state, &cur_instance.gb_state); // reload plan so it can be used again in later iterations.
             cur_instance = multi_state_item;
             if instance_is_done {
               is_done = true;
@@ -299,11 +311,27 @@ impl<const N: usize> MultiGbRunner<N> {
     !self.final_states.is_empty()
   }
   
-  pub fn save(&self, _file_name: &str) {
-    todo!()
+  pub fn save(&self, file_name: &str) {
+    let file_path = format!("saves/{}.gz", file_name);
+    let f = std::fs::File::create(file_path).unwrap();
+    let mut f = ::flate2::write::GzEncoder::new(f, ::flate2::Compression::best());
+    ::bincode::serialize_into(&mut f, &self.states).expect("saving statebuffer failed");
+    ::bincode::serialize_into(&mut f, &self.states_unsafe).expect("saving statebuffer failed");
+    ::bincode::serialize_into(&mut f, &self.final_states).expect("saving statebuffer failed");
   }
-  pub fn load(&mut self, _file_name: &str) {
-    todo!()
+  pub fn load(&mut self, file_name: &str) {
+    let file_path = format!("saves/{}.gz", file_name);
+    let f = std::fs::File::open(file_path).expect("file not found");
+    let mut f = ::flate2::read::GzDecoder::new(f);
+    self.states = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
+    self.states_unsafe = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
+    self.final_states = MultiStateBuffer::default();
+    let stored_final_states: MultiStateBuffer<N> = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
+
+    // Final states are not final anymore after the plans have been extended.
+    for state in stored_final_states.into_iter() {
+      self.add_state(state);
+    }
   }
 
   pub fn debug_segment_end(&mut self, file_name: &str) {
