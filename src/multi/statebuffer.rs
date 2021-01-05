@@ -25,6 +25,13 @@ impl MultiStateItem {
       is_safe,
     }
   }
+  pub fn new_rc(gb_state: std::rc::Rc<GbState>, plan_state: PlanState, is_safe: bool) -> Self {
+    Self {
+      gb_state,
+      plan_state,
+      is_safe,
+    }
+  }
 }
 
 #[derive(Serialize, Deserialize)]

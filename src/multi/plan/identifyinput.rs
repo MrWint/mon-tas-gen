@@ -23,7 +23,7 @@ pub struct IdentifyInputPlan;
 impl<R: MultiRom + InputIdentificationAddresses> Plan<R> for IdentifyInputPlan {
   type Value = ();
 
-  fn save(&self) -> PlanState { PlanState::EmptyState }
+  fn save(&self) -> PlanState { PlanState::IdentifyInputState }
   fn restore(&mut self, _state: &PlanState) { }
   fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) { }
   fn is_safe(&self) -> bool { true }

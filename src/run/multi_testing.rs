@@ -16,12 +16,12 @@ pub fn start() {
   let _red_executor = MultiGbExecutor::new(red_gb, red_plan());
   let mut r = MultiGbRunner::new([
     Box::new(_blue_executor),
-    Box::new(_red_executor),
+    // Box::new(_red_executor),
   ]);
 
   // r.load("multi_test2");
   r.run();
-  // r.save("multi_test");
+  r.save("multi_test");
   std::thread::sleep(std::time::Duration::from_millis(1000));
 
   r.debug_segment_end("temp/multi_testing");

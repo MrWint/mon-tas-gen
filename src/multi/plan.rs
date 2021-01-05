@@ -32,7 +32,7 @@ pub struct NullPlan;
 impl<R: MultiRom> Plan<R> for NullPlan {
   type Value = ();
 
-  fn save(&self) -> PlanState { PlanState::EmptyState }
+  fn save(&self) -> PlanState { PlanState::NullState }
   fn restore(&mut self, _state: &PlanState) { }
   fn is_safe(&self) -> bool { true }
   fn get_blockable_inputs(&self) -> Input { Input::empty() }
@@ -125,10 +125,13 @@ impl<R: Rom> Plan<R> for ListPlan<R> {
 
 #[derive(Clone, Debug, Eq, Serialize, Deserialize)]
 pub enum PlanState {
-  EmptyState,
+  NullState,
+  IdentifyInputState,
   ListState { cur_item: usize, sub_plan: Option<Rc<PlanState>> },
-  SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, },
+  IntroNameMenuState { handle_menu_input_state: HandleMenuInputState, },
   MainMenuState { handle_menu_input_state: HandleMenuInputState, },
+  NamingScreenState { letter_selected: bool, delta: (i8, i8), pressed_input_state: PressedInputState, },
+  SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, },
   TextState { printed_characters: u32, ends_to_be_skipped: u32, },
   TextScrollWaitState { hjoy5_state: HJoy5State, },
   SkipTextsState { num_texts_remaining: u32, at_wait: bool, inner_plan: Rc<PlanState> },
@@ -142,8 +145,13 @@ impl PartialEq for PlanState {
 impl PartialOrd for PlanState {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
     match self {
-      PlanState::EmptyState => {
-        if let PlanState::EmptyState = other {
+      PlanState::NullState => {
+        if let PlanState::NullState = other {
+          Some(Ordering::Equal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::IdentifyInputState => {
+        if let PlanState::IdentifyInputState = other {
           Some(Ordering::Equal)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
@@ -156,14 +164,28 @@ impl PartialOrd for PlanState {
           }
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
-      PlanState::SkipIntroState { inputs_until_auto_pass, hjoy5_state: _ } => {
-        if let PlanState::SkipIntroState { inputs_until_auto_pass: other_inputs_until_auto_pass, hjoy5_state: _ } = other {
-          other_inputs_until_auto_pass.partial_cmp(inputs_until_auto_pass)
+      PlanState::IntroNameMenuState { handle_menu_input_state: _ } => {
+        if let PlanState::IntroNameMenuState { handle_menu_input_state: _ } = other {
+          Some(Ordering::Equal)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
       PlanState::MainMenuState { handle_menu_input_state: _ } => {
         if let PlanState::MainMenuState { handle_menu_input_state: _ } = other {
           Some(Ordering::Equal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::NamingScreenState { letter_selected, delta: (dx, dy), pressed_input_state: _ } => {
+        if let PlanState::NamingScreenState { letter_selected: other_letter_selected, delta: (odx, ody), pressed_input_state: _ } = other {
+          if letter_selected != other_letter_selected {
+            letter_selected.partial_cmp(other_letter_selected)
+          } else {
+            (odx.abs() + ody.abs()).partial_cmp(&(dx.abs() + dy.abs()))
+          }
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::SkipIntroState { inputs_until_auto_pass, hjoy5_state: _ } => {
+        if let PlanState::SkipIntroState { inputs_until_auto_pass: other_inputs_until_auto_pass, hjoy5_state: _ } = other {
+          other_inputs_until_auto_pass.partial_cmp(inputs_until_auto_pass)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
       PlanState::TextState { printed_characters, ends_to_be_skipped } => {
@@ -197,8 +219,12 @@ impl PartialOrd for PlanState {
 
 mod identifyinput;
 pub use identifyinput::*;
+mod intronamemenu;
+pub use intronamemenu::*;
 mod mainmenu;
 pub use mainmenu::*;
+mod namingscreen;
+pub use namingscreen::*;
 mod skipintro;
 pub use skipintro::*;
 mod skiptexts;

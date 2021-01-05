@@ -5,8 +5,8 @@ pub trait Rom: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static {}
 impl<R: BasicRomInfo + JoypadAddresses + RngAddresses + Sync + 'static> Rom for R {} 
 
 /// Minimal set of defined addresses to be usable in the multi::Gb<R> wrapper.
-pub trait MultiRom: Rom + JoypadLowSensitivityAddresses {}
-impl<R: Rom + JoypadLowSensitivityAddresses> MultiRom for R {} 
+pub trait MultiRom: Rom + JoypadLowSensitivityAddresses + InputIdentificationAddresses {}
+impl<R: Rom + JoypadLowSensitivityAddresses + InputIdentificationAddresses> MultiRom for R {} 
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum Generation {

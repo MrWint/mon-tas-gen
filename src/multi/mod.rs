@@ -10,6 +10,8 @@ mod plan;
 pub use plan::*;
 mod statebuffer;
 pub use statebuffer::*;
+mod run;
+pub use run::*;
 
 use crate::bk2::*;
 use crate::rom::*;
@@ -227,6 +229,7 @@ impl<const N: usize> MultiGbRunner<N> {
       for i in 0..N {
         let input_frame_lo = s.instances[i].gb_state.get_input_frame_lo();
         let input_frame_hi = s.instances[i].gb_state.get_input_frame_hi();
+        self.instances[i].load_plan(&s.instances[i].plan_state, &s.instances[i].gb_state); // reload plan.
         canonical_inputs[i] = if input_frame_lo == input_frame {  // -1/0 or 0/0 case
           let instance_input = if input_frame_hi < input_frame { // -1/0 case
             (prev_input & inputs::HI_INPUTS) | (cur_input & inputs::LO_INPUTS)
@@ -263,7 +266,6 @@ impl<const N: usize> MultiGbRunner<N> {
             cur_input
           };
           if let Some((multi_state_item, instance_is_done)) = self.instances[i].execute_input(&cur_instance.gb_state, instance_input) {
-            self.instances[i].load_plan(&cur_instance.plan_state, &cur_instance.gb_state); // reload plan so it can be used again in later iterations.
             cur_instance = multi_state_item;
             if instance_is_done {
               is_done = true;
