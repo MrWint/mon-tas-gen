@@ -159,3 +159,64 @@ pub enum HandleMenuInputResult {
   ScrollTo { current_item: u8, },
   DoNothing,
 }
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+pub struct JoypadOverworldState {
+  last_input: Input, // hJoyLast
+  forced_downwards: bool, // wFlags_D733 bit 3 or wCurMap
+  simulating_button_presses: bool, // wd730 bit 7
+  simulating_button_presses_override_mask: Input, // wOverrideSimulatedJoypadStatesMask
+  simulated_button_press: Option<Input>, // done simulating if None
+}
+
+impl JoypadOverworldState {
+  pub fn unknown() -> Self {
+    Self {
+      last_input: Input::empty(),
+      forced_downwards: false,
+      simulating_button_presses: false,
+      simulating_button_presses_override_mask: Input::empty(),
+      simulated_button_press: None,
+    }
+  }
+  pub fn from_gb_state<R: MultiRom + JoypadOverworldAddresses>(gb: &mut Gb<R>, state: &GbState) -> Self {
+    gb.restore(state);
+    Self::from_gb(gb)
+  }
+  pub fn from_gb<R: MultiRom + JoypadOverworldAddresses>(gb: &mut Gb<R>) -> Self {
+    let last_input = Input::from_bits_truncate(gb.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS));
+    let forced_downwards = (gb.gb.read_memory(R::FLAGS_D733_MEM_ADDRESS) & 0b1000) == 0 && gb.gb.read_memory(R::CUR_MAP_MEM_ADDRESS) == 28;
+    let simulating_button_presses = (gb.gb.read_memory(R::FLAGS_D730_MEM_ADDRESS) & 0b1000_0000) != 0;
+    let simulating_button_presses_override_mask = Input::from_bits_truncate(gb.gb.read_memory(R::SIMULATED_JOYPAD_OVERRIDE_MASK_MEM_ADDRESS));
+    let simulated_button_index = gb.gb.read_memory(R::SIMULATED_JOYPAD_STATES_INDEX_MEM_ADDRESS);
+    let simulated_button_press = if simulated_button_index == 0 { None } else {
+      Some(Input::from_bits_truncate(gb.gb.read_memory(R::SIMULATED_JOYPAD_STATES_END_MEM_ADDRESS + u16::from(simulated_button_index - 1))))
+    };
+  
+    let res = Self {
+      last_input,
+      forced_downwards,
+      simulating_button_presses,
+      simulating_button_presses_override_mask,
+      simulated_button_press,
+    };
+    log::trace!("JoypadOverworld state: {:?}", res);
+    res
+  }
+  pub fn get_input(&self, mut input: Input) -> (Input, Input) {
+    let pressed = input - self.last_input;
+    if self.forced_downwards && !input.contains(Input::DOWN | Input::UP | Input::LEFT | Input::RIGHT | Input::B | Input::A) {
+      input = Input::DOWN;
+    }
+    if !self.simulating_button_presses || input.intersects(self.simulating_button_presses_override_mask) { return (input, pressed); }
+    if let Some(simulated_input) = self.simulated_button_press {
+      if simulated_input.is_empty() {
+        (Input::empty(), Input::empty())
+      } else {
+        (simulated_input, pressed)
+      }
+    } else {
+      (Input::empty(), pressed)
+    }
+  }
+}

@@ -1,5 +1,7 @@
 mod joypad;
 pub use joypad::*;
+mod overworld;
+pub use overworld::*;
 
 use std::{fmt::Debug, hash::Hash};
 
@@ -184,5 +186,38 @@ impl<R: Rom + TrainerIDAddresses> Metric<R> for TrainerIDMetric {
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
     if gb.step_until(&[R::TRAINER_ID_AFTER_GENERATION_ADDRESS]) == 0 { return None; }
     Some(gb.gb.read_memory_word_be(R::TRAINER_ID_MEM_ADDRESS))
+  }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DVs {
+  pub atk: u8,
+  pub def: u8,
+  pub spd: u8,
+  pub spc: u8,
+}
+impl DVs {
+  pub fn from_u16_be(dvs: u16) -> DVs {
+    DVs {
+      atk: ((dvs >> 12) & 0xF) as u8,
+      def: ((dvs >> 8) & 0xF) as u8,
+      spd: ((dvs >> 4) & 0xF) as u8,
+      spc: ((dvs >> 0) & 0xF) as u8,
+    }
+  }
+  pub fn hp(&self) -> u8 {
+    (self.atk & 1) << 3 | (self.def & 1) << 2 | (self.spd & 1) << 1 | (self.spc & 1)
+  }
+}
+#[allow(dead_code)]
+pub struct Gen1DVMetric {}
+impl<R: Rom + Gen1DVAddresses> Metric<R> for Gen1DVMetric {
+  type ValueType = DVs;
+
+  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+    if gb.step_until(R::AFTER_DV_GENERATION_ADDRESSES) == 0 { return None; }
+    let registers = gb.gb.read_registers();
+
+    Some(DVs::from_u16_be((registers.a as u16) << 8 | (registers.b as u16)))
   }
 }

@@ -49,6 +49,14 @@ pub trait JoypadLowSensitivityAddresses {
   const JOYPAD_FRAME_COUNTER_MEM_ADDRESS: u16; // hFrameCounter
   const JOYPAD_FRAME_COUNTER_CHECK_ADDRESS: i32; // JoypadLowSensitivity.noNewlyPressedButtons
 }
+pub trait JoypadOverworldAddresses {
+  const FLAGS_D733_MEM_ADDRESS: u16; // wFlags_D733
+  const CUR_MAP_MEM_ADDRESS: u16; // wCurMap
+  const FLAGS_D730_MEM_ADDRESS: u16; // wd730
+  const SIMULATED_JOYPAD_OVERRIDE_MASK_MEM_ADDRESS: u16; // wOverrideSimulatedJoypadStatesMask
+  const SIMULATED_JOYPAD_STATES_INDEX_MEM_ADDRESS: u16; // wSimulatedJoypadStatesIndex
+  const SIMULATED_JOYPAD_STATES_END_MEM_ADDRESS: u16; // wSimulatedJoypadStatesEnd
+}
 pub trait RngAddresses {
   const RNG_MEM_ADDRESS: u16;
 }
