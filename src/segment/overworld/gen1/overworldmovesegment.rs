@@ -38,6 +38,13 @@ impl OverworldMoveSegment {
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }
+  pub fn jump_ledge(input: Input) -> Self {
+    Self {
+      input,
+      result: OverworldInteractionResult::JumpLedge,
+      buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
+    }
+  }
   pub fn wait() -> Self {
     Self {
       input: Input::empty(),

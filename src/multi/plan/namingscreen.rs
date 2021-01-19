@@ -3,7 +3,7 @@ use crate::rom::*;
 use gambatte::inputs::*;
 
 // Plan to progress DisplayNamingScreen inputs, entering single-letter names
-pub struct NamingScreenPlan {
+pub struct NamingScreenPlan<M> {
   // instance state
   pressed_input_state: PressedInputState,
   delta: (i8, i8),
@@ -11,9 +11,13 @@ pub struct NamingScreenPlan {
 
   // config state
   initial_delta: (i8, i8),
+  metric: M,
 }
-impl NamingScreenPlan {
-  pub fn with_letter(letter: u8) -> Self {
+impl NamingScreenPlan<NullMetric> {
+  pub fn with_letter(letter: u8) -> Self { Self::with_metric(letter, NullMetric) }
+}
+impl<M> NamingScreenPlan<M> {
+  pub fn with_metric(letter: u8, metric: M) -> Self {
     assert!(letter >= b'A' && letter <= b'Z');
     let letter_offset = (letter - b'A') as i8;
     let dx = (letter_offset + 4) % 9 - 4;
@@ -26,11 +30,12 @@ impl NamingScreenPlan {
 
       // Default config state.
       initial_delta: (dx, dy),
+      metric,
     }
   }
 }
-impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for NamingScreenPlan {
-  type Value = ();
+impl<R: Rom + JoypadLowSensitivityAddresses, M: Metric<R>> Plan<R> for NamingScreenPlan<M> {
+  type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
     PlanState::NamingScreenState { letter_selected: self.letter_selected, delta: self.delta, pressed_input_state: self.pressed_input_state }
@@ -78,10 +83,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for NamingScreenPlan {
     } else if input.contains(B) {
       if self.letter_selected { None } else { Some(Input::empty()) }
     } else if input.contains(A) {
-      if self.letter_selected { None } else { Some(A) }
+      if self.letter_selected || self.delta != (0, 0) { None } else { Some(A) }
     } else { Some(Input::empty()) }
   }
-  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<M::ValueType>)> {
     let pressed = self.pressed_input_state.get_pressed_input(input);
     let mut is_done = false;
     let mut delay = false;
@@ -100,17 +105,22 @@ impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for NamingScreenPlan {
     } else if pressed.contains(B) {
       if self.letter_selected { return None; } else { delay = true; }
     } else if pressed.contains(A) {
-      if self.letter_selected { return None; } else { self.letter_selected = true; }
+      if self.letter_selected || self.delta != (0, 0) { return None; } else { self.letter_selected = true; }
     } else { delay = true; }
     gb.restore(s);
     gb.input(input);
+    if is_done {
+      if let Some(metric_value) = self.metric.evaluate(gb) {
+        gb.step();
+        return Some((gb.save(), Some(metric_value)));
+      } else { return None; }
+    }
     if delay {
       gb.delay_step();
     } else {
       gb.step();
     }
     let new_state = gb.save();
-    if is_done { return Some((new_state, Some(()))); }
     self.pressed_input_state = PressedInputState::from_gb(gb);
     Some((new_state, None))
   }

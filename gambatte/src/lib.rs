@@ -55,6 +55,10 @@ pub struct Registers {
 	pub h: i32,
 	pub l: i32,
 }
+impl Registers {
+  pub fn z_flag(&self) -> bool { self.f & 0x80 != 0 }
+  pub fn c_flag(&self) -> bool { self.f & 0x10 != 0 }
+}
 
 extern {
   fn gambatte_create() -> *mut c_void;

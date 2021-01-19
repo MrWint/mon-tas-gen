@@ -6,7 +6,7 @@ pub struct SingleGbRunner<R> {
   states_unsafe: MultiStateBuffer<1>,
   final_states: MultiStateBuffer<1>,
 }
-impl<R: MultiRom> SingleGbRunner<R> {
+impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
   pub fn new(gb: Gb<R>) -> Self {
     let initial_state = MultiState::new([MultiStateItem::new(gb.save(), PlanState::NullState, true)], InputLog::new());
     let mut result = Self {
@@ -161,11 +161,20 @@ impl<R: MultiRom> SingleGbRunner<R> {
   }
 
   fn debug_identify_input(&mut self, state: &GbState) {
+    let ignored_inputs = Input::all() - state.remove_ignored_inputs(Input::all());
+    let ignored_input_text = if !ignored_inputs.is_empty() {
+      format!("with Ignored inputs: {:?}", ignored_inputs)
+    } else { String::new() };
     let frame = state.get_input_frame_lo();
     if let Some(name) = identify_input(&mut self.gb, state) {
-      log::info!("Next input {} at frame {}", name, frame);
+      let additional_info = if name == "JoypadOverworld" {
+        self.gb.restore(state);
+        self.gb.input(Input::empty());
+        format!(" ({:?})", get_overworld_interaction_result(&mut self.gb))
+      } else { String::new() };
+      log::info!("Next input {}{} at frame {} {}", name, additional_info, frame, ignored_input_text);
     } else {
-      log::info!("Next input not identified at frame {}", frame);
+      log::info!("Next input not identified at frame {} {}", frame, ignored_input_text);
     }
   }
 

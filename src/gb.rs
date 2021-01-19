@@ -96,7 +96,7 @@ pub struct Gb<R> {
   inputs: Vec<(u32, Input)>,
   /// Frame (according to Gambatte's used timing) at which the last decision point occurred.
   /// Used to discard future inputs in the frame due to BizHawk's limit of only allowing one input per frame in its input format.
-  last_input_frame: [u32; 2], // first, last
+  pub last_input_frame: [u32; 2], // first, last
   /// Whether the execution is currently stopped at a decision point.
   pub is_at_input: bool,
   ignored_inputs: Input, // inputs ignored by next input use

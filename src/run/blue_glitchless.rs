@@ -48,54 +48,57 @@ fn run(r: &mut GbRunner<Blue>) {
   // r.run(TextSegment::new()); // ...awaits, let's go
   // r.save("blue_intro");
 
-  // r.load("blue_intro");
-  // r.run(MoveSegment::with_metric(START, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::DisplayText { id: 0 }))); // Open main menu
-  // r.run(MoveSegment::new(U)); // move cursor
-  // r.run(MoveSegment::new(NIL)); // move cursor
-  // r.run(MoveSegment::new(U)); // move cursor
-  // r.run(MoveSegment::new(A)); // options
-  // r.run(MoveSegment::new(L)); // text speed fast
-  // r.run(MoveSegment::new(D)); // battle animations...
-  // r.run(MoveSegment::new(L)); // ...off
-  // r.run(MoveSegment::new(D)); // battle style...
-  // r.run(MoveSegment::new(L)); // ...set
-  // r.run(MoveSegment::new(B)); // back
-  // r.run(MoveSegment::new(START)); // close main menu
+  r.load("blue_intro");
+  r.run(MoveSegment::with_metric(START, OverworldInteractionMetric {}.assert_eq(OverworldInteractionResult::DisplayText { id: 0 }))); // Open main menu
+  r.run(MoveSegment::new(U)); // move cursor
+  r.run(MoveSegment::new(NIL)); // move cursor
+  r.run(MoveSegment::new(U)); // move cursor
+  r.run(MoveSegment::new(A)); // options
+  r.run(MoveSegment::new(L)); // text speed fast
+  r.run(MoveSegment::new(D)); // battle animations...
+  r.run(MoveSegment::new(L)); // ...off
+  r.run(MoveSegment::new(D)); // battle style...
+  r.run(MoveSegment::new(L)); // ...set
+  r.run(MoveSegment::new(B)); // back
+  r.run(MoveSegment::new(START)); // close main menu
 
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(R));
 
-  // r.run(OverworldMoveSegment::turn(L));
-  // r.run(WalkStepSegment::new(D));
-  // r.run(WalkStepSegment::new(D));
-  // r.run(WalkStepSegment::new(D));
-  // r.run(WalkStepSegment::new(D));
-  // r.run(WalkStepSegment::new(D));
-  // r.run(WalkStepSegment::new(L));
-  // r.run(WalkStepSegment::new(L));
-  // r.run(WalkStepSegment::new(L));
-  // r.run(WalkStepSegment::new(L));
-  // r.run(WalkStepSegment::new(D).into(OverworldInteractionResult::NoOverworldInput));
-  // r.run(VerifyInputSegment::new("CheckWarpsNoCollisionLoop").with_input(D)); // edge warp
+  r.run(OverworldMoveSegment::turn(L));
+  r.run(WalkStepSegment::new(D));
+  r.run(WalkStepSegment::new(D));
+  r.run(WalkStepSegment::new(D));
+  r.run(WalkStepSegment::new(D));
+  r.run(WalkStepSegment::new(D));
+  r.run(WalkStepSegment::new(L));
+  r.run(WalkStepSegment::new(L));
+  r.run(WalkStepSegment::new(L));
+  r.run(WalkStepSegment::new(L));
+  r.run(WalkStepSegment::new(D).into(OverworldInteractionResult::NoOverworldInput));
+  r.run(VerifyInputSegment::new("CheckWarpsNoCollisionLoop").with_input(D)); // edge warp
 
-  // r.run(OverworldMoveSegment::turn(L));
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(R));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
-  // r.run(WalkStepSegment::new(U));
+  r.run(OverworldMoveSegment::turn(L));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(R));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.run(WalkStepSegment::new(U));
+  r.save("blue_test");
+
+  // r.load("blue_test");
   // r.run(OverworldMoveSegment::wait()); // Skip PalletTownScript0
   // r.run(TextSegment::new().with_allowed_end_inputs(A)); // it's dangerous to go outside, take this
   // r.run(VerifyInputSegment::new("HoldTextDisplayOpen").with_input(B)); // don't hold text box open
@@ -202,12 +205,12 @@ fn run(r: &mut GbRunner<Blue>) {
 
   // r.run(OverworldMoveSegment::turn(U));
   // r.run(WalkToSegment::new(29, 26));
-  // r.run(OverworldMoveSegment::collide(D)); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(D)); // Jump ledge
   // r.run(WalkToSegment::new(21, 36)); // enter Route 1
   // r.run(WalkToSegment::new(14, 18));
-  // r.run(OverworldMoveSegment::collide(D)); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(D)); // Jump ledge
   // r.run(WalkToSegment::new(12, 26));
-  // r.run(OverworldMoveSegment::collide(D)); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(D)); // Jump ledge
   // r.run(WalkToSegment::new(11, 36)); // enter pallet town
   // r.run(WalkToSegment::new(12, 11)); // enter oak's lab
   // r.save("blue_test");
@@ -526,7 +529,7 @@ fn run(r: &mut GbRunner<Blue>) {
   // r.run(WalkToSegment::new(27, 3).with_unbounded_buffer()); // Leave Mt. Moon
   // r.run(OverworldMoveSegment::turn(U).with_unbounded_buffer());
   // r.run(WalkToSegment::new(64, 8).with_unbounded_buffer());
-  // r.run(OverworldMoveSegment::collide(D).with_unbounded_buffer()); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(D).with_unbounded_buffer()); // Jump ledge
   // r.run(WalkToSegment::new(64, 14).with_unbounded_buffer());
   // r.run(WalkToSegment::new(65, 14).with_unbounded_buffer());
   // r.run(DelaySegment::new(MoveSegment::with_metric(R, OverworldInteractionMetric {}.filter(|v| {
@@ -912,7 +915,7 @@ fn run(r: &mut GbRunner<Blue>) {
   // r.run(VerifyInputSegment::new("HoldTextDisplayOpen").with_input(B)); // don't hold text box open
   // // { // 102609 - 100387 = 2222
   // //   r.run(WalkToSegment::new(33, 18));
-  // //   r.run(OverworldMoveSegment::collide(D)); // Jump ledge
+  // //   r.run(OverworldMoveSegment::jump_ledge(D)); // Jump ledge
   // //   r.run(WalkToSegment::new(13, 25)); // Enter Bike Shop
   // //   r.run(OverworldMoveSegment::turn(L));
   // //   r.run(WalkToSegment::new(6, 5)); // Enter Bike Shop
@@ -1207,7 +1210,7 @@ fn run(r: &mut GbRunner<Blue>) {
 
   // r.load("blue_route9_after_jrtrainerf");
   // r.run(WalkToSegment::new(12, 10));
-  // r.run(OverworldMoveSegment::collide(D)); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(D)); // Jump ledge
   // r.run(WalkToSegment::new(40, 10));
   // r.run(WalkToSegment::new(40, 9)); // Bugcatcher
   // r.run(OverworldMoveSegment::interact_with(9));
@@ -1222,7 +1225,7 @@ fn run(r: &mut GbRunner<Blue>) {
 
   // r.load("blue_route9_after_bugcatcher");
   // r.run(WalkToSegment::new(51, 4));
-  // r.run(OverworldMoveSegment::collide(D)); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(D)); // Jump ledge
   // r.run(WalkToSegment::new(60, 8)); // Route 10
   // r.run(WalkToSegment::new(8, 17)); // Rock Tunnel
   // r.run(OverworldMoveSegment::turn(L));
@@ -1802,7 +1805,7 @@ fn run(r: &mut GbRunner<Blue>) {
   // for _ in 0..21 {
   //   r.run(OverworldMoveSegment::auto_walk(D));
   // }
-  // r.run(OverworldMoveSegment::collide(D)); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(D)); // Jump ledge
   // r.run(WalkToSegment::new(32, 8));
   // r.run(WalkToSegment::new(33, 8).into(OverworldInteractionResult::NoOverworldInput));
   // r.run(VerifyInputSegment::new("CheckWarpsNoCollisionLoop").with_input(R)); // edge warp
@@ -2086,7 +2089,7 @@ fn run(r: &mut GbRunner<Blue>) {
   //   r.run(SkipTextsSegment::new(1).with_skip_ends(2).with_confirm_input(B)); // Get on Bike
   // }
   // r.run(WalkToSegment::new(22, 30));
-  // r.run(OverworldMoveSegment::collide(R)); // Jump ledge
+  // r.run(OverworldMoveSegment::jump_ledge(R)); // Jump ledge
   // r.run(WalkToSegment::new(27, 27)); // Strength house
   // r.run(OverworldMoveSegment::turn(R));
   // r.run(WalkToSegment::new(2, 5));
@@ -2600,14 +2603,14 @@ fn run(r: &mut GbRunner<Blue>) {
   // r.run(EndTrainerBattleSegment::with_defeat_texts(5).with_name_in_defeat_texts().with_level_up());
   // r.save("blue_viridian_after_giovanni");
 
-  r.load("blue_viridian_after_giovanni");
-  r.run(SkipTextsSegment::new(8).with_confirm_input(B)); // after texts
-  r.run(SkipTextsSegment::new(1).with_skip_ends(0).with_confirm_input(B)); // Got TM
-  r.run(SkipTextsSegment::new(5).with_confirm_input(B)); // after fight texts
-  r.run(WalkToSegment::new(15, 6));
-  r.run(WalkToSegment::new(16, 16));
-  r.run(WalkToSegment::new(16, 17).into(OverworldInteractionResult::NoOverworldInput));
-  r.run(VerifyInputSegment::new("CheckWarpsNoCollisionLoop").with_input(D)); // edge warp
+  // r.load("blue_viridian_after_giovanni");
+  // r.run(SkipTextsSegment::new(8).with_confirm_input(B)); // after texts
+  // r.run(SkipTextsSegment::new(1).with_skip_ends(0).with_confirm_input(B)); // Got TM
+  // r.run(SkipTextsSegment::new(5).with_confirm_input(B)); // after fight texts
+  // r.run(WalkToSegment::new(15, 6));
+  // r.run(WalkToSegment::new(16, 16));
+  // r.run(WalkToSegment::new(16, 17).into(OverworldInteractionResult::NoOverworldInput));
+  // r.run(VerifyInputSegment::new("CheckWarpsNoCollisionLoop").with_input(D)); // edge warp
 
 
 
@@ -2624,7 +2627,7 @@ fn run(r: &mut GbRunner<Blue>) {
   // log::info!("tile collisions:\n{}", map.tile_string());
   // log::info!("allowed movements:\n{}", map.tile_allowed_movements_string());
 
-  // r.run_debug(MoveSegment::with_metric(A, OverworldInteractionMetric {}.debug_print().into_unit()));
+  r.run_debug(MoveSegment::with_metric(D, OverworldInteractionMetric {}.debug_print().into_unit()));
   // r.run_debug(MoveSegment::with_metric(D, OverworldInteractionMetric {}.debug_print().into_unit()));
   // r.run_debug(MoveSegment::with_metric(R, OverworldInteractionMetric {}.debug_print().into_unit()));
   // r.save("blue_test2");

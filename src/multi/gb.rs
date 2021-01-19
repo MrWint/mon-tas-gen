@@ -144,30 +144,37 @@ impl <R: JoypadAddresses> Gb<R> {
     }
     // Write input directly to HRAM. This ignores Joypad interrupts and only works when they are not enabled. Will cause desync otherwise.
     self.gb.write_memory(R::JOYPAD_INPUT_MEM_ADDRESS, input.bits());
-    self.gb.run_until(&[self.input_use_address + 2]); // skip single LDH instruction.
+    while self.gb.run_until(&[self.input_use_address + 2, R::JOYPAD_READ_FIRST_ADDRESS]) == R::JOYPAD_READ_FIRST_ADDRESS { self.handle_vblank(); } // skip single LDH instruction.
     self.input_use_address = 0;
+  }
+
+  fn handle_vblank(&mut self) {
+    // println!("VBlank at {}", self.gb.frame() - 1);
+    // In VBlank, update the most recent input frame and retry.
+    self.cur_input_frame[if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_LO_ADDRESS { 0 } else { 1 }] = self.gb.frame() - 1;
+    self.gb.run_until(&[R::JOYPAD_READ_LAST_ADDRESS]);
+    self.cur_input_frame[if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_LO_ADDRESS { 1 } else { 0 }] = self.gb.frame() - 1;
   }
 
   /// Runs until any of the given addresses is hit, or the next decision point is reached.
   pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
     assert!(!self.is_at_input());
     'check_for_input_uses: loop {
-      let hit = self.gb.run_until(&[&[R::JOYPAD_READ_FIRST_ADDRESS], R::JOYPAD_USE_ADDRESSES, addresses].concat());
+      let hit = loop {
+        let hit = self.gb.run_until(&[&[R::JOYPAD_READ_FIRST_ADDRESS], R::JOYPAD_USE_ADDRESSES, addresses].concat());
+        if hit != R::JOYPAD_READ_FIRST_ADDRESS { break hit; }
+        self.handle_vblank();
+      };
       if addresses.contains(&hit) {
         // Hit one of the given addresses, so we're done.
         return hit;
-      } else if hit == R::JOYPAD_READ_FIRST_ADDRESS {
-        // In VBlank, update the most recent input frame and retry.
-        self.cur_input_frame[if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_LO_ADDRESS { 0 } else { 1 }] = self.gb.frame() - 1;
-        self.gb.run_until(&[R::JOYPAD_READ_LAST_ADDRESS]);
-        self.cur_input_frame[if R::JOYPAD_READ_FIRST_ADDRESS == R::JOYPAD_READ_LO_ADDRESS { 1 } else { 0 }] = self.gb.frame() - 1;
       } else { // R::JOYPAD_USE_ADDRESSES
         // Found a potential use of the last read input. Check whether the use actually can change the execution flow.
         for &(use_add, ignore_mask_mem_add, skip_add) in R::JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES {
           if hit == use_add {
             self.ignored_inputs = Input::from_bits_truncate(self.gb.read_memory(ignore_mask_mem_add));
             if self.ignored_inputs.bits() == 0xff { // discard if all inputs ignored
-              self.gb.run_until(&[skip_add]);
+              while self.gb.run_until(&[skip_add, R::JOYPAD_READ_FIRST_ADDRESS]) == R::JOYPAD_READ_FIRST_ADDRESS { self.handle_vblank(); }
               continue 'check_for_input_uses;
             }
             break;
@@ -176,7 +183,7 @@ impl <R: JoypadAddresses> Gb<R> {
         for &(use_add, flag_mem_add, flag_bit, discard_add) in R::JOYPAD_USE_DISCARD_ADDRESSES {
           if hit == use_add {
             if (self.gb.read_memory(flag_mem_add) >> flag_bit) & 1 != 0 {
-              self.gb.run_until(&[discard_add]);
+              while self.gb.run_until(&[discard_add, R::JOYPAD_READ_FIRST_ADDRESS]) == R::JOYPAD_READ_FIRST_ADDRESS { self.handle_vblank(); }
               continue 'check_for_input_uses;
             }
             break;

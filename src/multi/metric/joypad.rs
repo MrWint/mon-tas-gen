@@ -78,8 +78,8 @@ impl HJoy5State {
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct HandleMenuInputState {
   hjoy5: HJoy5State,
-  current_item: u8,
-  max_item: u8,
+  pub current_item: u8,
+  pub max_item: u8,
   watched_keys: Input,
   wrapping_enabled: bool,
   watch_moving_oob: bool,

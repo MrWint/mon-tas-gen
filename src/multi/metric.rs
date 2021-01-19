@@ -3,7 +3,7 @@ pub use joypad::*;
 mod overworld;
 pub use overworld::*;
 
-use std::{fmt::Debug, hash::Hash};
+use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
 use super::*;
 
@@ -15,8 +15,8 @@ pub trait Metric<R: Rom>: Sync {
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType>;
 
-  fn filter<F>(self, f: F) -> Filter<Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
-    Filter { metric: self, f, }
+  fn filter<F>(self, f: F) -> Filter<R, Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
+    Filter { metric: self, f, _rom: PhantomData, }
   }
   fn assert<F>(self, f: F) -> Assert<Self, F> where Self: Sized, F: Fn(&Self::ValueType) -> bool {
     Assert { metric: self, f, }
@@ -44,11 +44,12 @@ pub trait Metric<R: Rom>: Sync {
   }
 }
 
-pub struct Filter<M, F> {
+pub struct Filter<R, M, F> {
   metric: M,
   f: F,
+  _rom: PhantomData<R>,
 }
-impl<R: Rom, M: Metric<R>, F: Sync> Metric<R> for Filter<M, F> where F: Fn(&M::ValueType) -> bool {
+impl<R: Rom, M: Metric<R>, F: Sync> Metric<R> for Filter<R, M, F> where F: Fn(&M::ValueType) -> bool {
   type ValueType = M::ValueType;
 
   fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {

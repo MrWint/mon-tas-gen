@@ -1,7 +1,7 @@
 mod logger;
 mod run;
 
-use montas::bk2::{Bk2Writer, read_bk2_inputs};
+use montas::{bk2::{Bk2Writer, read_bk2_inputs}};
 use gambatte::*;
 use log::{LevelFilter::*};
 #[allow(unused_imports)] use montas::constants::*;
@@ -33,6 +33,8 @@ fn main() {
   // create_gbi_inputs();
   // playback_inputs();
   // playback_test();
+  // playback_test_gb();
+  // playback_test_multigb();
   // playback_demos();
   // convert_efl();
   // multi_gb_test();
@@ -41,8 +43,8 @@ fn main() {
   // crate::run::crystal_desync::start();
   // crate::run::crystal_glitchless::start();
   // crate::run::blue_testing::start();
-  crate::run::multi_blue::start();
-  // crate::run::multi_testing::start();
+  // crate::run::multi_blue::start();
+  crate::run::multi_testing::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();
 }
@@ -160,11 +162,57 @@ fn playback_demos() {
 #[allow(dead_code)]
 fn playback_test() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
-  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/silver.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
-  let inputs = read_bk2_inputs("temp/silver_test.bk2").unwrap();
+  let mut gb = Gambatte::create("roms/gbc_bios.bin", "roms/blue.gb", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  let inputs = read_bk2_inputs("temp/multi_testing.bk2").unwrap();
   for input in inputs {
     gb.set_input(input); gb.step();
-    std::thread::sleep(std::time::Duration::from_millis(1));
+    std::thread::sleep(std::time::Duration::from_millis(10));
+  }
+}
+
+#[allow(dead_code)]
+fn playback_test_gb() {
+  let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+  let mut gb = montas::gb::Gb::<Blue>::create(false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  let inputs = read_bk2_inputs("temp/multi_testing.bk2").unwrap();
+  let mut frame_lo = 0;
+  let mut frame_hi = 0;
+  while (gb.last_input_frame[0] as usize) < inputs.len() && (gb.last_input_frame[1] as usize) < inputs.len() {
+    let input = (inputs[gb.last_input_frame[0] as usize - 1] & inputs::HI_INPUTS) | (inputs[gb.last_input_frame[1] as usize - 1] & inputs::LO_INPUTS);
+    let state = gb.save();
+    let input_name = montas::segment::get_input_identification(&mut gb, &state).unwrap();
+    gb.restore(&state);
+    if frame_hi != gb.last_input_frame[0] - 1 || frame_lo != gb.last_input_frame[1] - 1 {
+      frame_hi = gb.last_input_frame[0] - 1;
+      frame_lo = gb.last_input_frame[1] - 1;
+      println!("Frame {}/{} input {:?} at {}", frame_hi, frame_lo, input, input_name);
+      // std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    gb.input(input);
+    gb.step();
+  }
+}
+
+#[allow(dead_code)]
+fn playback_test_multigb() {
+  let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
+  let mut gb = montas::multi::Gb::<Blue>::create(false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+  let inputs = read_bk2_inputs("temp/multi_testing.bk2").unwrap();
+  let mut frame_lo = 0;
+  let mut frame_hi = 0;
+  while (gb.get_input_frame_hi() as usize) < inputs.len() && (gb.get_input_frame_lo() as usize) < inputs.len() {
+    let input = (inputs[gb.get_input_frame_hi() as usize] & inputs::HI_INPUTS) | (inputs[gb.get_input_frame_lo() as usize] & inputs::LO_INPUTS);
+    let state = gb.save();
+    let input_name = montas::multi::identify_input(&mut gb, &state).unwrap();
+    gb.restore(&state);
+    if frame_hi != gb.get_input_frame_hi() ||  frame_lo != gb.get_input_frame_lo() {
+      frame_hi = gb.get_input_frame_hi();
+      frame_lo = gb.get_input_frame_lo();
+      println!("Frame {}/{} input {:?} at {}", frame_hi, frame_lo, input, input_name);
+      std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    gb.input(input);
+    gb.step();
   }
 }
 

@@ -1,6 +1,5 @@
-use crate::gb::*;
 use crate::rom::*;
-use gambatte::Input;
+use gambatte::{Gambatte, Input};
 use std::{fmt::Write, cmp::min};
 
 #[derive(Debug, Default, Hash, Eq, PartialEq)]
@@ -13,21 +12,21 @@ pub struct Map {
 
 impl Map {
   #[allow(clippy::cyclomatic_complexity)]
-  pub fn load_gen1_map<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(mut self, gb: &Gb<T>) -> Self {
-    let surfing = gb.gb.read_memory(T::SURF_STATE_MEM_ADDRESS) == 2;
+  pub fn load_gen1_map<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(mut self, gb: &Gambatte) -> Self {
+    let surfing = gb.read_memory(T::SURF_STATE_MEM_ADDRESS) == 2;
 
-    let tile_pair_collisions = self.parse_tile_pair_collisions(gb, if surfing { T::TILE_PAIR_COLLISIONS_WATER_ADDRESS } else { T::TILE_PAIR_COLLISIONS_LAND_ADDRESS });
-    let passable_tiles = self.parse_passable_tile_list(gb);
+    let tile_pair_collisions = self.parse_tile_pair_collisions::<T>(gb, if surfing { T::TILE_PAIR_COLLISIONS_WATER_ADDRESS } else { T::TILE_PAIR_COLLISIONS_LAND_ADDRESS });
+    let passable_tiles = self.parse_passable_tile_list::<T>(gb);
 
-    let tileset_blocks_ptr = i32::from(gb.gb.read_memory(T::MAP_TILESET_BANK_MEM_ADDRESS)) * 0x1_0000 + i32::from(gb.gb.read_memory_word_le(T::MAP_TILESET_BLOCKS_PTR_MEM_ADDRESS));
-    let cur_tileset = gb.gb.read_memory(T::MAP_TILESET_MEM_ADDRESS);
+    let tileset_blocks_ptr = i32::from(gb.read_memory(T::MAP_TILESET_BANK_MEM_ADDRESS)) * 0x1_0000 + i32::from(gb.read_memory_word_le(T::MAP_TILESET_BLOCKS_PTR_MEM_ADDRESS));
+    let cur_tileset = gb.read_memory(T::MAP_TILESET_MEM_ADDRESS);
 
-    let map_index = gb.gb.read_memory(T::MAP_INDEX_MEM_ADDRESS);
-    let map_header_bank = gb.gb.read_rom(T::MAP_HEADER_BANKS_ADDRESS + i32::from(map_index));
-    let text_ptr_base_address = i32::from(map_header_bank) * 0x1_0000 + i32::from(gb.gb.read_memory_word_le(T::MAP_TEXT_PTR_MEM_ADDRESS));
+    let map_index = gb.read_memory(T::MAP_INDEX_MEM_ADDRESS);
+    let map_header_bank = gb.read_rom(T::MAP_HEADER_BANKS_ADDRESS + i32::from(map_index));
+    let text_ptr_base_address = i32::from(map_header_bank) * 0x1_0000 + i32::from(gb.read_memory_word_le(T::MAP_TEXT_PTR_MEM_ADDRESS));
 
-    let map_block_width = gb.gb.read_memory(T::MAP_WIDTH_MEM_ADDRESS) as usize + 6;
-    let map_block_height = gb.gb.read_memory(T::MAP_HEIGHT_MEM_ADDRESS) as usize + 6;
+    let map_block_width = gb.read_memory(T::MAP_WIDTH_MEM_ADDRESS) as usize + 6;
+    let map_block_height = gb.read_memory(T::MAP_HEIGHT_MEM_ADDRESS) as usize + 6;
     self.width = map_block_width * 2;
     self.height = map_block_height * 2;
 
@@ -36,13 +35,13 @@ impl Map {
       let mut blocks = vec![];
       // get blocks
       for offset in 0..(map_block_height as u16 * map_block_width as u16) {
-        blocks.push(gb.gb.read_memory(T::OVERWORLD_MAP_MEM_ADDRESS + offset));
+        blocks.push(gb.read_memory(T::OVERWORLD_MAP_MEM_ADDRESS + offset));
       }
 
       for y in 0..self.height {
         for x in 0..self.width {
           let block = blocks[map_block_width * (y >> 1) + (x >> 1)];
-          let tile = gb.gb.read_rom(tileset_blocks_ptr + i32::from(block)*0x10 + (x as i32 & 1)*2 + (y as i32 & 1)*8+4);
+          let tile = gb.read_rom(tileset_blocks_ptr + i32::from(block)*0x10 + (x as i32 & 1)*2 + (y as i32 & 1)*8+4);
           self.tile.push(tile);
         }
       }
@@ -71,13 +70,13 @@ impl Map {
     // iterate map objects
     for i in 1..16 {
       let object_base_address = T::MAP_SPRITE_STATE_DATA_2_MEM_ADDRESS + i * 16;
-      if gb.gb.read_memory(object_base_address + 4) == 0 { continue; } // no sprite
-      if self.is_sprite_hidden(gb, i as u8) { continue; } // object hidden
-      let y = gb.gb.read_memory(object_base_address + 4) + 2;
-      let x = gb.gb.read_memory(object_base_address + 5) + 2;
-      let movement = gb.gb.read_memory(object_base_address + 6);
-      let mov2 = gb.gb.read_memory(T::MAP_SPRITE_DATA_MEM_ADDRESS + (i-1) * 2 + 0);
-      let text_id = gb.gb.read_memory(T::MAP_SPRITE_DATA_MEM_ADDRESS + (i-1) * 2 + 1);
+      if gb.read_memory(object_base_address + 4) == 0 { continue; } // no sprite
+      if self.is_sprite_hidden::<T>(gb, i as u8) { continue; } // object hidden
+      let y = gb.read_memory(object_base_address + 4) + 2;
+      let x = gb.read_memory(object_base_address + 5) + 2;
+      let movement = gb.read_memory(object_base_address + 6);
+      let mov2 = gb.read_memory(T::MAP_SPRITE_DATA_MEM_ADDRESS + (i-1) * 2 + 0);
+      let text_id = gb.read_memory(T::MAP_SPRITE_DATA_MEM_ADDRESS + (i-1) * 2 + 1);
       if movement == 0xff { // is stationary, prevent moving into it
           log::info!("stationary sprite at ({},{}) i={}, text_id={}", x-6, y-6, i, text_id);
           for &(dx, dy, block_input) in &[
@@ -92,29 +91,29 @@ impl Map {
           self.tile_allowed_movements[self.width * ny + nx] -= block_input;
         }
         // if text_id == 0 { continue; } // no text_id
-        let text_address = i32::from(gb.gb.read_rom_word_le(text_ptr_base_address + 2*(i32::from(text_id)-1)));
+        let text_address = i32::from(gb.read_rom_word_le(text_ptr_base_address + 2*(i32::from(text_id)-1)));
         let text_address = if text_address < 0x4000 { text_address } else { i32::from(map_header_bank) * 0x1_0000 + text_address };
         let trainer_header_address = {
           log::info!("text address for i={}: {:x} (base address: {:x}, text_id: {})", i, text_address, text_ptr_base_address, text_id);
-          if gb.gb.read_rom(text_address) != 0x08 || gb.gb.read_rom(text_address + 1) != 0x21 { None }
+          if gb.read_rom(text_address) != 0x08 || gb.read_rom(text_address + 1) != 0x21 { None }
           else {
-            let text_address_2 = if gb.gb.read_rom(text_address + 4) == 0x18 {
+            let text_address_2 = if gb.read_rom(text_address + 4) == 0x18 {
               // follow rlative jump
-              text_address + 6 + i32::from(gb.gb.read_rom(text_address + 5))
+              text_address + 6 + i32::from(gb.read_rom(text_address + 5))
             } else {
               text_address + 4
             };
-            if gb.gb.read_rom(text_address_2) == 0xcd && gb.gb.read_rom_word_le(text_address_2 + 1) == T::TALK_TO_TRAINER_FUNCTION_ADDRESS as u16 {
-              Some(i32::from(map_header_bank) * 0x1_0000 + i32::from(gb.gb.read_rom_word_le(text_address + 2)))
+            if gb.read_rom(text_address_2) == 0xcd && gb.read_rom_word_le(text_address_2 + 1) == T::TALK_TO_TRAINER_FUNCTION_ADDRESS as u16 {
+              Some(i32::from(map_header_bank) * 0x1_0000 + i32::from(gb.read_rom_word_le(text_address + 2)))
             } else { None }
           }
         };
         if let Some(trainer_header_address) = trainer_header_address { // is stationary trainer
-          let flag_bit = gb.gb.read_rom(trainer_header_address);
-          let mut range = gb.gb.read_rom(trainer_header_address + 1) / 0x10;
+          let flag_bit = gb.read_rom(trainer_header_address);
+          let mut range = gb.read_rom(trainer_header_address + 1) / 0x10;
           if mov2 == 0xd0 { range = min(range, 3); } // limit engage dist, 4+ won't engage when moving down
-          let flag_byte = gb.gb.read_rom_word_le(trainer_header_address + 2);
-          let already_fought = gb.gb.read_memory(flag_byte + u16::from(flag_bit/8)) & (1 << (flag_bit%8)) != 0;
+          let flag_byte = gb.read_rom_word_le(trainer_header_address + 2);
+          let already_fought = gb.read_memory(flag_byte + u16::from(flag_bit/8)) & (1 << (flag_bit%8)) != 0;
           // log::info!("trainer trainer_header_address {:#x} flag_bit {} flag_byte {:#x} already_fought {} (byte {:x})", trainer_header_address, flag_bit, flag_byte, already_fought, gb.gb.read_memory(flag_byte + u16::from(flag_bit/8)));
           if !already_fought { // not already fought
             let (dx, dy) = match mov2 {
@@ -141,32 +140,32 @@ impl Map {
     self
   }
 
-  fn is_sprite_hidden<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(&self, gb: &Gb<T>, sprite_index: u8) -> bool {
+  fn is_sprite_hidden<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(&self, gb: &Gambatte, sprite_index: u8) -> bool {
     let mut base_address = T::MAP_MISSABLE_OBJECT_LIST_MEM_ADDRESS;
     let bit_index = loop {
-      let spr_index = gb.gb.read_memory(base_address);
+      let spr_index = gb.read_memory(base_address);
       if spr_index == 0xff { return false; }
-      if sprite_index == spr_index { break gb.gb.read_memory(base_address + 1); }
+      if sprite_index == spr_index { break gb.read_memory(base_address + 1); }
       base_address += 2;
     };
-    gb.gb.read_memory(T::MAP_MISSABLE_OBJECT_FLAGS_MEM_ADDRESS + u16::from(bit_index)/8) & (1 << (bit_index%8)) != 0
+    gb.read_memory(T::MAP_MISSABLE_OBJECT_FLAGS_MEM_ADDRESS + u16::from(bit_index)/8) & (1 << (bit_index%8)) != 0
 	}
 
-  fn parse_tile_pair_collisions<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(&self, gb: &Gb<T>, mut base_address: i32) -> Vec<(u8, u8, u8)> {
+  fn parse_tile_pair_collisions<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(&self, gb: &Gambatte, mut base_address: i32) -> Vec<(u8, u8, u8)> {
     let mut res = vec![];
     loop {
-      let tileset = gb.gb.read_rom(base_address);
+      let tileset = gb.read_rom(base_address);
       if tileset == 0xff { return res; }
-      res.push((tileset, gb.gb.read_rom(base_address + 1), gb.gb.read_rom(base_address + 2)));
+      res.push((tileset, gb.read_rom(base_address + 1), gb.read_rom(base_address + 2)));
       base_address += 3;
     }
   }
 
-  fn parse_passable_tile_list<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(&self, gb: &Gb<T>) -> Vec<u8> {
+  fn parse_passable_tile_list<T: JoypadAddresses + RngAddresses + Gen1MapAddresses>(&self, gb: &Gambatte) -> Vec<u8> {
     let mut res = vec![];
-    let mut base_address = T::MAP_TILESET_COLLISION_PTR_BANK_OFFSET + i32::from(gb.gb.read_memory_word_le(T::MAP_TILESET_COLLISION_PTR_MEM_ADDRESS));
+    let mut base_address = T::MAP_TILESET_COLLISION_PTR_BANK_OFFSET + i32::from(gb.read_memory_word_le(T::MAP_TILESET_COLLISION_PTR_MEM_ADDRESS));
     loop {
-      let tile = gb.gb.read_rom(base_address);
+      let tile = gb.read_rom(base_address);
       if tile == 0xff { return res; }
       res.push(tile);
       base_address += 1;

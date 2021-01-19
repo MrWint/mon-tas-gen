@@ -17,19 +17,27 @@ impl Default for IdentifyInputSegment {
     }
   }
 }
+
+pub fn get_input_identification<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses>(gb: &mut Gb<R>, s: &State) -> Option<&'static str> {
+  for &(pre, input, post, name) in R::II_ADDRESSES {
+    gb.restore(s);
+    gb.input(Input::empty());
+    if super::is_correct_input_use(gb, pre, input, post) {
+      return Some(name);
+    }
+  }
+  return None;
+}
+
 impl IdentifyInputSegment {
   pub fn new() -> Self { Default::default() }
 
   fn print_identification<R: JoypadAddresses + RngAddresses + InputIdentificationAddresses>(gb: &mut Gb<R>, s: &State) {
-    for &(pre, input, post, name) in R::II_ADDRESSES {
-      gb.restore(s);
-      gb.input(Input::empty());
-      if super::is_correct_input_use(gb, pre, input, post) {
-        log::info!("IdentifyInputSegment: Identified input as {}", name);
-        return;
-      }
+    if let Some(name) = get_input_identification(gb, s) {
+      log::info!("IdentifyInputSegment: Identified input as {}", name);
+    } else {
+      log::info!("IdentifyInputSegment: Input not identified");
     }
-    log::info!("IdentifyInputSegment: Input not identified");
   }
 }
 

@@ -30,6 +30,10 @@ impl<R: MultiRom + InputIdentificationAddresses> Plan<R> for IdentifyInputPlan {
   fn get_blockable_inputs(&self) -> Input { Input::empty() }
   fn canonicalize_input(&self, _input: Input) -> Option<Input> { Some(Input::empty()) }
   fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+    let ignored_inputs = Input::all() - s.remove_ignored_inputs(Input::all());
+    if !ignored_inputs.is_empty() {
+      log::info!("IdentifyInputPlan: Ignored inputs: {:?}", ignored_inputs);
+    }
     if let Some(name) = identify_input_with(gb, s, input) {
       log::info!("IdentifyInputPlan: Identified input as {}", name);
       gb.step();

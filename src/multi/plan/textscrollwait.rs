@@ -2,7 +2,7 @@ use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
 
-// Plan to progress WaitForTextScrollButtonPress inputs
+// Plan to progress WaitForTextScrollButtonPress inputs or ShowPokedexDataInternal inputs
 pub struct TextScrollWaitPlan {
   // instance state
   hjoy5_state: HJoy5State,

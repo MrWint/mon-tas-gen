@@ -40,7 +40,7 @@ impl<R: Rom + Gen1MapAddresses + Gen1OverworldAddresses + Gen1DVAddresses> crate
       gb.restore(&s);
       gb.input(Input::empty());
       gb.step();
-      tx.send(gb.save_with_value(super::map::Map::default().load_gen1_map(gb))).unwrap();
+      tx.send(gb.save_with_value(super::map::Map::default().load_gen1_map::<R>(&gb.gb))).unwrap();
     }).get_value_assert_all_equal();
     // let map = gbe.execute_state_fn(vec![&initial_states[0]], |gb| {
     //   super::map::Map::default().load_gen1_map(gb)

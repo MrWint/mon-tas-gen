@@ -27,7 +27,7 @@ impl<M> TextPlan<M> {
     }
   }
   /// How often is an "end" of the text expected (can happen when special characters are printed). This avoid inputs conflicting with the next text's inputs.
-  pub fn with_skip_ends(self, ends_to_be_skipped: u32) -> Self { Self { ends_to_be_skipped, ..self } }
+  pub fn with_skip_ends(self, initial_ends_to_be_skipped: u32) -> Self { Self { initial_ends_to_be_skipped, ..self } }
 }
 impl<R: MultiRom + TextAddresses, M: Metric<R>> Plan<R> for TextPlan<M> {
   type Value = M::ValueType;

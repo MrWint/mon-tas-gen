@@ -139,6 +139,7 @@ mod gen1itskiptextssegment;
 pub use self::gen1itskiptextssegment::Gen1ITSkipTextsSegment;
 mod identifyinputsegment;
 pub use self::identifyinputsegment::IdentifyInputSegment;
+pub use self::identifyinputsegment::get_input_identification;
 mod joypadlowsensitivitysegment;
 pub use self::joypadlowsensitivitysegment::JoypadLowSensitivitySegment;
 mod moveloopsegment;

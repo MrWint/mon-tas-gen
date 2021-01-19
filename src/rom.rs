@@ -78,17 +78,23 @@ pub trait Gen1OverworldAddresses {
   const OVERWORLD_WARP_MAP_MEM_ADDRESS: u16;
   const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16;
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32;
+  const OVERWORLD_A_BUTTON_Z_CHECK_1: i32; // .displayDialogue - 12
+  const OVERWORLD_A_BUTTON_Z_CHECK_2: i32; // .displayDialogue - 3
   const OVERWORLD_DISPLAY_TEXT_ADDRESS: i32;
   const OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS: u16;
+  const OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS: i32; // .noDirectionButtonsPressed - 3
   const OVERWORLD_INIT_BATTLE_COMMON_ADDRESS: i32;
+  const OVERWORLD_NEW_BATTLE_NO_BATTLE: i32; // .newBattle + 3
   const OVERWORLD_BATTLE_SPECIES_MEM_ADDRESS: u16;
   const OVERWORLD_BATTLE_LEVEL_MEM_ADDRESS: u16;
   const OVERWORLD_TURNING_DONE_ADDRESS: i32;
   const OVERWORLD_MOVING_DIRECTION_MEM_ADDRESS: u16;
+  const OVERWORLD_JUMP_LEDGE_ADDRESS: i32; // HandleLedges.foundMatch + 4
   const OVERWORLD_LAND_COLLISION_ADDRESS: i32;
   const OVERWORLD_LAND_COLLISION_NO_WARP_ADDRESS: i32;
   const OVERWORLD_WATER_COLLISION_ADDRESS: i32;
   const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32;
+  const OVERWORLD_WALKED_PRE_ADDRESS: i32; // .notSafariZone
   const OVERWORLD_WALKED_ADDRESS: i32;
   const OVERWORLD_NO_ACTION_ADDRESS: i32;
   const OVERWORLD_TURNFRAME_DIRECTION_MEM_ADDRESS: u16; // wPlayerLastStopDirection
@@ -365,6 +371,14 @@ macro_rules! impl_red_blue_common_addresses {
       const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
       const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
     }
+    impl JoypadOverworldAddresses for $t {
+      const FLAGS_D733_MEM_ADDRESS: u16 = 0xd733; // wFlags_D733
+      const CUR_MAP_MEM_ADDRESS: u16 = 0xd35e; // wCurMap
+      const FLAGS_D730_MEM_ADDRESS: u16 = 0xd730; // wd730
+      const SIMULATED_JOYPAD_OVERRIDE_MASK_MEM_ADDRESS: u16 = 0xcd3b; // wOverrideSimulatedJoypadStatesMask
+      const SIMULATED_JOYPAD_STATES_INDEX_MEM_ADDRESS: u16 = 0xcd38; // wSimulatedJoypadStatesIndex
+      const SIMULATED_JOYPAD_STATES_END_MEM_ADDRESS: u16 = 0xccd3; // wSimulatedJoypadStatesEnd
+    }
     impl RngAddresses for $t {
       const RNG_MEM_ADDRESS: u16 = 0xffd3;
     }
@@ -395,17 +409,23 @@ macro_rules! impl_red_blue_common_addresses {
       const OVERWORLD_WARP_MAP_MEM_ADDRESS: u16 = 0xFF8B; // hWarpDestinationMap
       const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16 = 0xD42F; // wDestinationWarpID
       const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0965; // HandleFlyWarpOrDungeonWarp
+      const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_047d-12; // .displayDialogue - 12
+      const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_047d-3; // .displayDialogue - 3
       const OVERWORLD_DISPLAY_TEXT_ADDRESS: i32 = 0x0_0496; // at call DisplayTextID
       const OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS: u16 = 0xFF8C; // hSpriteIndexOrTextID
+      const OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS: i32 = 0x0_04cd-3; // .noDirectionButtonsPressed - 3
       const OVERWORLD_INIT_BATTLE_COMMON_ADDRESS: i32 = 0xF_6F3D; // InitBattleCommon
+      const OVERWORLD_NEW_BATTLE_NO_BATTLE: i32 = 0x0_062c+3; // .newBattle + 3
       const OVERWORLD_BATTLE_SPECIES_MEM_ADDRESS: u16 = 0xCFD8; // wEnemyMonSpecies2
       const OVERWORLD_BATTLE_LEVEL_MEM_ADDRESS: u16 = 0xD127; // wCurEnemyLVL
       const OVERWORLD_TURNING_DONE_ADDRESS: i32 = 0x0_057B; // at .holdIntermediateDirectionLoop -> jp OverworldLoop
       const OVERWORLD_MOVING_DIRECTION_MEM_ADDRESS: u16 = 0xD528; // wPlayerMovingDirection
+      const OVERWORLD_JUMP_LEDGE_ADDRESS: i32 = 0x6_66a9+4; // HandleLedges.foundMatch + 4
       const OVERWORLD_LAND_COLLISION_ADDRESS: i32 = 0x0C0C; // CollisionCheckOnLand.setCarry
       const OVERWORLD_LAND_COLLISION_NO_WARP_ADDRESS: i32 = 0x0_03FF; // OverworldLoop
       const OVERWORLD_WATER_COLLISION_ADDRESS: i32 = 0x0_1001; // CollisionCheckOnWater.setCarry
       const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32 = 0x0_0931; // HandleBlackOut
+      const OVERWORLD_WALKED_PRE_ADDRESS: i32 = 0x0_0619; // .notSafariZone
       const OVERWORLD_WALKED_ADDRESS: i32 = 0x0_06B4; // CheckWarpsNoCollision
       const OVERWORLD_NO_ACTION_ADDRESS: i32 = 0x0_04CD; // OverworldLoopLessDelay.noDirectionButtonsPressed
       const OVERWORLD_TURNFRAME_DIRECTION_MEM_ADDRESS: u16 = 0xd529; // wPlayerLastStopDirection
@@ -605,6 +625,14 @@ impl HandleMenuInputAddresses for Yellow {
   const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
   const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
 }
+impl JoypadOverworldAddresses for Yellow {
+  const FLAGS_D733_MEM_ADDRESS: u16 = 0xd732; // wFlags_D733
+  const CUR_MAP_MEM_ADDRESS: u16 = 0xd35e; // wCurMap
+  const FLAGS_D730_MEM_ADDRESS: u16 = 0xd72f; // wd730
+  const SIMULATED_JOYPAD_OVERRIDE_MASK_MEM_ADDRESS: u16 = 0xcd3b; // wOverrideSimulatedJoypadStatesMask
+  const SIMULATED_JOYPAD_STATES_INDEX_MEM_ADDRESS: u16 = 0xcd38; // wSimulatedJoypadStatesIndex
+  const SIMULATED_JOYPAD_STATES_END_MEM_ADDRESS: u16 = 0xccd3; // wSimulatedJoypadStatesEnd
+}
 impl RngAddresses for Yellow {
   const RNG_MEM_ADDRESS: u16 = 0xffd3;
 }
@@ -635,17 +663,23 @@ impl Gen1OverworldAddresses for Yellow {
   const OVERWORLD_WARP_MAP_MEM_ADDRESS: u16 = 0xFF8B; // hWarpDestinationMap
   const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16 = 0xD42E; // wDestinationWarpID
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0794; // HandleFlyWarpOrDungeonWarp
+  const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_02b2; // different in Yellow
+  const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_02c5-3; // .displayDialogue - 3
   const OVERWORLD_DISPLAY_TEXT_ADDRESS: i32 = 0x0_02DE; // at call DisplayTextID
   const OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS: u16 = 0xFF8C; // hSpriteIndexOrTextID
+  const OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS: i32 = 0x0_02f8-3; // .noDirectionButtonsPressed - 3
   const OVERWORLD_INIT_BATTLE_COMMON_ADDRESS: i32 = 0x3D_601D; // asm_f601d
+  const OVERWORLD_NEW_BATTLE_NO_BATTLE: i32 = 0x0_040b+3; // .newBattle + 3
   const OVERWORLD_BATTLE_SPECIES_MEM_ADDRESS: u16 = 0xCFD7; // wEnemyMonSpecies2
   const OVERWORLD_BATTLE_LEVEL_MEM_ADDRESS: u16 = 0xD126; // wCurEnemyLVL
   const OVERWORLD_TURNING_DONE_ADDRESS: i32 = 0x0_0381; // at .handleDirectionButtonPress -> jp OverworldLoop
   const OVERWORLD_MOVING_DIRECTION_MEM_ADDRESS: u16 = 0xD527; // wPlayerMovingDirection
+  const OVERWORLD_JUMP_LEDGE_ADDRESS: i32 = 0x682b+4; // HandleLedges.foundMatch + 4
   const OVERWORLD_LAND_COLLISION_ADDRESS: i32 = 0x0_0A75; // CollisionCheckOnLand.setCarry
   const OVERWORLD_LAND_COLLISION_NO_WARP_ADDRESS: i32 = 0x0_0242; // OverworldLoop
   const OVERWORLD_WATER_COLLISION_ADDRESS: i32 = 0x0_0D08; // CollisionCheckOnWater.setCarry
   const OVERWORLD_HANDLE_BLACKOUT_ADDRESS: i32 = 0x0_0762; // HandleBlackOut
+  const OVERWORLD_WALKED_PRE_ADDRESS: i32 = 0x0_03f8; // .notSafariZone
   const OVERWORLD_WALKED_ADDRESS: i32 = 0x0_04BD; // CheckWarpsNoCollision
   const OVERWORLD_NO_ACTION_ADDRESS: i32 = 0x0_02F8; // OverworldLoopLessDelay.noDirectionButtonsPressed
   const OVERWORLD_TURNFRAME_DIRECTION_MEM_ADDRESS: u16 = 0xd528; // wPlayerLastStopDirection
