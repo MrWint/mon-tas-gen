@@ -1,3 +1,4 @@
+use crate::metric::overworld::gen2::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -5,7 +6,6 @@ use gambatte::Input;
 use log::{debug, log_enabled};
 use std::collections::VecDeque;
 use std::fmt::Write;
-use super::OverworldInteractionResult;
 
 const MAX_WALK_STEP_SKIPS: u32 = 0;
 
@@ -100,7 +100,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
 
     let mut cur_dist = max_dist;
     while cur_dist > 0 {
-      let into_result = if cur_dist == 1 { &self.into_result } else { &super::OverworldInteractionResult::NoEvents };
+      let into_result = if cur_dist == 1 { &self.into_result } else { &OverworldInteractionResult::NoEvents };
       for x in 0..map.width {
         for y in 0..map.height {
           if distances[map.width * y + x] == cur_dist {

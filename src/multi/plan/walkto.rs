@@ -1,5 +1,6 @@
 use serde_derive::{Serialize, Deserialize};
 
+use crate::metric::overworld::gen1::*;
 use crate::{multi::*, segment::overworld::gen1::Map};
 use crate::rom::*;
 use gambatte::inputs::*;

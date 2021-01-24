@@ -1,4 +1,5 @@
 use crate::gb::*;
+use crate::metric::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -31,7 +32,7 @@ impl<R> JoypadLowSensitivitySegment<R, NullMetric> {
   pub fn new(inputs: &'static [Input]) -> Self {
     Self {
       inputs,
-      metric: NullMetric {},
+      metric: NullMetric,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       _rom: PhantomData,
     }

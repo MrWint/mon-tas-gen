@@ -1,4 +1,5 @@
 use crate::gb::*;
+use crate::metric::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -27,7 +28,7 @@ impl<R: Rom + TextAddresses> TextSegment<R, NullMetric> {
   pub fn new() -> Self {
     TextSegment {
       allowed_end_inputs: Input::all(),
-      metric: NullMetric {},
+      metric: NullMetric,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       expect_conflicting_inputs: false,
       ignore_conflicting_inputs: false,
@@ -85,7 +86,12 @@ impl<R: Rom + TextAddresses, M: Metric<R>> TextSegment<R, M> {
       let end = Self::hit_address_to_text_segment_end(hit).unwrap();
       if ends_to_be_skipped == 0 {
         if !self.allowed_end_inputs.contains(input) { return None; }
-        if let Some(metric_value) = self.metric.evaluate_and_step(gb, s, input) {
+        if let Some(metric_value) = self.metric.evaluate(gb) {
+          if gb.skipped_relevant_inputs { // restore state if metric overran next input
+            gb.restore(&s);
+            gb.input(input);
+          }
+          if !gb.is_at_input { gb.step(); }
           return Some(gb.save_with_value(PrintLetterProgressResult::Finished(TextSegmentResult { printed_characters, end, metric_value })));
         } else { return None; }
       }

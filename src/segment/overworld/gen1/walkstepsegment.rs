@@ -1,10 +1,10 @@
 use crate::gb::*;
+use crate::metric::overworld::gen1::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
 use log::debug;
-use super::OverworldInteractionResult;
 
 pub struct WalkStepSegment {
   input: Input,
@@ -47,7 +47,7 @@ impl<R: Rom + Gen1OverworldAddresses + Gen1DVAddresses> crate::segment::Segment<
           gb.step();
           tx.send(gb.save()).unwrap();
         }
-        if skips >= self.max_skips || facing_dir != super::input_to_dir(self.input) { break; }
+        if skips >= self.max_skips || facing_dir != input_to_dir(self.input) { break; }
         gb.restore(&s);
         gb.input(Input::empty());
         gb.step();
@@ -59,7 +59,7 @@ impl<R: Rom + Gen1OverworldAddresses + Gen1DVAddresses> crate::segment::Segment<
 }
 
 pub fn walk_step_check<T: Rom + Gen1OverworldAddresses + Gen1DVAddresses>(gb: &mut Gb<T>, s: &State, input: Input, into_result: &OverworldInteractionResult) -> bool {
-  let result = super::get_overworld_interaction_result(gb);
+  let result = get_overworld_interaction_result(gb);
   if let OverworldInteractionResult::Walked { direction: _ } = result {
     if gb.skipped_relevant_inputs {
       gb.restore(s);
@@ -69,7 +69,7 @@ pub fn walk_step_check<T: Rom + Gen1OverworldAddresses + Gen1DVAddresses>(gb: &m
       gb.step();
     }
     gb.input(Input::empty());
-    let result = super::get_overworld_interaction_result(gb);
+    let result = get_overworld_interaction_result(gb);
     if result != *into_result {
       debug!("WalkStepSegment into_result failed: {:?}", result);
       false

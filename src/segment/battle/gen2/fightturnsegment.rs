@@ -1,3 +1,4 @@
+use crate::metric::battle::gen2::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::segment::battle::*;
@@ -270,7 +271,7 @@ impl EnemyAttackMetric {
 impl<R: Rom + Gen2FightTurnAddresses + Gen2BattleSpiteAddresses> Metric<R> for EnemyAttackMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<()> {
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<()> {
     match self.enemy_attack_type {
       EnemyAttackType::Hit => Gen2NormalHitMetric::with_expected_max_damage(self.expected_max_damage, self.expected_max_crit_damage).expect(FightTurnResult::Hit { damage: (u32::from(self.expected_max_damage) * 217 / 255) as u16, }).evaluate(gb),
       EnemyAttackType::HitWithoutEffect => Gen2NormalHitMetric::with_expected_max_damage(self.expected_max_damage, self.expected_max_crit_damage).with_effect().expect(FightTurnResult::HitWithoutEffect { damage: (u32::from(self.expected_max_damage) * 217 / 255) as u16, }).evaluate(gb),
@@ -332,7 +333,7 @@ struct EnemyExpectedNextMoveMetric {
 impl<R: Rom + AIChooseMoveAddresses> Metric<R> for EnemyExpectedNextMoveMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<()> {
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<()> {
     if self.is_ko { Some(()) } else { ExpectedAIChooseMoveMetric { expected_move: self.expected_move }.evaluate(gb) }
   }
 }

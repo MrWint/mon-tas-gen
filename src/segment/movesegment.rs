@@ -1,4 +1,4 @@
-use crate::gb::*;
+use crate::metric::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -16,7 +16,7 @@ pub struct MoveSegment<R, M> {
   buffer_size: usize,
   _rom: PhantomData<R>,
 }
-impl<R: JoypadAddresses + RngAddresses, F: Metric<R>, V> MoveSegment<R, F> where F: Fn(&mut Gb<R>) -> Option<V> {
+impl<R: JoypadAddresses + RngAddresses, F: Metric<R>, V> MoveSegment<R, F> where F: Fn(&mut dyn GbI<R>) -> Option<V> {
   pub fn with_metric_fn(input: Input, f: F) -> Self { Self::with_metric(input, f) }
 }
 impl<R: JoypadAddresses + RngAddresses, M: Metric<R>> MoveSegment<R, M> {
@@ -35,7 +35,7 @@ impl<R> MoveSegment<R, NullMetric> {
   pub fn new(input: Input) -> Self {
     Self {
       input,
-      metric: NullMetric {},
+      metric: NullMetric,
       max_skips: 0,
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
       _rom: PhantomData,

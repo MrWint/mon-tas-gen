@@ -1,5 +1,6 @@
 use std::cmp::min;
 
+use crate::metric::battle::gen1::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::segment::battle::*;
@@ -168,7 +169,7 @@ impl PlayerAfterAttackMetric {
 impl<R: Rom + Gen1FightTurnAddresses + Gen1MoveEffectAddresses> Metric<R> for PlayerAfterAttackMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<()> {
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<()> {
     if let Some(effect) = self.expected_effect {
       if effect == MoveEffectResult::NoEffect || !self.has_after_attack_text_segment { // effects with texts are handled in the PlayerAfterAttackTextsSegment instead
         MoveEffectMetric {}.expect(effect).evaluate(gb)
@@ -241,7 +242,7 @@ impl EnemyAttackMetric {
 impl<R: Rom + Gen1FightTurnAddresses + Gen1MoveEffectAddresses> Metric<R> for EnemyAttackMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<()> {
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<()> {
     match self.enemy_attack_type {
       EnemyAttackType::CriticalHit { damage } => Gen1NormalHitMetric::with_expected_max_damage(self.expected_max_damage, self.expected_max_crit_damage).expect(FightTurnResult::CriticalHit { damage }).evaluate(gb),
       EnemyAttackType::Hit { damage } => Gen1NormalHitMetric::with_expected_max_damage(self.expected_max_damage, self.expected_max_crit_damage).expect(FightTurnResult::Hit { damage }).evaluate(gb),
@@ -301,7 +302,7 @@ impl EnemyAfterAttackMetric {
 impl<R: Rom + Gen1FightTurnAddresses + Gen1MoveEffectAddresses> Metric<R> for EnemyAfterAttackMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<()> {
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<()> {
     if let EnemyAttackType::HitNoEffect { .. } = self.enemy_attack_type {
       if self.is_effective { MoveEffectMetric {}.expect(MoveEffectResult::NoEffect).evaluate(gb) } else { Some(()) } // already handled in EnemyAttackMetric
     } else { Some(()) }

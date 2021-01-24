@@ -365,6 +365,8 @@ mod identifyinput;
 pub use identifyinput::*;
 mod intronamemenu;
 pub use intronamemenu::*;
+mod joypad;
+pub use joypad::*;
 mod mainmenu;
 pub use mainmenu::*;
 mod namingscreen;

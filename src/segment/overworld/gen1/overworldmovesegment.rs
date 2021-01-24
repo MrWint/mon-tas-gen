@@ -1,8 +1,9 @@
+use crate::metric::*;
+use crate::metric::overworld::gen1::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use super::{OverworldInteractionMetric, OverworldInteractionResult};
 
 pub struct OverworldMoveSegment {
   input: Input,

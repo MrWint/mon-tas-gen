@@ -4,8 +4,6 @@ use std::{collections::HashSet, mem::MaybeUninit};
 pub use gb::*;
 mod input;
 pub use input::*;
-mod metric;
-pub use metric::*;
 mod plan;
 pub use plan::*;
 mod statebuffer;

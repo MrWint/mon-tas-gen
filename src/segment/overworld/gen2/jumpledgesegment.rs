@@ -1,9 +1,9 @@
-use crate::gb::*;
+use crate::metric::*;
+use crate::metric::overworld::gen2::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
-use super::OverworldInteractionResult;
 
 pub struct JumpLedgeSegment {
   input: Input,
@@ -34,8 +34,8 @@ struct JumpLedgeMetric {}
 impl<R: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses> Metric<R> for JumpLedgeMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    let result = super::get_overworld_interaction_result(gb);
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<Self::ValueType> {
+    let result = get_overworld_interaction_result(gb);
     if result != OverworldInteractionResult::JumpedLedge {
       log::warn!("JumpLedgeSegment jumping failed: {:?}", result); None
     } else { Some(()) }

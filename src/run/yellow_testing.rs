@@ -1,6 +1,7 @@
 use crate::run::*;
 use gambatte::inputs::*;
-use montas::segment::overworld::gen1::*;
+use montas::metric::*;
+use montas::metric::overworld::gen1::*;
 
 #[allow(dead_code)]
 pub fn start() {

@@ -1,3 +1,4 @@
+use crate::metric::overworld::gen1::*;
 use super::*;
 
 pub struct SingleGbRunner<R> {

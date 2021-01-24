@@ -1,3 +1,5 @@
+use crate::metric::*;
+use crate::metric::overworld::gen2::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
@@ -24,15 +26,15 @@ impl<R: Rom + Gen2MapEventsAddresses> Segment<R> for SkipScriptSegment {
   type Key = ();
 
   fn execute_split(&self, gbe: &mut RuntimeGbExecutor<R>, sb: StateBuffer) -> HashMap<Self::Key, StateBuffer> {
-    MoveLoopSegment::new(super::OverworldInteractionMetric {}.filter(|v|
-        v != &super::OverworldInteractionResult::CountStepEvent &&
-        v != &super::OverworldInteractionResult::MapCoordEvent &&
-        v != &super::OverworldInteractionResult::SceneScript &&
-        v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::MapScript) &&
-        v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::TalkToTrainer) &&
-        v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::Fall) &&
-        v != &super::OverworldInteractionResult::SeenByTrainer &&
-        v != &super::OverworldInteractionResult::ScriptRunning(super::PlayerEventScript::SeenByTrainer)
+    MoveLoopSegment::new(OverworldInteractionMetric {}.filter(|v|
+        v != &OverworldInteractionResult::CountStepEvent &&
+        v != &OverworldInteractionResult::MapCoordEvent &&
+        v != &OverworldInteractionResult::SceneScript &&
+        v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::MapScript) &&
+        v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::TalkToTrainer) &&
+        v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::Fall) &&
+        v != &OverworldInteractionResult::SeenByTrainer &&
+        v != &OverworldInteractionResult::ScriptRunning(PlayerEventScript::SeenByTrainer)
     ).into_unit()).with_buffer_size(self.buffer_size).execute_split(gbe, sb)
   }
 }

@@ -1,3 +1,4 @@
+use crate::metric::battle::gen2::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::segment::battle::*;

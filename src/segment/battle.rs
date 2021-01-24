@@ -6,9 +6,8 @@ use std::cmp::{max, min};
 use crate::constants::*;
 use crate::gb::*;
 use crate::gbexecutor::*;
+use crate::metric::*;
 use crate::rom::*;
-use crate::segment::Metric;
-use crate::segment::metric::DVs;
 use num_traits::cast::ToPrimitive;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
@@ -21,8 +20,8 @@ pub struct BattleMoveOrderMetric {}
 impl<R: JoypadAddresses + BattleDetermineMoveOrderAddresses> Metric<R> for BattleMoveOrderMetric {
   type ValueType = MoveOrder;
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    let hit = gb.run_until_or_next_input_use(&[R::MOVE_ORDER_PLAYER_FIRST_ADDRESS, R::MOVE_ORDER_ENEMY_FIRST_ADDRESS]);
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<Self::ValueType> {
+    let hit = gb.step_until(&[R::MOVE_ORDER_PLAYER_FIRST_ADDRESS, R::MOVE_ORDER_ENEMY_FIRST_ADDRESS]);
     if hit == R::MOVE_ORDER_PLAYER_FIRST_ADDRESS { return Some(MoveOrder::PlayerFirst); }
     if hit == R::MOVE_ORDER_ENEMY_FIRST_ADDRESS { return Some(MoveOrder::EnemyFirst); }
     None
@@ -39,9 +38,9 @@ pub struct BattleObedienceMetric {}
 impl<R: JoypadAddresses + BattleObedienceAddresses> Metric<R> for BattleObedienceMetric {
   type ValueType = BattleObedience;
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    if gb.run_until_or_next_input_use(&[R::CHECK_OBEDIENCE_START_ADDRESS]) == 0 { return None; }
-    let hit = gb.run_until_or_next_input_use(&[R::CHECK_OBEDIENCE_OBEY_ADDRESS, R::CHECK_OBEDIENCE_DISOBEY_ADDRESS]);
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<Self::ValueType> {
+    if gb.step_until(&[R::CHECK_OBEDIENCE_START_ADDRESS]) == 0 { return None; }
+    let hit = gb.step_until(&[R::CHECK_OBEDIENCE_OBEY_ADDRESS, R::CHECK_OBEDIENCE_DISOBEY_ADDRESS]);
     if hit == R::CHECK_OBEDIENCE_OBEY_ADDRESS { Some(BattleObedience::Obey) }
     else if hit == R::CHECK_OBEDIENCE_DISOBEY_ADDRESS { Some(BattleObedience::Disobey) }
     else { None }
@@ -52,9 +51,9 @@ pub struct AIChooseMoveMetric {}
 impl<R: JoypadAddresses + AIChooseMoveAddresses> Metric<R> for AIChooseMoveMetric {
   type ValueType = Move;
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    if gb.run_until_or_next_input_use(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
-    Move::from_index(gb.gb.read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS))
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<Self::ValueType> {
+    if gb.step_until(&[R::AFTER_AI_CHOOSE_MOVE_ADDRESS]) == 0 { return None; }
+    Move::from_index(gb.gb().read_memory(R::CUR_ENEMY_MOVE_MEM_ADDRESS))
   }
 }
 pub struct ExpectedAIChooseMoveMetric {
@@ -63,7 +62,7 @@ pub struct ExpectedAIChooseMoveMetric {
 impl<R: Rom + AIChooseMoveAddresses> Metric<R> for ExpectedAIChooseMoveMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<Self::ValueType> {
     AIChooseMoveMetric {}.filter(|&m| {
       log::debug!("Enemy selected move: {:?}", m);
       if let Some(mov) = self.expected_move {
@@ -408,8 +407,8 @@ pub struct CatchSuccessMetric {}
 impl<R: JoypadAddresses + BattleCatchMonAddresses> Metric<R> for CatchSuccessMetric {
   type ValueType = ();
 
-  fn evaluate(&self, gb: &mut Gb<R>) -> Option<Self::ValueType> {
-    if gb.run_until_or_next_input_use(&[R::CATCH_SUCCESS_ADDRESS, R::CATCH_FAIL_ADDRESS]) == R::CATCH_SUCCESS_ADDRESS {
+  fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<Self::ValueType> {
+    if gb.step_until(&[R::CATCH_SUCCESS_ADDRESS, R::CATCH_FAIL_ADDRESS]) == R::CATCH_SUCCESS_ADDRESS {
       Some(())
     } else {
       None

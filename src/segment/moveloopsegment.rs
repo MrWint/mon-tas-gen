@@ -1,3 +1,4 @@
+use crate::metric::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;

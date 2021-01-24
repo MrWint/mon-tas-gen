@@ -1,3 +1,4 @@
+use crate::metric::overworld::gen1::*;
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;

@@ -216,3 +216,13 @@ impl <R: JoypadAddresses> Gb<R> {
     self.num_delays = s.num_delays;
   }
 }
+
+impl<R: JoypadAddresses> crate::metric::GbI<R> for Gb<R> {
+  fn step_until(&mut self, addresses: &[i32]) -> i32 {
+    self.step_until(addresses)
+  }
+
+  fn gb(&self) -> &Gambatte {
+    &self.gb
+  }
+}

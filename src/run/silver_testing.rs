@@ -1,8 +1,10 @@
 use crate::run::*;
+use montas::metric::*;
+use montas::metric::battle::gen2::*;
+use montas::metric::overworld::gen2::*;
 use gambatte::inputs::*;
 use montas::constants::*;
 use montas::segment::battle::*;
-use montas::segment::battle::gen2::*;
 use montas::segment::overworld::gen2::*;
 
 #[allow(dead_code)]

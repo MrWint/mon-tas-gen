@@ -1,10 +1,10 @@
 use crate::gb::*;
+use crate::metric::overworld::gen2::*;
 use crate::rom::*;
 use crate::segment::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
 use log::debug;
-use super::OverworldInteractionResult;
 
 pub struct WalkStepSegment {
   input: Input,
@@ -65,11 +65,11 @@ impl<R: Rom + Gen2MapEventsAddresses> crate::segment::Segment<R> for WalkStepSeg
 }
 
 pub fn walk_step_check<T: JoypadAddresses + RngAddresses + Gen2MapEventsAddresses>(gb: &mut Gb<T>, into_result: &OverworldInteractionResult) -> bool {
-  let result = super::get_overworld_interaction_result(gb);
+  let result = get_overworld_interaction_result(gb);
   if let OverworldInteractionResult::Walked(_, _) = result {
     gb.step();
     gb.input(Input::empty());
-    let result = super::get_overworld_interaction_result(gb);
+    let result = get_overworld_interaction_result(gb);
     if result != *into_result {
       debug!("WalkStepSegment into_result failed: {:?}", result);
       false

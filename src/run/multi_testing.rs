@@ -1,4 +1,5 @@
 use gambatte::inputs::*;
+use montas::metric::*;
 use montas::multi::*;
 use montas::rom::*;
 use montas::sdl::*;

@@ -1,6 +1,5 @@
 use crate::rom::*;
 use crate::segment::*;
-use crate::segment::battle::gen1::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;
 

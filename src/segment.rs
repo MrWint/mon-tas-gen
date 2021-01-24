@@ -121,15 +121,6 @@ fn is_correct_input_use<R: JoypadAddresses>(gb: &mut Gb<R>, pre_address: i32, us
 pub mod battle;
 pub mod overworld;
 
-mod metric;
-pub use self::metric::*;
-pub use self::metric::FnMetric;
-pub use self::metric::NullMetric;
-pub use self::metric::Gen1DVMetric;
-pub use self::metric::Gen2DVMetric;
-pub use self::metric::DVs;
-pub use self::metric::TrainerIDMetric;
-
 mod applyindividuallysegment;
 pub use self::applyindividuallysegment::ApplyIndividuallySegment;
 mod delaysegment;

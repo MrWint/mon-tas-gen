@@ -422,6 +422,16 @@ impl <R: JoypadAddresses> Gb<R> {
   }
 }
 
+impl<R: JoypadAddresses> crate::metric::GbI<R> for Gb<R> {
+  fn step_until(&mut self, addresses: &[i32]) -> i32 {
+    self.run_until_or_next_input_use(addresses)
+  }
+
+  fn gb(&self) -> &Gambatte {
+    &self.gb
+  }
+}
+
 enum RunToNextVBlankResult {
   HitAddress(i32),
   AtNextVBlank(SaveState, [u32; 2]),

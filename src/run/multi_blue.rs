@@ -89,7 +89,9 @@ pub fn start() {
   //   }).into_unit()));
   // r.run(HoldTextDisplayOpenPlan::new());
   // r.save("multi_blue_test2"); // DVs: 15 / 4 / 15 / 15
-  r.load("multi_blue_test2");
+  // r.load("multi_blue_test2");
+  // r.save("multi_blue_chosen_starter"); // DVs: 15 / 4 / 15 / 15
+  r.load("multi_blue_chosen_starter");
   r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // I'll take this one then
   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan::new())); // rival received // bulbasaur // !
   r.run(WalkToPlan::new(5, 6)); // trigger rival fight
