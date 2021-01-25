@@ -1,5 +1,4 @@
-use crate::gb::*;
-use crate::rom::*;
+use crate::metric::*;
 use gambatte::Input;
 use std::fmt::Write;
 
@@ -17,9 +16,11 @@ impl Map {
   pub fn with_water_tiles(self, allow_water_tiles: bool) -> Self { Self { allow_water_tiles, ..self } }
 
   #[allow(clippy::cyclomatic_complexity)]
-  pub fn load_gen2_map<T: JoypadAddresses + RngAddresses + Gen2MapAddresses>(mut self, gb: &Gb<T>) -> Self {
-    let map_block_width = gb.gb.read_memory(T::MAP_WIDTH_MEM_ADDRESS) as usize + 6;
-    let map_block_height = gb.gb.read_memory(T::MAP_HEIGHT_MEM_ADDRESS) as usize + 6;
+  pub fn load_gen2_map<T: JoypadAddresses + RngAddresses + Gen2MapAddresses>(mut self, gb: &dyn GbI<T>) -> Self {
+    let gb = gb.gb();
+
+    let map_block_width = gb.read_memory(T::MAP_WIDTH_MEM_ADDRESS) as usize + 6;
+    let map_block_height = gb.read_memory(T::MAP_HEIGHT_MEM_ADDRESS) as usize + 6;
     self.width = map_block_width * 2;
     self.height = map_block_height * 2;
 
@@ -28,15 +29,15 @@ impl Map {
       let mut blocks = vec![];
       // get blocks
       for offset in 0..(map_block_height as u16 * map_block_width as u16) {
-        blocks.push(gb.gb.read_memory(T::OVERWORLD_MAP_MEM_ADDRESS + offset));
+        blocks.push(gb.read_memory(T::OVERWORLD_MAP_MEM_ADDRESS + offset));
       }
 
-      let tileset_collision_data_base_address = (i32::from(gb.gb.read_memory(T::TILESET_COLLISION_BANK_MEM_ADDRESS)) << 16) + i32::from(gb.gb.read_memory_word_le(T::TILESET_COLLISION_PTR_MEM_ADDRESS));
+      let tileset_collision_data_base_address = (i32::from(gb.read_memory(T::TILESET_COLLISION_BANK_MEM_ADDRESS)) << 16) + i32::from(gb.read_memory_word_le(T::TILESET_COLLISION_PTR_MEM_ADDRESS));
       for y in 0..self.height {
         for x in 0..self.width {
           let block = blocks[map_block_width * (y >> 1) + (x >> 1)];
           let tile = if block == 0 { 0xff } else {
-            gb.gb.read_rom(tileset_collision_data_base_address + i32::from(block) * 4 + (y as i32 & 1)*2 + (x as i32 & 1))
+            gb.read_rom(tileset_collision_data_base_address + i32::from(block) * 4 + (y as i32 & 1)*2 + (x as i32 & 1))
           };
           self.tile_collision.push(tile);
         }
@@ -58,7 +59,7 @@ impl Map {
           let ny = (y as isize + dy) as usize;
           if forbidden_cur_tiles.contains(&self.tile_collision[self.width * y + x]) { continue; } // direction forbidden
           if forbidden_new_tiles.contains(&self.tile_collision[self.width * ny + nx]) { continue; } // direction forbidden
-          let new_tile_collision_type = gb.gb.read_rom(T::TILE_COLLISION_TABLE_ADDRESS + i32::from(self.tile_collision[self.width * ny + nx])) & 0xf;
+          let new_tile_collision_type = gb.read_rom(T::TILE_COLLISION_TABLE_ADDRESS + i32::from(self.tile_collision[self.width * ny + nx])) & 0xf;
           if new_tile_collision_type != 0 && (new_tile_collision_type != 1 || !self.allow_water_tiles) { continue; } // target tile not passable
           allowed_inputs |= input;
         }
@@ -69,12 +70,12 @@ impl Map {
     // iterate map objects
     for i in 1..16 {
       let object_base_address = T::MAP_OBJECTS_MEM_ADDRESS + i * 16;
-      if gb.gb.read_memory(object_base_address + 1) == 0 { continue; } // no sprite
-      let event_flag_index = gb.gb.read_memory_word_le(object_base_address + 0xc);
-      if gb.gb.read_memory(T::EVENT_FLAGS_MEM_ADDRESS + event_flag_index/8) & (1 << (event_flag_index % 8)) != 0 { continue; } // object hidden
-      let x = gb.gb.read_memory(object_base_address + 3) + 2;
-      let y = gb.gb.read_memory(object_base_address + 2) + 2;
-      let movement = gb.gb.read_memory(object_base_address + 4);
+      if gb.read_memory(object_base_address + 1) == 0 { continue; } // no sprite
+      let event_flag_index = gb.read_memory_word_le(object_base_address + 0xc);
+      if gb.read_memory(T::EVENT_FLAGS_MEM_ADDRESS + event_flag_index/8) & (1 << (event_flag_index % 8)) != 0 { continue; } // object hidden
+      let x = gb.read_memory(object_base_address + 3) + 2;
+      let y = gb.read_memory(object_base_address + 2) + 2;
+      let movement = gb.read_memory(object_base_address + 4);
       if [0x01, 0x03, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x16, 0x17, 0x18, 0x19, 0x1e, 0x1f].contains(&movement) { // is stationary, prevent moving into it
         for &(dx, dy, block_input) in &[
             (0, 1, Input::UP),
@@ -87,13 +88,13 @@ impl Map {
           let ny = (y as isize + dy) as usize;
           self.tile_allowed_movements[self.width * ny + nx] -= block_input;
         }
-        if gb.gb.read_memory(object_base_address + 8) & 0xf == 2 && [0x06, 0x07, 0x08, 0x09].contains(&movement) { // is stationary trainer
-          let script_pointer = gb.gb.read_memory_word_le(object_base_address + 0xa);
-          let map_scripts_bank = if script_pointer >= 0x4000 { gb.gb.read_memory(T::MAP_SCRIPTS_BANK_MEM_ADDRESS) } else { 0 };
+        if gb.read_memory(object_base_address + 8) & 0xf == 2 && [0x06, 0x07, 0x08, 0x09].contains(&movement) { // is stationary trainer
+          let script_pointer = gb.read_memory_word_le(object_base_address + 0xa);
+          let map_scripts_bank = if script_pointer >= 0x4000 { gb.read_memory(T::MAP_SCRIPTS_BANK_MEM_ADDRESS) } else { 0 };
           let script_pointer_rom_address = (i32::from(map_scripts_bank) << 16) + i32::from(script_pointer);
-          let event_flag_index = gb.gb.read_rom_word_le(script_pointer_rom_address);
-          if gb.gb.read_memory(T::EVENT_FLAGS_MEM_ADDRESS + event_flag_index/8) & (1 << (event_flag_index % 8)) == 0 { // not already fought
-            let range = gb.gb.read_memory(object_base_address + 9);
+          let event_flag_index = gb.read_rom_word_le(script_pointer_rom_address);
+          if gb.read_memory(T::EVENT_FLAGS_MEM_ADDRESS + event_flag_index/8) & (1 << (event_flag_index % 8)) == 0 { // not already fought
+            let range = gb.read_memory(object_base_address + 9);
             let (dx, dy) = match movement {
               6 => (0, 1),
               7 => (0, -1),

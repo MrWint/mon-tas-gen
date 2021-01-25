@@ -2,6 +2,7 @@ use gambatte::Input;
 use log::{LevelFilter::*};
 use montas::bk2::Bk2Writer;
 use montas::gbexecutor::*;
+use montas::metric::*;
 use montas::rom::*;
 use montas::segment::*;
 use montas::statebuffer::*;
@@ -53,11 +54,11 @@ impl<R: Rom> GbRunner<R> {
     });
   }
   #[allow(dead_code)]
-  fn get_state_metric<V: StateValue + PartialEq + std::fmt::Debug, S: StateFn<R, V> + Send + Sync>(&mut self, state_fn: S) -> V {
+  fn get_state_metric<V: StateValue + PartialEq + std::fmt::Debug, S: StateFn<R, OV=V> + Send + Sync>(&mut self, state_fn: S) -> V {
     self.gbe.execute_state(&self.sb, state_fn).get_value_assert_all_equal()
   }
   #[allow(dead_code)]
-  fn get_state_metric_fn<V: StateValue + PartialEq + std::fmt::Debug, S: Fn(&montas::gb::Gb<R>) -> V + Send + Sync>(&mut self, state_fn: S) -> V {
+  fn get_state_metric_fn<V: StateValue + PartialEq + std::fmt::Debug, S: Fn(&dyn GbI<R>) -> V + Send + Sync>(&mut self, state_fn: S) -> V {
     self.gbe.execute_state_fn(&self.sb, state_fn).get_value_assert_all_equal()
   }
 

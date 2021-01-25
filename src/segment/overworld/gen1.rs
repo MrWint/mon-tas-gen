@@ -1,5 +1,3 @@
-mod map;
-pub use self::map::Map;
 mod overworldmovesegment;
 pub use self::overworldmovesegment::OverworldMoveSegment;
 mod walkstepsegment;

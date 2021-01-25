@@ -268,5 +268,20 @@ impl<R: JoypadAddresses + TrainerIDAddresses> Metric<R> for TrainerIDMetric {
   }
 }
 
+
+
+
+pub trait StateFn<R> {
+  type OV;
+
+  fn invoke(&self, gb: &dyn GbI<R>) -> Self::OV;
+}
+impl<R, OV, F: Fn(&dyn GbI<R>) -> OV> StateFn<R> for F {
+  type OV = OV;
+
+  fn invoke(&self, gb: &dyn GbI<R>) -> OV { self(gb) }
+}
+
+
 pub mod battle;
 pub mod overworld;

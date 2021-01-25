@@ -1,6 +1,7 @@
+use crate::constants::*;
+use crate::metric::battle::*;
 use crate::rom::*;
 use crate::segment::*;
-use crate::segment::battle::*;
 use crate::segment::battle::gen2::*;
 use crate::statebuffer::StateBuffer;
 use std::collections::BTreeMap;

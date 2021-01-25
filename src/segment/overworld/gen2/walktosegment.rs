@@ -43,7 +43,7 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
     let initial_states: Vec<_> = sb.into_iter().collect();
     assert!(!initial_states.is_empty());
     let map = gbe.execute_state_fn(vec![&initial_states[0]], |gb| {
-      super::map::Map::default().with_water_tiles(self.allow_water_tiles).load_gen2_map(gb)
+      Map::default().with_water_tiles(self.allow_water_tiles).load_gen2_map(gb)
     }).into_split_iter().next().unwrap().1;
 
     debug!("WalkToSegment navigate to ({}, {})", self.dest_x as isize-6, self.dest_y as isize-6);
@@ -89,8 +89,8 @@ impl<R: Rom + Gen2MapAddresses + Gen2MapEventsAddresses> crate::segment::Segment
     for _ in 0..map.width * map.height { buffers.push(StateBuffer::with_max_size(self.buffer_size)); }
     let mut max_dist = -1;
     for (s, (x, y)) in gbe.execute_state_fn(initial_states, |gb| {
-      let x = gb.gb.read_memory(R::PLAYER_X_MEM_ADDRESS) as usize + 2;
-      let y = gb.gb.read_memory(R::PLAYER_Y_MEM_ADDRESS) as usize + 2;
+      let x = gb.gb().read_memory(R::PLAYER_X_MEM_ADDRESS) as usize + 2;
+      let y = gb.gb().read_memory(R::PLAYER_Y_MEM_ADDRESS) as usize + 2;
       (x, y)
     }).into_split_iter() {
       buffers[map.width * y + x].add_state(s);

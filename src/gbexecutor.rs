@@ -1,4 +1,5 @@
 use crate::gb::*;
+use crate::metric::*;
 use crate::rom::*;
 use crate::sdl::*;
 use crate::statebuffer::*;
@@ -20,20 +21,13 @@ impl<T: Send + 'static> StateValue for T {}
 pub trait StateKey: Eq + Hash + Debug + StateValue {}
 impl<T: Eq + Hash + Debug + StateValue> StateKey for T {}
 
-pub trait StateFn<R, OV> {
-  fn invoke(&self, gb: &Gb<R>) -> OV;
-}
-impl<R, OV, F: Fn(&Gb<R>) -> OV> StateFn<R, OV> for F {
-  fn invoke(&self, gb: &Gb<R>) -> OV { self(gb) }
-}
-
 pub trait GbExecutor<R: Rom> {
   fn execute<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&mut Gb<R>, State<IV>, Sender<State<OV>>) + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>>;
   fn get_state_from_inputs(&mut self, inputs: &[Input]) -> State;
-  fn execute_state_fn<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&Gb<R>) -> OV + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
+  fn execute_state_fn<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + Fn(&dyn GbI<R>) -> OV + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
     self.execute_state(states, f)
   }
-  fn execute_state<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + StateFn<R, OV> + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
+  fn execute_state<'a, IV: StateValue, S: StateRef<IV>, OV: StateValue, I: IntoIterator<Item=S>, F: 'a + StateFn<R, OV=OV> + Send + Sync>(&mut self, states: I, f: F) -> GbResults<State<OV>, Arc<GbFn<'a, R, IV, OV>>> {
     self.execute(states, move |gb, s, tx| {
       gb.restore(&s);
       tx.send(s.replace_value(f.invoke(gb))).unwrap();

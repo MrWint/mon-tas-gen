@@ -1,7 +1,9 @@
+use crate::constants::*;
+use crate::metric::*;
+use crate::metric::battle::*;
 use crate::metric::battle::gen1::*;
 use crate::rom::*;
 use crate::segment::*;
-use crate::segment::battle::*;
 use crate::segment::battle::gen1::*;
 use crate::statebuffer::StateBuffer;
 use gambatte::Input;

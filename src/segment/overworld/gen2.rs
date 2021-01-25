@@ -1,5 +1,3 @@
-mod map;
-pub use self::map::Map;
 mod jumpledgesegment;
 pub use self::jumpledgesegment::JumpLedgeSegment;
 mod resetafterhofsegment;

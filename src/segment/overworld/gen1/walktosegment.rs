@@ -40,7 +40,7 @@ impl<R: Rom + Gen1MapAddresses + Gen1OverworldAddresses + Gen1DVAddresses> crate
       gb.restore(&s);
       gb.input(Input::empty());
       gb.step();
-      tx.send(gb.save_with_value(super::map::Map::default().load_gen1_map::<R>(&gb.gb))).unwrap();
+      tx.send(gb.save_with_value(Map::default().load_gen1_map::<R>(&gb.gb))).unwrap();
     }).get_value_assert_all_equal();
     // let map = gbe.execute_state_fn(vec![&initial_states[0]], |gb| {
     //   super::map::Map::default().load_gen1_map(gb)
@@ -89,8 +89,8 @@ impl<R: Rom + Gen1MapAddresses + Gen1OverworldAddresses + Gen1DVAddresses> crate
     for _ in 0..map.width * map.height { buffers.push(StateBuffer::with_max_size(self.buffer_size)); }
     let mut max_dist = -1;
     for (s, (x, y)) in gbe.execute_state_fn(initial_states, |gb| {
-      let x = gb.gb.read_memory(R::PLAYER_X_POS_MEM_ADDRESS) as usize + 6;
-      let y = gb.gb.read_memory(R::PLAYER_Y_POS_MEM_ADDRESS) as usize + 6;
+      let x = gb.gb().read_memory(R::PLAYER_X_POS_MEM_ADDRESS) as usize + 6;
+      let y = gb.gb().read_memory(R::PLAYER_Y_POS_MEM_ADDRESS) as usize + 6;
       (x, y)
     }).into_split_iter() {
       buffers[map.width * y + x].add_state(s);

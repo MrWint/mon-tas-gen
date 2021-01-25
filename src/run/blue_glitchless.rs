@@ -1,5 +1,4 @@
 use crate::run::*;
-use montas::metric::*;
 use montas::metric::overworld::gen1::*;
 #[allow(unused_imports)] use gambatte::inputs::*;
 #[allow(unused_imports)] use montas::constants::*;

@@ -2,6 +2,9 @@ use crate::constants::*;
 use crate::metric::*;
 use gambatte::Input;
 
+mod map;
+pub use map::Map;
+
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum OverworldInteractionResult {
   NoOverworldInput,
