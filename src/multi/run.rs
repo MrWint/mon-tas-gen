@@ -1,3 +1,4 @@
+use crate::metric::*;
 use crate::metric::overworld::gen1::*;
 use super::*;
 
@@ -179,6 +180,13 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
     }
   }
 
+  pub fn debug_print_state_fn<F: StateFn<R>>(&mut self, f: F) where F::OV: std::fmt::Debug {
+    let chosen_state = self.states.iter().min_by_key(|s| s.inputs.len_max()).unwrap();
+    self.gb.restore(&chosen_state.instances[0].gb_state);
+    let result = f.invoke(&self.gb);
+    log::info!("StateFn result: {:?}", result);
+  }
+
   pub fn debug_segment_end(&mut self, file_name: &str) {
     {
       let chosen_state = self.states.iter().min_by_key(|s| s.inputs.len_max()).unwrap();
@@ -192,13 +200,19 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
       self.debug_identify_input(&s);
       self.gb.restore(&s);
       for _ in 0..10 {
-        self.gb.input(Input::empty());
-        self.gb.step();
+        let frame_lo = self.gb.get_input_frame_lo();
+        while frame_lo == self.gb.get_input_frame_lo() {
+          self.gb.input(Input::empty());
+          self.gb.step();
+        }
         std::thread::sleep(std::time::Duration::from_millis(200));
       }
       for _ in 0..1000 {
-        self.gb.input(Input::empty());
-        self.gb.step();
+        let frame_lo = self.gb.get_input_frame_lo();
+        while frame_lo == self.gb.get_input_frame_lo() {
+          self.gb.input(Input::empty());
+          self.gb.step();
+        }
       }
       std::thread::sleep(std::time::Duration::from_millis(200));
     }

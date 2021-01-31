@@ -184,6 +184,7 @@ impl<R: Rom,P: Plan<R>, Q: Plan<R>> Plan<R> for SeqPlan<P, Q> {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PlanState {
   NullState,
+  BattleMenuState { handle_menu_input_state: HandleMenuInputState, correct_side: bool, },
   ChangeOptionsState { progress: ChangeOptionsProgress, hjoy5_state: HJoy5State, },
   EdgeWarpState,
   IdentifyInputState,
@@ -196,6 +197,7 @@ pub enum PlanState {
   OverworldOpenStartMenuState { joypad_overworld_state: JoypadOverworldState, },
   OverworldTurnState { joypad_overworld_state: JoypadOverworldState, },
   OverworldWaitState,
+  SelectMoveMenuState { handle_menu_input_state: HandleMenuInputState, move_index: u8, num_moves: u8, distance_to_goal: u8, },
   SeqState { p_done: bool, sub_plan: Rc<PlanState> },
   SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, },
   StartMenuState { handle_menu_input_state: HandleMenuInputState, distance_to_goal: u8, },
@@ -218,6 +220,11 @@ impl PartialOrd for PlanState {
       PlanState::NullState => {
         if let PlanState::NullState = other {
           Some(Ordering::Equal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::BattleMenuState { handle_menu_input_state: _, correct_side } => {
+        if let PlanState::BattleMenuState { handle_menu_input_state: _, correct_side: other_correct_side } = other {
+          correct_side.partial_cmp(other_correct_side)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
       PlanState::ChangeOptionsState { progress, hjoy5_state: _ } => {
@@ -288,6 +295,11 @@ impl PartialOrd for PlanState {
           Some(Ordering::Equal)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
+      PlanState::SelectMoveMenuState { handle_menu_input_state: _, move_index: _, num_moves: _, distance_to_goal } => {
+        if let PlanState::SelectMoveMenuState { handle_menu_input_state: _, move_index: _, num_moves: _, distance_to_goal: other_distance_to_goal } = other {
+          other_distance_to_goal.partial_cmp(distance_to_goal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
       PlanState::SeqState { p_done, sub_plan } => {
         if let PlanState::SeqState { p_done: other_p_done, sub_plan: other_plan } = other {
           if p_done != other_p_done {
@@ -355,6 +367,8 @@ impl PartialOrd for PlanState {
   }
 }
 
+mod battlemenu;
+pub use battlemenu::*;
 mod changeoptions;
 pub use changeoptions::*;
 mod edgewarp;
@@ -379,12 +393,16 @@ mod overworldturn;
 pub use overworldturn::*;
 mod overworldwait;
 pub use overworldwait::*;
+mod selectmovemenu;
+pub use selectmovemenu::*;
 mod skipintro;
 pub use skipintro::*;
 mod skiptexts;
 pub use skiptexts::*;
 mod startmenu;
 pub use startmenu::*;
+mod starttrainerbattle;
+pub use starttrainerbattle::*;
 mod text;
 pub use text::*;
 mod textscrollwait;

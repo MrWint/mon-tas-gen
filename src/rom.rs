@@ -41,6 +41,7 @@ pub trait HandleMenuInputAddresses {
   const MENU_WATCHED_KEYS_MEM_ADDRESS: u16; // wMenuWatchedKeys
   const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16; // wMenuWatchMovingOutOfBounds
   const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16; // wMenuJoypadPollCount
+  const BATTLE_START_SAVED_MENU_ITEM: u16; // wBattleAndStartSavedMenuItem
 }
 pub trait JoypadLowSensitivityAddresses {
   const JOYPAD_HJOY6_MEM_ADDRESS: u16; // hJoy6
@@ -370,6 +371,7 @@ macro_rules! impl_red_blue_common_addresses {
       const MENU_WATCHED_KEYS_MEM_ADDRESS: u16 = 0xcc29; // wMenuWatchedKeys
       const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
       const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
+      const BATTLE_START_SAVED_MENU_ITEM: u16 = 0xcc2d; // wBattleAndStartSavedMenuItem
     }
     impl JoypadOverworldAddresses for $t {
       const FLAGS_D733_MEM_ADDRESS: u16 = 0xd733; // wFlags_D733
@@ -624,6 +626,7 @@ impl HandleMenuInputAddresses for Yellow {
   const MENU_WATCHED_KEYS_MEM_ADDRESS: u16 = 0xcc29; // wMenuWatchedKeys
   const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
   const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
+  const BATTLE_START_SAVED_MENU_ITEM: u16 = 0xcc2d; // wBattleAndStartSavedMenuItem
 }
 impl JoypadOverworldAddresses for Yellow {
   const FLAGS_D733_MEM_ADDRESS: u16 = 0xd732; // wFlags_D733

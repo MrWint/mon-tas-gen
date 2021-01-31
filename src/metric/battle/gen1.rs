@@ -50,7 +50,7 @@ pub enum MoveEffectResult {
   Unknown,
 }
 
-pub struct MoveEffectMetric {}
+pub struct MoveEffectMetric;
 impl<R: JoypadAddresses + Gen1MoveEffectAddresses> Metric<R> for MoveEffectMetric {
   type ValueType = MoveEffectResult;
 

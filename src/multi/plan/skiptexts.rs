@@ -6,7 +6,7 @@ use crate::rom::*;
 pub struct SkipTextsPlan {
   // instance state
   text_plan: TextPlan<NullMetric>,
-  text_scroll_wait_plan: TextScrollWaitPlan,
+  text_scroll_wait_plan: TextScrollWaitPlan<NullMetric>,
   num_texts_remaining: u32,
   at_wait: bool,
 

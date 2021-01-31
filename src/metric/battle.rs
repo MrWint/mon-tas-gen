@@ -15,7 +15,7 @@ pub enum MoveOrder {
   EnemyFirst,
 }
 #[allow(dead_code)]
-pub struct BattleMoveOrderMetric {}
+pub struct BattleMoveOrderMetric;
 impl<R: JoypadAddresses + BattleDetermineMoveOrderAddresses> Metric<R> for BattleMoveOrderMetric {
   type ValueType = MoveOrder;
 
@@ -33,7 +33,7 @@ pub enum BattleObedience {
   Disobey,
 }
 #[allow(dead_code)]
-pub struct BattleObedienceMetric {}
+pub struct BattleObedienceMetric;
 impl<R: JoypadAddresses + BattleObedienceAddresses> Metric<R> for BattleObedienceMetric {
   type ValueType = BattleObedience;
 
@@ -46,7 +46,7 @@ impl<R: JoypadAddresses + BattleObedienceAddresses> Metric<R> for BattleObedienc
   }
 }
 
-pub struct AIChooseMoveMetric {}
+pub struct AIChooseMoveMetric;
 impl<R: JoypadAddresses + AIChooseMoveAddresses> Metric<R> for AIChooseMoveMetric {
   type ValueType = Move;
 
@@ -63,7 +63,7 @@ impl<R: Rom + AIChooseMoveAddresses> Metric<R> for ExpectedAIChooseMoveMetric {
 
   fn evaluate(&self, gb: &mut dyn GbI<R>) -> Option<Self::ValueType> {
     AIChooseMoveMetric {}.filter(|&m| {
-      log::debug!("Enemy selected move: {:?}", m);
+      log::trace!("Enemy selected move: {:?}", m);
       if let Some(mov) = self.expected_move {
         m == mov
       } else {
