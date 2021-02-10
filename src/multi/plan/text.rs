@@ -11,12 +11,13 @@ pub struct TextPlan<M> {
   // config state
   initial_ends_to_be_skipped: u32,
   metric: M,
+  metric_safe: bool,
 }
 impl TextPlan<NullMetric> {
-  pub fn new() -> Self { Self::with_metric(NullMetric) }
+  pub fn new() -> Self { Self::with_metric(NullMetric, true) }
 }
 impl<M> TextPlan<M> {
-  pub fn with_metric(metric: M) -> Self {
+  pub fn with_metric(metric: M, metric_safe: bool) -> Self {
     Self {
       // Set instance state to dummy values, will be initialize()'d later.
       printed_characters: 0,
@@ -25,6 +26,7 @@ impl<M> TextPlan<M> {
       // Default config state.
       initial_ends_to_be_skipped: 0,
       metric,
+      metric_safe,
     }
   }
   /// How often is an "end" of the text expected (can happen when special characters are printed). This avoid inputs conflicting with the next text's inputs.
@@ -46,7 +48,7 @@ impl<R: MultiRom + TextAddresses, M: Metric<R>> Plan<R> for TextPlan<M> {
     self.printed_characters = 0;
     self.ends_to_be_skipped = self.initial_ends_to_be_skipped;
   }
-  fn is_safe(&self) -> bool { true }
+  fn is_safe(&self) -> bool { self.metric_safe }
   fn get_blockable_inputs(&self) -> Input { Input::empty() }
 
   fn canonicalize_input(&self, input: Input) -> Option<Input> {

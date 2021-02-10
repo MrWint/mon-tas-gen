@@ -3,16 +3,31 @@ pub mod gen2;
 
 
 
+use serde_derive::{Serialize, Deserialize};
 use std::cmp::{max, min};
 
 use crate::constants::*;
 use crate::metric::*;
 use num_traits::cast::ToPrimitive;
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub enum MoveOrder {
   PlayerFirst,
   EnemyFirst,
+}
+impl MoveOrder {
+  pub fn first(&self) -> Who {
+    match self {
+        MoveOrder::PlayerFirst => Who::Player,
+        MoveOrder::EnemyFirst => Who::Enemy,
+    }
+  }
+  pub fn second(&self) -> Who {
+    match self {
+        MoveOrder::PlayerFirst => Who::Enemy,
+        MoveOrder::EnemyFirst => Who::Player,
+    }
+  }
 }
 #[allow(dead_code)]
 pub struct BattleMoveOrderMetric;
@@ -94,7 +109,7 @@ impl Who {
   }
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct MoveInfo {
   pub mov: Move,
   pub power: u8,

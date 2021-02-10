@@ -1,6 +1,6 @@
 use crate::metric::*;
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum TrainerAIAction {
   NoAction,
   FullHeal,
@@ -10,7 +10,7 @@ pub enum TrainerAIAction {
   Switch,
   XItem,
 }
-pub struct TrainerAIMetric {}
+pub struct TrainerAIMetric;
 impl<R: JoypadAddresses + Gen1TrainerAIAddresses> Metric<R> for TrainerAIMetric {
   type ValueType = TrainerAIAction;
 

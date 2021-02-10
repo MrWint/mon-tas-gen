@@ -1,7 +1,8 @@
 use enum_primitive_derive::Primitive;
 use num_traits::FromPrimitive;
+use serde_derive::{Serialize, Deserialize};
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Primitive)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Primitive, Serialize, Deserialize)]
 pub enum Move {
  	Pound = 1,
  	KarateChop = 2,
@@ -264,7 +265,7 @@ impl Move {
   }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Primitive)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Primitive, Serialize, Deserialize)]
 pub enum Type {
   Normal = 0,
   Fighting = 1,
@@ -319,7 +320,7 @@ impl Type {
   }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Primitive)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Primitive, Serialize, Deserialize)]
 pub enum Pokemon {
   Bulbasaur = 0x01,
   Ivysaur = 0x02,

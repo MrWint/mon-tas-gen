@@ -1,9 +1,11 @@
 use serde_derive::{Serialize, Deserialize};
 
+use crate::metric::battle::*;
 use crate::rom::*;
 use super::*;
 
 use std::cmp::Ordering;
+use std::ops::RangeInclusive;
 use std::rc::Rc;
 
 pub trait Plan<R: Rom> {
@@ -133,8 +135,8 @@ impl<P, Q> SeqPlan<P, Q> {
     Self { p, q, p_done: false, }
   }
 }
-impl<R: Rom,P: Plan<R>, Q: Plan<R>> Plan<R> for SeqPlan<P, Q> {
-  type Value = ();
+impl<R: Rom,P: Plan<R, Value=()>, Q: Plan<R>> Plan<R> for SeqPlan<P, Q> {
+  type Value = Q::Value;
 
   fn save(&self) -> PlanState {
     PlanState::SeqState {
@@ -161,14 +163,9 @@ impl<R: Rom,P: Plan<R>, Q: Plan<R>> Plan<R> for SeqPlan<P, Q> {
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
     if self.p_done { self.q.canonicalize_input(input) } else { self.p.canonicalize_input(input) }
   }
-  fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+  fn execute_input(&mut self, gb: &mut Gb<R>, state: &GbState, input: Input) -> Option<(GbState, Option<Q::Value>)> {
     if self.p_done {
-      if let Some((new_state, result)) = self.q.execute_input(gb, state, input) {
-        if result.is_some() {
-          return Some((new_state, Some(())));
-        }
-        Some((new_state, None))
-      } else { None }
+      self.q.execute_input(gb, state, input)
     } else {
       if let Some((new_state, result)) = self.p.execute_input(gb, state, input) {
         if result.is_some() {
@@ -187,6 +184,8 @@ pub enum PlanState {
   BattleMenuState { handle_menu_input_state: HandleMenuInputState, correct_side: bool, },
   ChangeOptionsState { progress: ChangeOptionsProgress, hjoy5_state: HJoy5State, },
   EdgeWarpState,
+  FightKOState { num_turns: u16, move_order: MoveOrder, non_crit_damage: RangeInclusive<u16>, crit_damage: RangeInclusive<u16>,inner_plan: Rc<PlanState> },
+  FightTurnState { progress: FightTurnProgress, actual_move_order: MoveOrder, after_hit_text_count: u32, enemy_hp: u16, move_info: Option<MoveInfo>, sub_plan: Rc<PlanState> },
   IdentifyInputState,
   HoldTextDisplayOpenState,
   ListState { cur_item: usize, sub_plan: Option<Rc<PlanState>> },
@@ -235,6 +234,43 @@ impl PartialOrd for PlanState {
       PlanState::EdgeWarpState => {
         if let PlanState::EdgeWarpState = other {
           Some(Ordering::Equal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::FightKOState { num_turns, move_order: _, non_crit_damage: _, crit_damage: _, inner_plan } => {
+        if let PlanState::FightKOState { num_turns: other_num_turns , move_order: _, non_crit_damage: _, crit_damage: _, inner_plan: other_plan } = other {
+          if num_turns != other_num_turns {
+            let enemy_hp = if let PlanState::FightTurnState { enemy_hp, .. } = **inner_plan { enemy_hp } else { panic!("unexpected inner plan state") };
+            let other_enemy_hp = if let PlanState::FightTurnState { enemy_hp, .. } = **other_plan { enemy_hp } else { panic!("unexpected inner plan state") };
+            if num_turns < other_num_turns {
+              if enemy_hp > other_enemy_hp { None } else { Some(Ordering::Greater) }
+            } else {
+              if enemy_hp < other_enemy_hp { None } else { Some(Ordering::Less) }
+            }
+          } else {
+            inner_plan.partial_cmp(other_plan)
+          }
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
+      PlanState::FightTurnState { progress, actual_move_order, after_hit_text_count: _, enemy_hp, move_info: _, sub_plan } => {
+        if let PlanState::FightTurnState { progress: other_progress, actual_move_order: other_actual_move_order, after_hit_text_count: _, enemy_hp: other_enemy_hp, move_info: _, sub_plan: other_sub_plan } = other {
+          let enemy_hp_ord = enemy_hp.cmp(other_enemy_hp);
+          let combine_with_enemy_hp = move |partial_ord: Option<Ordering>| {
+            match partial_ord {
+              None => None,
+              Some(Ordering::Equal) => Some(enemy_hp_ord),
+              Some(Ordering::Less) => if enemy_hp_ord == Ordering::Less { None } else { Some(Ordering::Less) },
+              Some(Ordering::Greater) => if enemy_hp_ord == Ordering::Greater { None } else { Some(Ordering::Greater) },
+            }
+          };
+          if progress > &FightTurnProgress::BattleMenuSelectMove && other_progress > &FightTurnProgress::BattleMenuSelectMove && actual_move_order != other_actual_move_order {
+            // State are incomparable if move order is different.
+            return None;
+          }
+          if progress != other_progress {
+            combine_with_enemy_hp(progress.partial_cmp(other_progress))
+          } else {
+            combine_with_enemy_hp(sub_plan.partial_cmp(other_sub_plan))
+          }
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
       PlanState::HoldTextDisplayOpenState => {
@@ -373,6 +409,10 @@ mod changeoptions;
 pub use changeoptions::*;
 mod edgewarp;
 pub use edgewarp::*;
+mod fightko;
+pub use fightko::*;
+mod fightturn;
+pub use fightturn::*;
 mod holdtextdisplayopen;
 pub use holdtextdisplayopen::*;
 mod identifyinput;

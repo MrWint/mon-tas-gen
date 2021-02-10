@@ -1,8 +1,8 @@
 #[allow(unused_imports)] use gambatte::inputs::*;
-use montas::constants::*;
-use montas::metric::*;
-use montas::metric::battle::*;
-use montas::metric::battle::gen1::*;
+#[allow(unused_imports)] use montas::constants::*;
+#[allow(unused_imports)] use montas::metric::*;
+#[allow(unused_imports)] use montas::metric::battle::*;
+#[allow(unused_imports)] use montas::metric::battle::gen1::*;
 use montas::multi::*;
 use montas::rom::*;
 use montas::sdl::*;
@@ -105,13 +105,27 @@ pub fn start() {
   r.load("multi_blue_test");
   // r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Rival fight
   r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rival fight
-  r.run(BattleMenuPlan::fight());
-  r.run(SelectMoveMenuPlan::with_metric(Move::TailWhip, ExpectedAIChooseMoveMetric { expected_move: Some(Move::Growl) }.and_then(BattleMoveOrderMetric).expect(MoveOrder::PlayerFirst).and_then(BattleObedienceMetric).expect(BattleObedience::Obey)));
-  r.run(TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Success)).with_skip_ends(4)); // mon used move!
-  r.run(TextPlan::new().with_skip_ends(2)); // mon's stat fell!
-  r.run(TextScrollWaitPlan::new());
-  r.run(TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Failed)).with_skip_ends(4)); // enemy mon used move!
-  r.run(SkipTextsPlan::new(1)); // but it failed
+  r.run(FightTurnPlan::new(AttackDesc::stat_up_down(Move::TailWhip), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)), Some(MoveOrder::PlayerFirst)));
+  r.run(FightKOPlan::new(Move::Tackle, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl))));
+  // {
+  //   r.run(BattleMenuPlan::fight());
+  //   r.run(SeqPlan::new(
+  //     SelectMoveMenuPlan::with_metric(Move::TailWhip, ExpectedAIChooseMoveMetric { expected_move: Some(Move::Growl) }.and_then(BattleMoveOrderMetric).expect(MoveOrder::PlayerFirst).and_then(BattleObedienceMetric).expect(BattleObedience::Obey)),
+  //     TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Success), false).with_skip_ends(4))); // mon used move!
+  //   r.run(TextPlan::new().with_skip_ends(2)); // mon's stat fell!
+  //   r.run(SeqPlan::new(
+  //     TextScrollWaitPlan::new(), 
+  //     TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Failed), false).with_skip_ends(4))); // enemy mon used move!
+  //   r.run(SkipTextsPlan::new(1)); // but it failed
+  // } // 7940
+  // r.save("multi_blue_test_2");
+  // r.load("multi_blue_test_2");
+  // r.run(FightTurnPlan::new(AttackDesc::hit(Move::Tackle, 7..=7), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)), Some(MoveOrder::PlayerFirst)));
+  // r.run(FightTurnPlan::new(AttackDesc::hit(Move::Tackle, 7..=7), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)), Some(MoveOrder::PlayerFirst)));
+  // r.run(FightTurnPlan::new(AttackDesc::hit(Move::Tackle, 6..=7), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst))); // 8786 / 8777
+  // r.save("multi_blue_test_4");
+  // r.load("multi_blue_test_4");
+
 
   r.debug_print_state_fn(MoveInfosFn::new(Who::Player));
   r.debug_print_state_fn(BattleMonInfoFn::new(Who::Player));
