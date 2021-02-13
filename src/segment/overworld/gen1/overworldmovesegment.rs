@@ -42,7 +42,7 @@ impl OverworldMoveSegment {
   pub fn jump_ledge(input: Input) -> Self {
     Self {
       input,
-      result: OverworldInteractionResult::JumpLedge,
+      result: OverworldInteractionResult::JumpLedge { direction: input },
       buffer_size: crate::statebuffer::STATE_BUFFER_DEFAULT_MAX_SIZE,
     }
   }

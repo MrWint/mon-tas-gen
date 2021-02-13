@@ -1,4 +1,5 @@
 use gambatte::inputs::*;
+use montas::constants::*;
 use montas::metric::*;
 use montas::multi::*;
 use montas::rom::*;
@@ -11,7 +12,7 @@ const RTC_DIVISOR_OFFSET: i32 = 0;
 pub fn start() {
   log::set_max_level(log::LevelFilter::Debug);
 
-  let sdl = Sdl::init_sdl(2 /* num screens */, 1 /* scale */);
+  let sdl = Sdl::init_sdl(2 /* num screens */, 3 /* scale */);
   let blue_gb = Gb::<Blue>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, SdlScreen::new(sdl.clone(), 0));
   let _blue_executor = MultiGbExecutor::new(blue_gb, blue_plan());
   let red_gb = Gb::<Red>::create(EQUAL_LENGTH_FRAMES, RTC_DIVISOR_OFFSET, SdlScreen::new(sdl, 1));
@@ -21,9 +22,9 @@ pub fn start() {
     Box::new(_red_executor),
   ]);
 
-  // r.load("multi_test2");
+  r.load("multi_test2");
   r.run();
-  r.save("multi_test");
+  r.save("multi_test3");
   std::thread::sleep(std::time::Duration::from_millis(1000));
 
   r.debug_segment_end("temp/multi_testing");
@@ -90,8 +91,8 @@ fn blue_plan() -> ListPlan<Blue> {
     Box::new(TextPlan::new().with_skip_ends(2)), // give nickname?
     Box::new(TwoOptionMenuPlan::yes()), // give nickname
     Box::new(NamingScreenPlan::with_metric(b'A', Gen1DVMetric {}.filter(|v| {
-        // if v.atk < 15 || v.def < 11 || v.spc < 12 || v.spd < 7 || v.def & 1 == 0 || (v.spd & 1 == 0 && v.spc & 1 == 0) { return false, } // totodile
-        // if v.atk < 15 || v.spc < 15 || v.spd < 15 { return false; } // squirtle DVs
+        // if v.atk < 15 || v.def < 11 || v.spc < 12 || v.spd < 7 || v.def & 1 == 0 || (v.spd & 1 == 0 && v.spc & 1 == 0) { return false; } // totodile
+        if v.atk < 15 || v.spc < 15 || v.spd < 15 { return false; } // squirtle DVs
         log::info!("Chosen DVs: {:?}", v); true
       }).into_unit())),
     Box::new(HoldTextDisplayOpenPlan::new()),
@@ -100,6 +101,14 @@ fn blue_plan() -> ListPlan<Blue> {
     Box::new(WalkToPlan::new(5, 6)), // trigger rival fight
     Box::new(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())), // Rival fight
     Box::new(OverworldWaitPlan::trainer_battle(225)), // Rival fight
+    Box::new(StartTrainerBattlePlan::with_pre_battle_texts(0)), // Rival fight
+    Box::new(FightTurnPlan::new(AttackDesc::stat_up_down(Move::TailWhip), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)), None)),
+    Box::new(FightKOPlan::new(Move::Tackle, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)))),
+    Box::new(EndTrainerBattlePlan::with_level_up(3)), // Rival1 fight
+    Box::new(OverworldWaitPlan::new()), // advance map script (abSs buttons allowed)
+    Box::new(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())), // after rival1 texts
+    Box::new(WalkToPlan::new(5, 11)), // Leave lab
+    Box::new(EdgeWarpPlan::new()), // go outside // inputs: 9784
   ])
 }
 
@@ -111,7 +120,7 @@ fn red_plan() -> ListPlan<Red> {
     Box::new(MainMenuPlan::new()), // main menu
     Box::new(SkipTextsPlan::new(13)), // oak speech
     Box::new(IntroNameMenuPlan::choose_custom_name()), // own name
-    Box::new(NamingScreenPlan::with_letter(b'I')),
+    Box::new(NamingScreenPlan::with_letter(b'R')),
     Box::new(SkipTextsPlan::new(5)), // oak speech
     Box::new(IntroNameMenuPlan::choose_custom_name()), // rival name
     Box::new(NamingScreenPlan::with_letter(b'U')),
@@ -151,28 +160,34 @@ fn red_plan() -> ListPlan<Red> {
     Box::new(SeqPlan::new(SkipTextsPlan::new(12), HoldTextDisplayOpenPlan::new())), // you can have one, choose
     Box::new(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())), // What about me?
     Box::new(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())), // Can have one too
-    Box::new(WalkToPlan::new(7, 4)), // stand before squirtle
-    Box::new(OverworldTurnPlan::new(U)), // turn towards squirtle
-    Box::new(OverworldInteractPlan::with(3)), // Interact with Squirtle Ball
+    Box::new(OverworldTurnPlan::new(R)), // turn towards Charmander
+    Box::new(OverworldInteractPlan::with(2)), // Interact with Charmander Ball
     Box::new(TextScrollWaitPlan::new()), // Scroll dex text 1
     Box::new(TextScrollWaitPlan::new()), // Scroll dex text 2
-    Box::new(SkipTextsPlan::new(1)), // so you want Squirtle
-    Box::new(TextPlan::new()), // so you want Squirtle?
-    Box::new(TwoOptionMenuPlan::yes()), // choose Squirtle
+    Box::new(SkipTextsPlan::new(1)), // so you want Charmander
+    Box::new(TextPlan::new()), // so you want Charmander?
+    Box::new(TwoOptionMenuPlan::yes()), // choose Charmander
     Box::new(SkipTextsPlan::new(1)), // looks really energetic
-    Box::new(SkipTextsPlan::new(1).with_skip_ends(3)), // received Squirtle! Do you want...
+    Box::new(SkipTextsPlan::new(1).with_skip_ends(3)), // received Charmander! Do you want...
     Box::new(TextPlan::new().with_skip_ends(2)), // give nickname?
     Box::new(TwoOptionMenuPlan::yes()), // give nickname
     Box::new(NamingScreenPlan::with_metric(b'A', Gen1DVMetric {}.filter(|v| {
-        // if v.atk < 15 || v.def < 11 || v.spc < 12 || v.spd < 7 || v.def & 1 == 0 || (v.spd & 1 == 0 && v.spc & 1 == 0) { return false, } // totodile
-        // if v.atk < 15 || v.spc < 15 || v.spd < 15 { return false; } // squirtle DVs
+        // if v.atk < 15 || v.def < 11 || v.spc < 12 || v.spd < 7 || v.def & 1 == 0 || (v.spd & 1 == 0 && v.spc & 1 == 0) { return false; } // totodile
+        if v.atk < 15 || v.spc < 15 || v.spd < 15 { return false; } // Charmander DVs
         log::info!("Chosen DVs: {:?}", v); true
       }).into_unit())),
     Box::new(HoldTextDisplayOpenPlan::new()),
     Box::new(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())), // I'll take this one then
-    Box::new(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan::new())), // rival received // bulbasaur // !
+    Box::new(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan::new())), // rival received // squirtle // !
     Box::new(WalkToPlan::new(5, 6)), // trigger rival fight
     Box::new(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())), // Rival fight
     Box::new(OverworldWaitPlan::trainer_battle(225)), // Rival fight
+    Box::new(StartTrainerBattlePlan::with_pre_battle_texts(0)), // Rival fight
+    Box::new(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::TailWhip)))),
+    Box::new(EndTrainerBattlePlan::with_level_up(3)), // Rival1 fight
+    Box::new(OverworldWaitPlan::new()), // advance map script (abSs buttons allowed)
+    Box::new(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())), // after rival1 texts
+    Box::new(WalkToPlan::new(5, 11)), // Leave lab
+    Box::new(EdgeWarpPlan::new()), // go outside // inputs: 9551
   ])
 }

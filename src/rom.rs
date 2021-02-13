@@ -31,7 +31,7 @@ pub trait JoypadAddresses {
   const JOYPAD_READ_LOCKED_ADDRESS: i32; // address in VBlank after reading both nybbles is done and the values are locked. Assumed to be after reading hi/lo without any branches or interrupts
   const JOYPAD_INPUT_MEM_ADDRESS: u16; // address the input read in VBlank is stored in
   const JOYPAD_USE_ADDRESSES: &'static [i32]; // addresses of usages of joypad inputs, if none of these are hit inbetween VBlank reads, the input is assumed to be irrelevant
-  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)]; // JOYPAD_USE_ADDRESSES which have a discard option. (use add, discard flag, flag bit, discard add)
+  const JOYPAD_USE_DISCARD_ADDRESSES: Option<(u16, u16, u8, i32, i32, i32)>; // Gen1 discard logic. (ignore_input_counter_mem_add, ignore_flag_mem_add, ignore_flag_bit, calc_joy_pressed_add, check_ignore_flag_add, discard_add)
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)]; // JOYPAD_USE_ADDRESSES which have a ignore mask option. (use add, ignored inputs, skip add)
 }
 pub trait HandleMenuInputAddresses {
@@ -354,7 +354,7 @@ macro_rules! impl_red_blue_common_addresses {
       const JOYPAD_USE_ADDRESSES: &'static [i32] = &[
         0x3_4000, // _Joypad
       ];
-      const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[(0x3_4000, 0xd730, 5, 0x3_4034)];
+      const JOYPAD_USE_DISCARD_ADDRESSES: Option<(u16, u16, u8, i32, i32, i32)> = Some((0xd13a, 0xd730, 5, 0x3_4012, 0x3_4017, 0x3_4034)); // (ignore_input_counter_mem_add, ignore_flag_mem_add, ignore_flag_bit, calc_joy_pressed_add, check_ignore_flag_add, discard_add)
       const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_4000, 0xCD6B, 0x3_4002)]; // wJoyIgnore
     }
     impl JoypadLowSensitivityAddresses for $t {
@@ -609,7 +609,7 @@ impl JoypadAddresses for Yellow {
   const JOYPAD_USE_ADDRESSES: &'static [i32] = &[
     0x3_402D, // _Joypad
   ];
-  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[(0x3_402D, 0xd72f, 5, 0x3_4063)];
+  const JOYPAD_USE_DISCARD_ADDRESSES: Option<(u16, u16, u8, i32, i32, i32)> = Some((0xd139, 0xd72f, 5, 0x3_4041, 0x3_4046, 0x3_4063)); // (ignore_input_counter_mem_add, ignore_flag_mem_add, ignore_flag_bit, calc_joy_pressed_add, check_ignore_flag_add, discard_add)
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[(0x3_402D, 0xCD6B, 0x3_402F)]; // wJoyIgnore
 }
 impl JoypadLowSensitivityAddresses for Yellow {
@@ -882,7 +882,7 @@ macro_rules! impl_gold_silver_common_addresses {
       const JOYPAD_USE_ADDRESSES: &'static [i32] = &[
         0x0_0940, // in GetJoypad
       ];
-      const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[];
+      const JOYPAD_USE_DISCARD_ADDRESSES: Option<(u16, u16, u8, i32, i32, i32)> = None;
       const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[];
     }
     impl RngAddresses for $t {
@@ -1095,7 +1095,7 @@ impl JoypadAddresses for Crystal {
     0x24_6903, // in SlotsAction_WaitReel2
     0x24_692D, // in SlotsAction_WaitReel3
   ];
-  const JOYPAD_USE_DISCARD_ADDRESSES: &'static [(i32, u16, u8, i32)] = &[];
+  const JOYPAD_USE_DISCARD_ADDRESSES: Option<(u16, u16, u8, i32, i32, i32)> = None;
   const JOYPAD_USE_IGNORE_MASK_MEM_ADDRESSES: &'static [(i32, u16, i32)] = &[];
 }
 impl RngAddresses for Crystal {

@@ -4,14 +4,14 @@ use crate::rom::*;
 use gambatte::inputs::*;
 
 // Plan to progress JoypadOverworld inputs
-pub struct OverworldTurnPlan {
+pub struct OverworldJumpLedgePlan {
   // instance state
   joypad_overworld_state: JoypadOverworldState,
 
   // config state
   direction: Input,
 }
-impl OverworldTurnPlan {
+impl OverworldJumpLedgePlan {
   pub fn new(direction: Input) -> Self {
     Self {
       // Set instance state to dummy values, will be initialize()'d later.
@@ -22,14 +22,14 @@ impl OverworldTurnPlan {
     }
   }
 }
-impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAddresses> Plan<R> for OverworldTurnPlan {
+impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAddresses> Plan<R> for OverworldJumpLedgePlan {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::OverworldTurnState { joypad_overworld_state: self.joypad_overworld_state.clone() }
+    PlanState::OverworldJumpLedgeState { joypad_overworld_state: self.joypad_overworld_state.clone() }
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::OverworldTurnState { joypad_overworld_state, } = state {
+    if let PlanState::OverworldJumpLedgeState { joypad_overworld_state, } = state {
       self.joypad_overworld_state = joypad_overworld_state.clone();
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
@@ -54,22 +54,22 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
     gb.restore(s);
     gb.input(input);
     match get_overworld_interaction_result(gb) {
-      OverworldInteractionResult::Turned { direction } => {
+      OverworldInteractionResult::JumpLedge { direction } => {
         assert!(dir == direction);
         if direction == self.direction {
           gb.step();
           return Some((gb.save(), Some(())));
         }
+        None // Jumped wrong ledge
+      },
+      OverworldInteractionResult::Turned { direction } => {
+        assert!(dir == direction);
         gb.delay_step();
         let new_state = gb.save();
         self.joypad_overworld_state = JoypadOverworldState::from_gb(gb);
         Some((new_state, None))
       },
       OverworldInteractionResult::Collision => {
-        if dir == self.direction {
-          gb.step();
-          return Some((gb.save(), Some(())));
-        }
         gb.delay_step();
         let new_state = gb.save();
         self.joypad_overworld_state = JoypadOverworldState::from_gb(gb);

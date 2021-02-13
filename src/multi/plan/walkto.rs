@@ -162,7 +162,9 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
           _ => panic!("invalid direction {:?}", direction),
         }
         assert!(self.map.distances[self.map.width * self.pos_y + self.pos_x] >= 0);
+        // log::debug!("before step");
         gb.step();
+        // log::debug!("after step");
         if (self.pos_x, self.pos_y) == (self.dest_x, self.dest_y) {
           return Some((gb.save(), Some(())));
         }

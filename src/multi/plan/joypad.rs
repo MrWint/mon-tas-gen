@@ -17,7 +17,7 @@ impl PressedInputState {
   }
   pub fn from_gb<R: Rom + JoypadLowSensitivityAddresses>(gb: &mut Gb<R>) -> PressedInputState {
     PressedInputState {
-      last_input: Input::from_bits_truncate(gb.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS)),
+      last_input: if gb.is_pressed_always_cleared() { Input::all() } else { Input::from_bits_truncate(gb.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS)) },
     }
   }
   pub fn get_pressed_input(&self, input: Input) -> Input {
@@ -27,7 +27,7 @@ impl PressedInputState {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct HJoy5State {
-  last_input: Input, // hJoyLast
+  pressed: PressedInputState,
   hjoy7: bool,
   frame_counter: bool,
   hjoy6: bool,
@@ -35,7 +35,7 @@ pub struct HJoy5State {
 impl HJoy5State {
   pub fn unknown() -> HJoy5State {
     HJoy5State {
-      last_input: Input::empty(),
+      pressed: PressedInputState::unknown(),
       hjoy7: false,
       frame_counter: false,
       hjoy6: true,
@@ -47,7 +47,7 @@ impl HJoy5State {
   }
   pub fn from_gb<R: Rom + JoypadLowSensitivityAddresses>(gb: &mut Gb<R>) -> HJoy5State {
     gb.input(Input::empty());
-    let last_input = Input::from_bits_truncate(gb.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS));
+    let pressed = PressedInputState::from_gb(gb);
     let hjoy7 = gb.gb.read_memory(R::JOYPAD_HJOY7_MEM_ADDRESS) > 0;
     let hit = gb.step_until(&[R::JOYPAD_FRAME_COUNTER_CHECK_ADDRESS]);
     assert!(hit == R::JOYPAD_FRAME_COUNTER_CHECK_ADDRESS, "Not a JoypadLowSensitivity input");
@@ -55,17 +55,17 @@ impl HJoy5State {
     let hjoy6 = gb.gb.read_memory(R::JOYPAD_HJOY6_MEM_ADDRESS) > 0;
   
     HJoy5State {
-      last_input,
+      pressed,
       hjoy7,
       frame_counter,
       hjoy6,
     }
   }
   pub fn get_pressed_input(&self, input: Input) -> Input {
-    input - self.last_input
+    self.pressed.get_pressed_input(input)
   }
   pub fn get_hjoy5(&self, input: Input) -> Input {
-    let pressed_input = input - self.last_input;
+    let pressed_input = self.pressed.get_pressed_input(input);
     if !self.hjoy7 { return pressed_input; }
     if !pressed_input.is_empty() { return input; }
     if self.frame_counter { return Input::empty(); }
@@ -162,7 +162,7 @@ pub enum HandleMenuInputResult {
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct JoypadOverworldState {
-  last_input: Input, // hJoyLast
+  pressed: PressedInputState,
   forced_downwards: bool, // wFlags_D733 bit 3 or wCurMap
   simulating_button_presses: bool, // wd730 bit 7
   simulating_button_presses_override_mask: Input, // wOverrideSimulatedJoypadStatesMask
@@ -172,7 +172,7 @@ pub struct JoypadOverworldState {
 impl JoypadOverworldState {
   pub fn unknown() -> Self {
     Self {
-      last_input: Input::empty(),
+      pressed: PressedInputState::unknown(),
       forced_downwards: false,
       simulating_button_presses: false,
       simulating_button_presses_override_mask: Input::empty(),
@@ -184,7 +184,7 @@ impl JoypadOverworldState {
     Self::from_gb(gb)
   }
   pub fn from_gb<R: MultiRom + JoypadOverworldAddresses>(gb: &mut Gb<R>) -> Self {
-    let last_input = Input::from_bits_truncate(gb.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS));
+    let pressed = PressedInputState::from_gb(gb);
     let forced_downwards = (gb.gb.read_memory(R::FLAGS_D733_MEM_ADDRESS) & 0b1000) == 0 && gb.gb.read_memory(R::CUR_MAP_MEM_ADDRESS) == 28;
     let simulating_button_presses = (gb.gb.read_memory(R::FLAGS_D730_MEM_ADDRESS) & 0b1000_0000) != 0;
     let simulating_button_presses_override_mask = Input::from_bits_truncate(gb.gb.read_memory(R::SIMULATED_JOYPAD_OVERRIDE_MASK_MEM_ADDRESS));
@@ -194,7 +194,7 @@ impl JoypadOverworldState {
     };
   
     let res = Self {
-      last_input,
+      pressed,
       forced_downwards,
       simulating_button_presses,
       simulating_button_presses_override_mask,
@@ -204,7 +204,7 @@ impl JoypadOverworldState {
     res
   }
   pub fn get_input(&self, mut input: Input) -> (Input, Input) {
-    let pressed = input - self.last_input;
+    let pressed = self.pressed.get_pressed_input(input);
     if self.forced_downwards && !input.contains(Input::DOWN | Input::UP | Input::LEFT | Input::RIGHT | Input::B | Input::A) {
       input = Input::DOWN;
     }

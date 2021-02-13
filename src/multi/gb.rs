@@ -10,6 +10,7 @@ pub struct GbState {
   // Current input frame number
   cur_input_frame: [u32; 2], // lo, hi
   input_use_address: i32,
+  pressed_cleared: bool,
   ignored_inputs: Input, // inputs ignored by current input use
 
   // derived state for StateBuffer decisions
@@ -33,6 +34,10 @@ impl GbState {
   #[inline]
   pub fn is_at_input(&self) -> bool {
     self.input_use_address != 0
+  }
+  #[inline]
+  pub fn is_pressed_always_cleared(&self) -> bool {
+    self.pressed_cleared
   }
   #[inline]
   pub fn get_input_frame_lo(&self) -> u32 {
@@ -64,6 +69,7 @@ pub struct Gb<R> {
   cur_input_frame: [u32; 2], // lo, hi
   /// Address of the current input use the execution is stopped at, or 0 if not at an input use.
   input_use_address: i32,
+  pressed_cleared: bool, // Whether hJoyPressed will always be empty at the current input
   ignored_inputs: Input, // inputs ignored by current input use
 
   pub num_delays: u32,
@@ -79,6 +85,7 @@ impl <R: BasicRomInfo + JoypadAddresses> Gb<R> {
 
       cur_input_frame: [0, 0],
       input_use_address: 0,
+      pressed_cleared: false,
       ignored_inputs: Input::empty(),
       num_delays: 0,
     };
@@ -94,6 +101,7 @@ impl <R: RngAddresses + JoypadLowSensitivityAddresses> Gb<R> {
       gb_state: self.gb.save_state(),
       cur_input_frame: self.cur_input_frame,
       input_use_address: self.input_use_address,
+      pressed_cleared: self.pressed_cleared,
       ignored_inputs: self.ignored_inputs,
       // save derived state
       blocked_inputs: if self.is_at_input() { Input::from_bits_truncate(self.gb.read_memory(R::JOYPAD_LAST_MEM_ADDRESS)) } else { Input::empty() },
@@ -126,6 +134,10 @@ impl <R> Gb<R> {
     self.input_use_address != 0
   }
   #[inline]
+  pub fn is_pressed_always_cleared(&self) -> bool {
+    self.pressed_cleared
+  }
+  #[inline]
   pub fn get_input_frame_lo(&self) -> u32 {
     self.cur_input_frame[0]
   }
@@ -146,6 +158,7 @@ impl <R: JoypadAddresses> Gb<R> {
     self.gb.write_memory(R::JOYPAD_INPUT_MEM_ADDRESS, input.bits());
     while self.gb.run_until(&[self.input_use_address + 2, R::JOYPAD_READ_FIRST_ADDRESS]) == R::JOYPAD_READ_FIRST_ADDRESS { self.handle_vblank(); } // skip single LDH instruction.
     self.input_use_address = 0;
+    self.pressed_cleared = false;
   }
 
   fn handle_vblank(&mut self) {
@@ -160,6 +173,7 @@ impl <R: JoypadAddresses> Gb<R> {
   pub fn step_until(&mut self, addresses: &[i32]) -> i32 {
     assert!(!self.is_at_input());
     'check_for_input_uses: loop {
+      let mut pressed_cleared = false;
       let hit = loop {
         let hit = self.gb.run_until(&[&[R::JOYPAD_READ_FIRST_ADDRESS], R::JOYPAD_USE_ADDRESSES, addresses].concat());
         if hit != R::JOYPAD_READ_FIRST_ADDRESS { break hit; }
@@ -180,16 +194,30 @@ impl <R: JoypadAddresses> Gb<R> {
             break;
           }
         }
-        for &(use_add, flag_mem_add, flag_bit, discard_add) in R::JOYPAD_USE_DISCARD_ADDRESSES {
-          if hit == use_add {
-            if (self.gb.read_memory(flag_mem_add) >> flag_bit) & 1 != 0 {
+        if let Some((ignore_input_counter_mem_add, ignore_flag_mem_add, ignore_flag_bit, calc_joy_pressed_add, check_ignore_flag_add, discard_add)) = R::JOYPAD_USE_DISCARD_ADDRESSES {
+          let ignore_input_counter = self.gb.read_memory(ignore_input_counter_mem_add);
+          let inputs_ignored = (self.gb.read_memory(ignore_flag_mem_add) >> ignore_flag_bit) & 1 != 0;
+          if inputs_ignored {
+            if ignore_input_counter != 1 { // no risk of VBlank interfering during Joypad calculation
               while self.gb.run_until(&[discard_add, R::JOYPAD_READ_FIRST_ADDRESS]) == R::JOYPAD_READ_FIRST_ADDRESS { self.handle_vblank(); }
               continue 'check_for_input_uses;
             }
-            break;
+            // VBlank might interfere and disable ingoring inputs before the check is made.
+            let s = self.gb.save_state();
+            if self.gb.run_until(&[calc_joy_pressed_add, R::JOYPAD_READ_FIRST_ADDRESS]) == calc_joy_pressed_add {
+              if self.gb.run_until(&[check_ignore_flag_add, R::JOYPAD_READ_FIRST_ADDRESS]) == check_ignore_flag_add {
+                // This input use is still full ignored
+                while self.gb.run_until(&[discard_add, R::JOYPAD_READ_FIRST_ADDRESS]) == R::JOYPAD_READ_FIRST_ADDRESS { self.handle_vblank(); }
+                continue 'check_for_input_uses;
+              }
+              // ignoring inputs is disabled before after hJoyPressed calculation was made, this input is usable but hJoyPressed will be cleared
+              pressed_cleared = true;
+            } // else: ignoring inputs is disabled before any calculations are made, this input is fully usable
+            self.gb.load_state(&s);
           }
         }
         self.input_use_address = hit;
+        self.pressed_cleared = pressed_cleared;
         return 0;
       }
     }
@@ -212,6 +240,7 @@ impl <R: JoypadAddresses> Gb<R> {
     self.gb.load_state(&s.gb_state);
     self.cur_input_frame.clone_from(&s.cur_input_frame);
     self.input_use_address = s.input_use_address;
+    self.pressed_cleared = s.pressed_cleared;
     self.ignored_inputs = s.ignored_inputs;
     self.num_delays = s.num_delays;
   }

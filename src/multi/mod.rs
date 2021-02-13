@@ -48,12 +48,12 @@ impl<R: MultiRom + InputIdentificationAddresses> IMultiGbExecutor for MultiGbExe
     self.plan.ensure_cur_item_initialized(&mut self.gb, gb_state);
   }
   fn canonicalize_input(&self, state: &GbState, input: Input) -> Option<Input> {
-    if input == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs
+    if (input & (inputs::LO_INPUTS | Input::UP)) == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs (apply most restrictive check from Yellow)
     let input = state.remove_ignored_inputs(input);
     self.plan.canonicalize_input(input)
   }
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)> {
-    if input == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs
+    if (input & (inputs::LO_INPUTS | Input::UP)) == inputs::LO_INPUTS { return None; } // Block all attempts at soft reset inputs (apply most restrictive check from Yellow)
     let input = state.remove_ignored_inputs(input);
     if let Some((mut gb_state, value)) = self.plan.execute_input(&mut self.gb, state, input) {
       gb_state.blocked_inputs &= self.plan.get_blockable_inputs();

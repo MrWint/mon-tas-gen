@@ -285,13 +285,15 @@ impl <R: JoypadAddresses> Gb<R> {
               break;
             }
           }
-          for &(use_add, flag_mem_add, flag_bit, discard_add) in R::JOYPAD_USE_DISCARD_ADDRESSES {
-            if hit == use_add {
-              if (self.gb.read_memory(flag_mem_add) >> flag_bit) & 1 != 0 {
+          if let Some((ignore_input_counter_mem_add, ignore_flag_mem_add, ignore_flag_bit, _calc_joy_pressed_add, check_ignore_flag_add, discard_add)) = R::JOYPAD_USE_DISCARD_ADDRESSES {
+            let ignore_input_counter = self.gb.read_memory(ignore_input_counter_mem_add);
+            let inputs_ignored = (self.gb.read_memory(ignore_flag_mem_add) >> ignore_flag_bit) & 1 != 0;
+            if inputs_ignored {
+              if ignore_input_counter != 1 || self.gb.run_until(&[check_ignore_flag_add, R::JOYPAD_READ_FIRST_ADDRESS]) == check_ignore_flag_add {
+                // This input use is still full ignored
                 self.gb.run_until(&[discard_add]);
                 continue 'check_for_input_uses_until_next_input;
               }
-              break;
             }
           }
           // Found use can potentially change the execution flow, so the last read input is a decision point.

@@ -43,7 +43,8 @@ fn main() {
   // crate::run::crystal_desync::start();
   // crate::run::crystal_glitchless::start();
   // crate::run::blue_testing::start();
-  crate::run::multi_blue::start();
+  // crate::run::multi_blue::start();
+  crate::run::multi_red::start();
   // crate::run::multi_testing::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();

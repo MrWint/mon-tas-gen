@@ -30,11 +30,22 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
       plan.initialize(&mut self.gb, &instance.gb_state);
       self.add_state(MultiState::new([MultiStateItem::new_rc(instance.gb_state, plan.save(), plan.is_safe())], inputs));
     }
+
+    let mut full_final_states_cutoff = std::u32::MAX;
+    const FULL_FINAL_STATES_CUTOFF_DELAY: u32 = 10;
+
     // Execute plan until all states are through
     while !self.states.is_empty() || !self.states_unsafe.is_empty() {
       if let Some(max_final_frame) = self.final_states.iter().map(|s| s.get_next_input_frame()).max() {
         let states = if self.states.is_empty() { &mut self.states_unsafe } else { &mut self.states };
         let min_frame = states.iter().map(|s| s.get_next_input_frame()).min().expect("Can't step: state buffer is empty");
+        if self.final_states.is_full() { full_final_states_cutoff = std::cmp::min(full_final_states_cutoff, min_frame + FULL_FINAL_STATES_CUTOFF_DELAY); }
+        if min_frame > full_final_states_cutoff {
+          log::info!("Discarding all remaining states, full_final_states_cutoff frame {} is smaller than next active frame {}", full_final_states_cutoff, min_frame);
+          self.states = MultiStateBuffer::new();
+          self.states_unsafe = MultiStateBuffer::new();
+          break;
+        }
         if min_frame > max_final_frame {
           log::info!("Discarding all remaining states, max final frame {} is smaller than next active frame {}", max_final_frame, min_frame);
           self.states = MultiStateBuffer::new();
@@ -80,7 +91,7 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
     // Go through reasonable input combinations
     'next_input: for input_num in 0..=255 {
       let input = Input::from_bits_truncate(input_num);
-      if input == inputs::LO_INPUTS { continue 'next_input; } // Block all attempts at soft reset inputs
+      if (input & (inputs::LO_INPUTS | Input::UP)) == inputs::LO_INPUTS { continue 'next_input; } // Block all attempts at soft reset inputs (apply most restrictive check from Yellow)
       if let Some(hi_input) = inputs.get_input_hi(input_frame_hi) {
         if input & inputs::HI_INPUTS != hi_input { continue 'next_input; }
       }

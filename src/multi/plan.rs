@@ -193,6 +193,7 @@ pub enum PlanState {
   MainMenuState { handle_menu_input_state: HandleMenuInputState, },
   NamingScreenState { letter_selected: bool, delta: (i8, i8), pressed_input_state: PressedInputState, },
   OverworldInteractState { joypad_overworld_state: JoypadOverworldState, },
+  OverworldJumpLedgeState { joypad_overworld_state: JoypadOverworldState, },
   OverworldOpenStartMenuState { joypad_overworld_state: JoypadOverworldState, },
   OverworldTurnState { joypad_overworld_state: JoypadOverworldState, },
   OverworldWaitState,
@@ -316,6 +317,11 @@ impl PartialOrd for PlanState {
           Some(Ordering::Equal)
         } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
       },
+      PlanState::OverworldJumpLedgeState { joypad_overworld_state: _ } => {
+        if let PlanState::OverworldJumpLedgeState { joypad_overworld_state: _ } = other {
+          Some(Ordering::Equal)
+        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
+      },
       PlanState::OverworldOpenStartMenuState { joypad_overworld_state: _ } => {
         if let PlanState::OverworldOpenStartMenuState { joypad_overworld_state: _ } = other {
           Some(Ordering::Equal)
@@ -409,6 +415,8 @@ mod changeoptions;
 pub use changeoptions::*;
 mod edgewarp;
 pub use edgewarp::*;
+mod endtrainerbattle;
+pub use endtrainerbattle::*;
 mod fightko;
 pub use fightko::*;
 mod fightturn;
@@ -427,6 +435,8 @@ mod namingscreen;
 pub use namingscreen::*;
 mod overworldinteract;
 pub use overworldinteract::*;
+mod overworldjumpledge;
+pub use overworldjumpledge::*;
 mod overworldopenstartmenu;
 pub use overworldopenstartmenu::*;
 mod overworldturn;

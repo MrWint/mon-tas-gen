@@ -14,7 +14,7 @@ pub enum OverworldInteractionResult {
   WildEncounter { species: Pokemon, level: u8, dvs: DVs },
   TrainerBattle { species: u8 },
   Turned { direction: Input },
-  JumpLedge,
+  JumpLedge { direction: Input },
   Collision,
   BlackOut,
   Walked { direction: Input },
@@ -87,7 +87,7 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen1OverworldAddres
   } else if hit == R::OVERWORLD_TURNING_DONE_ADDRESS {
     OverworldInteractionResult::Turned { direction: dir_to_input(gb.gb().read_memory(R::OVERWORLD_MOVING_DIRECTION_MEM_ADDRESS)) }
   } else if hit == R::OVERWORLD_JUMP_LEDGE_ADDRESS {
-    OverworldInteractionResult::JumpLedge
+    OverworldInteractionResult::JumpLedge { direction: dir_to_input(gb.gb().read_memory(R::OVERWORLD_MOVING_DIRECTION_MEM_ADDRESS)) }
   } else if hit == R::OVERWORLD_LAND_COLLISION_ADDRESS {
     // still need to check for warps
     let hit = gb.step_until(&[R::OVERWORLD_WARP_FOUND_ADDRESS, R::OVERWORLD_LAND_COLLISION_NO_WARP_ADDRESS]);
