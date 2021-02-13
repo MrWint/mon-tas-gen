@@ -1,6 +1,24 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TwoOptionMenuPlanState {
+  handle_menu_input_state: HandleMenuInputState,
+}
+impl PartialOrd for TwoOptionMenuPlanState {
+  fn partial_cmp(&self, _other: &Self) -> Option<Ordering> {
+    Some(Ordering::Equal)
+  }
+}
+impl PartialEq for TwoOptionMenuPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress HandleMenuInput_ inputs, selecting an option in a two-option menu (DisplayTwoOptionMenu)
 pub struct TwoOptionMenuPlan {
@@ -24,10 +42,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::TwoOptionMenuState { handle_menu_input_state: self.handle_menu_input_state.clone(), }
+    PlanState::TwoOptionMenuState(TwoOptionMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone(), })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::TwoOptionMenuState { handle_menu_input_state, } = state {
+    if let PlanState::TwoOptionMenuState(TwoOptionMenuPlanState { handle_menu_input_state, }) = state {
       self.handle_menu_input_state = handle_menu_input_state.clone();
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }

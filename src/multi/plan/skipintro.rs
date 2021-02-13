@@ -1,6 +1,25 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SkipIntroPlanState {
+  inputs_until_auto_pass: u32,
+  hjoy5_state: HJoy5State,
+}
+impl PartialOrd for SkipIntroPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    other.inputs_until_auto_pass.partial_cmp(&self.inputs_until_auto_pass)
+  }
+}
+impl PartialEq for SkipIntroPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress CheckForUserInterruption inputs
 pub struct SkipIntroPlan {
@@ -31,10 +50,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for SkipIntroPlan {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::SkipIntroState { inputs_until_auto_pass: self.inputs_until_auto_pass, hjoy5_state: self.hjoy5_state }
+    PlanState::SkipIntroState(SkipIntroPlanState { inputs_until_auto_pass: self.inputs_until_auto_pass, hjoy5_state: self.hjoy5_state })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::SkipIntroState { inputs_until_auto_pass, hjoy5_state } = state {
+    if let PlanState::SkipIntroState(SkipIntroPlanState { inputs_until_auto_pass, hjoy5_state }) = state {
       self.inputs_until_auto_pass = *inputs_until_auto_pass;
       self.hjoy5_state = *hjoy5_state;
     } else { panic!("Loading incompatible plan state {:?}", state); }

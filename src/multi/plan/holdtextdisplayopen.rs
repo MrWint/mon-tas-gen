@@ -1,6 +1,11 @@
+use serde_derive::{Serialize, Deserialize};
+
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub struct HoldTextDisplayOpenPlanState;
 
 // Plan to progress HoldTextDisplayOpen inputs
 pub struct HoldTextDisplayOpenPlan;
@@ -11,10 +16,10 @@ impl<R: MultiRom> Plan<R> for HoldTextDisplayOpenPlan {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::HoldTextDisplayOpenState
+    PlanState::HoldTextDisplayOpenState(HoldTextDisplayOpenPlanState)
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::HoldTextDisplayOpenState = state {
+    if let PlanState::HoldTextDisplayOpenState(HoldTextDisplayOpenPlanState) = state {
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
   fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) {}

@@ -4,9 +4,33 @@ use crate::metric::overworld::gen1::*;
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+use std::cmp::Ordering;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct WalkToPlanState {
+  pos: (usize, usize),
+  turnframe_direction: Option<u8>,
+  map: Rc<MapState>,
+  joypad_overworld_state: JoypadOverworldState,
+  dist_to_goal: i32,
+  requires_turn: bool,
+}
+impl PartialOrd for WalkToPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    if self.dist_to_goal != other.dist_to_goal {
+      other.dist_to_goal.partial_cmp(&self.dist_to_goal)
+    } else {
+      other.requires_turn.partial_cmp(&self.requires_turn)
+    }
+  }
+}
+impl PartialEq for WalkToPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct MapState {
@@ -110,10 +134,10 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::WalkToState { pos: (self.pos_x, self.pos_y), turnframe_direction: self.turnframe_direction, map: self.map.clone(), joypad_overworld_state: self.joypad_overworld_state.clone(), dist_to_goal: self.map.distances[self.map.width * self.pos_y + self.pos_x], requires_turn: self.requires_turn_frame() }
+    PlanState::WalkToState(WalkToPlanState { pos: (self.pos_x, self.pos_y), turnframe_direction: self.turnframe_direction, map: self.map.clone(), joypad_overworld_state: self.joypad_overworld_state.clone(), dist_to_goal: self.map.distances[self.map.width * self.pos_y + self.pos_x], requires_turn: self.requires_turn_frame() })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::WalkToState { pos, turnframe_direction, map, joypad_overworld_state, dist_to_goal: _, requires_turn: _, } = state {
+    if let PlanState::WalkToState(WalkToPlanState { pos, turnframe_direction, map, joypad_overworld_state, dist_to_goal: _, requires_turn: _, }) = state {
       self.pos_x = pos.0;
       self.pos_y = pos.1;
       self.turnframe_direction = *turnframe_direction;

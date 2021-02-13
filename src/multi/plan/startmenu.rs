@@ -1,6 +1,25 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StartMenuPlanState {
+  handle_menu_input_state: HandleMenuInputState,
+  distance_to_goal: u8,
+}
+impl PartialOrd for StartMenuPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    other.distance_to_goal.partial_cmp(&self.distance_to_goal)
+  }
+}
+impl PartialEq for StartMenuPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 const NUM_ITEMS_WITH_DEX: u8 = 7;
 // Plan to progress HandleMenuInput_ inputs, selecting a chosen start menu item
@@ -60,10 +79,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::StartMenuState { handle_menu_input_state: self.handle_menu_input_state.clone(), distance_to_goal: std::cmp::min(self.distance_up(), self.distance_down()) }
+    PlanState::StartMenuState(StartMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone(), distance_to_goal: std::cmp::min(self.distance_up(), self.distance_down()) })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::StartMenuState { handle_menu_input_state, distance_to_goal: _ } = state {
+    if let PlanState::StartMenuState(StartMenuPlanState { handle_menu_input_state, distance_to_goal: _ }) = state {
       self.handle_menu_input_state = handle_menu_input_state.clone();
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
@@ -181,6 +200,21 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
 }
 
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StartMenuClosePlanState {
+  pressed_input_state: PressedInputState,
+}
+impl PartialOrd for StartMenuClosePlanState {
+  fn partial_cmp(&self, _other: &Self) -> Option<Ordering> {
+    Some(Ordering::Equal)
+  }
+}
+impl PartialEq for StartMenuClosePlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
+
 pub struct StartMenuClosePlan {
   // instance state
   pressed_input_state: PressedInputState,
@@ -197,10 +231,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses> Plan<R> for StartMenuClosePlan {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::StartMenuCloseState { pressed_input_state: self.pressed_input_state }
+    PlanState::StartMenuCloseState(StartMenuClosePlanState { pressed_input_state: self.pressed_input_state })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::StartMenuCloseState { pressed_input_state } = state {
+    if let PlanState::StartMenuCloseState(StartMenuClosePlanState { pressed_input_state }) = state {
       self.pressed_input_state = *pressed_input_state;
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }

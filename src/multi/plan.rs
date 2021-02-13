@@ -1,11 +1,9 @@
 use serde_derive::{Serialize, Deserialize};
 
-use crate::metric::battle::*;
 use crate::rom::*;
 use super::*;
 
 use std::cmp::Ordering;
-use std::ops::RangeInclusive;
 use std::rc::Rc;
 
 pub trait Plan<R: Rom> {
@@ -73,17 +71,37 @@ impl<R: Rom> ListPlan<R> {
     }
   }
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ListPlanState {
+  cur_item: usize,
+  sub_plan: Option<Rc<PlanState>>,
+}
+impl PartialOrd for ListPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    if self.cur_item != other.cur_item {
+      self.cur_item.partial_cmp(&other.cur_item)
+    } else {
+      self.sub_plan.partial_cmp(&other.sub_plan)
+    }
+}
+}
+impl PartialEq for ListPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 impl<R: Rom> Plan<R> for ListPlan<R> {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::ListState {
+    PlanState::ListState(ListPlanState {
       cur_item: self.cur_item,
       sub_plan: if self.cur_item >= self.plans.len() { None } else { Some(Rc::new(self.plans[self.cur_item].save())) },
-    }
+    })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::ListState { cur_item, sub_plan } = state {
+    if let PlanState::ListState(ListPlanState { cur_item, sub_plan }) = state {
       assert!(*cur_item < self.plans.len());
       self.cur_item = *cur_item;
       if let Some(sub_plan) = sub_plan {
@@ -125,6 +143,26 @@ impl<R: Rom> Plan<R> for ListPlan<R> {
   }
 }
 
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SeqPlanState {
+  p_done: bool,
+  sub_plan: Rc<PlanState>,
+}
+impl PartialOrd for SeqPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    if self.p_done != other.p_done {
+      self.p_done.partial_cmp(&other.p_done)
+    } else {
+      self.sub_plan.partial_cmp(&other.sub_plan)
+    }
+}
+}
+impl PartialEq for SeqPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 pub struct SeqPlan<P, Q> {
   p: P,
   q: Q,
@@ -139,13 +177,13 @@ impl<R: Rom,P: Plan<R, Value=()>, Q: Plan<R>> Plan<R> for SeqPlan<P, Q> {
   type Value = Q::Value;
 
   fn save(&self) -> PlanState {
-    PlanState::SeqState {
+    PlanState::SeqState(SeqPlanState {
       p_done: self.p_done,
       sub_plan: Rc::new(if self.p_done { self.q.save() } else { self.p.save() }),
-    }
+    })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::SeqState { p_done, sub_plan } = state {
+    if let PlanState::SeqState(SeqPlanState { p_done, sub_plan }) = state {
       self.p_done = *p_done;
       if self.p_done { self.q.restore(sub_plan) } else { self.p.restore(sub_plan) };
     } else { panic!("Loading incompatible plan state {:?}", state); }
@@ -181,32 +219,32 @@ impl<R: Rom,P: Plan<R, Value=()>, Q: Plan<R>> Plan<R> for SeqPlan<P, Q> {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PlanState {
   NullState,
-  BattleMenuState { handle_menu_input_state: HandleMenuInputState, correct_side: bool, },
-  ChangeOptionsState { progress: ChangeOptionsProgress, hjoy5_state: HJoy5State, },
-  EdgeWarpState,
-  FightKOState { num_turns: u16, move_order: MoveOrder, non_crit_damage: RangeInclusive<u16>, crit_damage: RangeInclusive<u16>,inner_plan: Rc<PlanState> },
-  FightTurnState { progress: FightTurnProgress, actual_move_order: MoveOrder, after_hit_text_count: u32, enemy_hp: u16, move_info: Option<MoveInfo>, sub_plan: Rc<PlanState> },
-  IdentifyInputState,
-  HoldTextDisplayOpenState,
-  ListState { cur_item: usize, sub_plan: Option<Rc<PlanState>> },
-  IntroNameMenuState { handle_menu_input_state: HandleMenuInputState, },
-  MainMenuState { handle_menu_input_state: HandleMenuInputState, },
-  NamingScreenState { letter_selected: bool, delta: (i8, i8), pressed_input_state: PressedInputState, },
-  OverworldInteractState { joypad_overworld_state: JoypadOverworldState, },
-  OverworldJumpLedgeState { joypad_overworld_state: JoypadOverworldState, },
-  OverworldOpenStartMenuState { joypad_overworld_state: JoypadOverworldState, },
-  OverworldTurnState { joypad_overworld_state: JoypadOverworldState, },
-  OverworldWaitState,
-  SelectMoveMenuState { handle_menu_input_state: HandleMenuInputState, move_index: u8, num_moves: u8, distance_to_goal: u8, },
-  SeqState { p_done: bool, sub_plan: Rc<PlanState> },
-  SkipIntroState { inputs_until_auto_pass: u32, hjoy5_state: HJoy5State, },
-  StartMenuState { handle_menu_input_state: HandleMenuInputState, distance_to_goal: u8, },
-  StartMenuCloseState { pressed_input_state: PressedInputState, },
-  TextState { printed_characters: u32, ends_to_be_skipped: u32, },
-  TextScrollWaitState { hjoy5_state: HJoy5State, },
-  SkipTextsState { num_texts_remaining: u32, at_wait: bool, inner_plan: Rc<PlanState> },
-  TwoOptionMenuState { handle_menu_input_state: HandleMenuInputState, },
-  WalkToState { pos: (usize, usize), turnframe_direction: Option<u8>, map: Rc<MapState>, joypad_overworld_state: JoypadOverworldState, dist_to_goal: i32, requires_turn: bool, },
+  BattleMenuState(BattleMenuPlanState),
+  ChangeOptionsState(ChangeOptionsPlanState),
+  EdgeWarpState(EdgeWarpPlanState),
+  FightKOState(FightKOPlanState),
+  FightTurnState(FightTurnPlanState),
+  HoldTextDisplayOpenState(HoldTextDisplayOpenPlanState),
+  IdentifyInputState(IdentifyInputPlanState),
+  IntroNameMenuState(IntroNameMenuPlanState),
+  ListState(ListPlanState),
+  MainMenuState(MainMenuPlanState),
+  NamingScreenState(NamingScreenPlanState),
+  OverworldInteractState(OverworldInteractPlanState),
+  OverworldJumpLedgeState(OverworldJumpLedgePlanState),
+  OverworldOpenStartMenuState(OverworldOpenStartMenuPlanState),
+  OverworldTurnState(OverworldTurnPlanState),
+  OverworldWaitState(OverworldWaitPlanState),
+  SelectMoveMenuState(SelectMoveMenuPlanState),
+  SeqState(SeqPlanState),
+  SkipIntroState(SkipIntroPlanState),
+  SkipTextsState(SkipTextsPlanState),
+  StartMenuState(StartMenuPlanState),
+  StartMenuCloseState(StartMenuClosePlanState),
+  TextState(TextPlanState),
+  TextScrollWaitState(TextScrollWaitPlanState),
+  TwoOptionMenuState(TwoOptionMenuPlanState),
+  WalkToState(WalkToPlanState),
 }
 impl PartialEq for PlanState {
   fn eq(&self, other: &Self) -> bool {
@@ -217,194 +255,33 @@ impl PartialEq for PlanState {
 impl PartialOrd for PlanState {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
     match self {
-      PlanState::NullState => {
-        if let PlanState::NullState = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::BattleMenuState { handle_menu_input_state: _, correct_side } => {
-        if let PlanState::BattleMenuState { handle_menu_input_state: _, correct_side: other_correct_side } = other {
-          correct_side.partial_cmp(other_correct_side)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::ChangeOptionsState { progress, hjoy5_state: _ } => {
-        if let PlanState::ChangeOptionsState { progress: other_progress, hjoy5_state: _ } = other {
-          progress.partial_cmp(other_progress)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::EdgeWarpState => {
-        if let PlanState::EdgeWarpState = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::FightKOState { num_turns, move_order: _, non_crit_damage: _, crit_damage: _, inner_plan } => {
-        if let PlanState::FightKOState { num_turns: other_num_turns , move_order: _, non_crit_damage: _, crit_damage: _, inner_plan: other_plan } = other {
-          if num_turns != other_num_turns {
-            let enemy_hp = if let PlanState::FightTurnState { enemy_hp, .. } = **inner_plan { enemy_hp } else { panic!("unexpected inner plan state") };
-            let other_enemy_hp = if let PlanState::FightTurnState { enemy_hp, .. } = **other_plan { enemy_hp } else { panic!("unexpected inner plan state") };
-            if num_turns < other_num_turns {
-              if enemy_hp > other_enemy_hp { None } else { Some(Ordering::Greater) }
-            } else {
-              if enemy_hp < other_enemy_hp { None } else { Some(Ordering::Less) }
-            }
-          } else {
-            inner_plan.partial_cmp(other_plan)
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::FightTurnState { progress, actual_move_order, after_hit_text_count: _, enemy_hp, move_info: _, sub_plan } => {
-        if let PlanState::FightTurnState { progress: other_progress, actual_move_order: other_actual_move_order, after_hit_text_count: _, enemy_hp: other_enemy_hp, move_info: _, sub_plan: other_sub_plan } = other {
-          let enemy_hp_ord = enemy_hp.cmp(other_enemy_hp);
-          let combine_with_enemy_hp = move |partial_ord: Option<Ordering>| {
-            match partial_ord {
-              None => None,
-              Some(Ordering::Equal) => Some(enemy_hp_ord),
-              Some(Ordering::Less) => if enemy_hp_ord == Ordering::Less { None } else { Some(Ordering::Less) },
-              Some(Ordering::Greater) => if enemy_hp_ord == Ordering::Greater { None } else { Some(Ordering::Greater) },
-            }
-          };
-          if progress > &FightTurnProgress::BattleMenuSelectMove && other_progress > &FightTurnProgress::BattleMenuSelectMove && actual_move_order != other_actual_move_order {
-            // State are incomparable if move order is different.
-            return None;
-          }
-          if progress != other_progress {
-            combine_with_enemy_hp(progress.partial_cmp(other_progress))
-          } else {
-            combine_with_enemy_hp(sub_plan.partial_cmp(other_sub_plan))
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::HoldTextDisplayOpenState => {
-        if let PlanState::HoldTextDisplayOpenState = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::IdentifyInputState => {
-        if let PlanState::IdentifyInputState = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::ListState { cur_item, sub_plan } => {
-        if let PlanState::ListState { cur_item: other_item, sub_plan: other_plan } = other {
-          if cur_item != other_item {
-            cur_item.partial_cmp(other_item)
-          } else {
-            sub_plan.partial_cmp(other_plan)
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::IntroNameMenuState { handle_menu_input_state: _ } => {
-        if let PlanState::IntroNameMenuState { handle_menu_input_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::MainMenuState { handle_menu_input_state: _ } => {
-        if let PlanState::MainMenuState { handle_menu_input_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::NamingScreenState { letter_selected, delta: (dx, dy), pressed_input_state: _ } => {
-        if let PlanState::NamingScreenState { letter_selected: other_letter_selected, delta: (odx, ody), pressed_input_state: _ } = other {
-          if letter_selected != other_letter_selected {
-            letter_selected.partial_cmp(other_letter_selected)
-          } else {
-            (odx.abs() + ody.abs()).partial_cmp(&(dx.abs() + dy.abs()))
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::OverworldInteractState { joypad_overworld_state: _ } => {
-        if let PlanState::OverworldInteractState { joypad_overworld_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::OverworldJumpLedgeState { joypad_overworld_state: _ } => {
-        if let PlanState::OverworldJumpLedgeState { joypad_overworld_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::OverworldOpenStartMenuState { joypad_overworld_state: _ } => {
-        if let PlanState::OverworldOpenStartMenuState { joypad_overworld_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::OverworldTurnState { joypad_overworld_state: _ } => {
-        if let PlanState::OverworldTurnState { joypad_overworld_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::OverworldWaitState => {
-        if let PlanState::OverworldWaitState = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::SelectMoveMenuState { handle_menu_input_state: _, move_index: _, num_moves: _, distance_to_goal } => {
-        if let PlanState::SelectMoveMenuState { handle_menu_input_state: _, move_index: _, num_moves: _, distance_to_goal: other_distance_to_goal } = other {
-          other_distance_to_goal.partial_cmp(distance_to_goal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::SeqState { p_done, sub_plan } => {
-        if let PlanState::SeqState { p_done: other_p_done, sub_plan: other_plan } = other {
-          if p_done != other_p_done {
-            p_done.partial_cmp(other_p_done)
-          } else {
-            sub_plan.partial_cmp(other_plan)
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::SkipIntroState { inputs_until_auto_pass, hjoy5_state: _ } => {
-        if let PlanState::SkipIntroState { inputs_until_auto_pass: other_inputs_until_auto_pass, hjoy5_state: _ } = other {
-          other_inputs_until_auto_pass.partial_cmp(inputs_until_auto_pass)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::StartMenuState { handle_menu_input_state: _, distance_to_goal } => {
-        if let PlanState::StartMenuState { handle_menu_input_state: _, distance_to_goal: other_distance_to_goal } = other {
-          other_distance_to_goal.partial_cmp(distance_to_goal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::StartMenuCloseState { pressed_input_state: _ } => {
-        if let PlanState::StartMenuCloseState { pressed_input_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::TextState { printed_characters, ends_to_be_skipped } => {
-        if let PlanState::TextState { printed_characters: other_printed_characters, ends_to_be_skipped: other_ends_to_be_skipped } = other {
-          if ends_to_be_skipped != other_ends_to_be_skipped {
-            other_ends_to_be_skipped.partial_cmp(ends_to_be_skipped)
-          } else {
-            printed_characters.partial_cmp(other_printed_characters)
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::TextScrollWaitState { hjoy5_state: _ } => {
-        if let PlanState::TextScrollWaitState { hjoy5_state: _ } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::SkipTextsState { num_texts_remaining, at_wait, inner_plan } => {
-        if let PlanState::SkipTextsState { num_texts_remaining: other_num_texts_remaining, at_wait: other_at_wait, inner_plan: other_inner_plan } = other {
-          if num_texts_remaining != other_num_texts_remaining {
-            other_num_texts_remaining.partial_cmp(num_texts_remaining)
-          } else if at_wait != other_at_wait {
-            at_wait.partial_cmp(other_at_wait)
-          } else {
-            inner_plan.partial_cmp(other_inner_plan)
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::TwoOptionMenuState { handle_menu_input_state: _, } => {
-        if let PlanState::TwoOptionMenuState { handle_menu_input_state: _, } = other {
-          Some(Ordering::Equal)
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
-      PlanState::WalkToState { pos: _, turnframe_direction: _, map: _, joypad_overworld_state: _, dist_to_goal, requires_turn, } => {
-        if let PlanState::WalkToState { pos: _, turnframe_direction: _, map: _, joypad_overworld_state: _, dist_to_goal: other_dist_to_goal, requires_turn: other_requires_turn, } = other {
-          if dist_to_goal != other_dist_to_goal {
-            other_dist_to_goal.partial_cmp(dist_to_goal)
-          } else {
-            other_requires_turn.partial_cmp(requires_turn)
-          }
-        } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); }
-      },
+      PlanState::NullState => if let PlanState::NullState = other { Some(Ordering::Equal) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::BattleMenuState(state) => if let PlanState::BattleMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::ChangeOptionsState(state) => if let PlanState::ChangeOptionsState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::EdgeWarpState(state) => if let PlanState::EdgeWarpState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::FightKOState(state) => if let PlanState::FightKOState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::FightTurnState(state) => if let PlanState::FightTurnState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::HoldTextDisplayOpenState(state) => if let PlanState::HoldTextDisplayOpenState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::IdentifyInputState(state) => if let PlanState::IdentifyInputState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::ListState(state) => if let PlanState::ListState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::IntroNameMenuState(state) => if let PlanState::IntroNameMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::MainMenuState(state) => if let PlanState::MainMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::NamingScreenState(state) => if let PlanState::NamingScreenState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::OverworldInteractState(state) => if let PlanState::OverworldInteractState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::OverworldJumpLedgeState(state) => if let PlanState::OverworldJumpLedgeState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::OverworldOpenStartMenuState(state) => if let PlanState::OverworldOpenStartMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::OverworldTurnState(state) => if let PlanState::OverworldTurnState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::OverworldWaitState(state) => if let PlanState::OverworldWaitState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::SelectMoveMenuState(state) => if let PlanState::SelectMoveMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::SeqState(state) => if let PlanState::SeqState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::SkipIntroState(state) => if let PlanState::SkipIntroState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::SkipTextsState(state) => if let PlanState::SkipTextsState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::StartMenuState(state) => if let PlanState::StartMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::StartMenuCloseState(state) => if let PlanState::StartMenuCloseState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::TextState(state) => if let PlanState::TextState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::TextScrollWaitState(state) => if let PlanState::TextScrollWaitState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::TwoOptionMenuState(state) => if let PlanState::TwoOptionMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::WalkToState(state) => if let PlanState::WalkToState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
     }
   }
 }

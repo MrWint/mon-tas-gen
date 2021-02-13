@@ -1,6 +1,24 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IntroNameMenuPlanState {
+  handle_menu_input_state: HandleMenuInputState,
+}
+impl PartialOrd for IntroNameMenuPlanState {
+  fn partial_cmp(&self, _other: &Self) -> Option<Ordering> {
+    Some(Ordering::Equal)
+  }
+}
+impl PartialEq for IntroNameMenuPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress HandleMenuInput_ inputs
 pub struct IntroNameMenuPlan {
@@ -23,10 +41,10 @@ impl<R: MultiRom + HandleMenuInputAddresses> Plan<R> for IntroNameMenuPlan {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::IntroNameMenuState { handle_menu_input_state: self.handle_menu_input_state.clone() }
+    PlanState::IntroNameMenuState(IntroNameMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone() })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::IntroNameMenuState { handle_menu_input_state, } = state {
+    if let PlanState::IntroNameMenuState(IntroNameMenuPlanState { handle_menu_input_state, }) = state {
       self.handle_menu_input_state = handle_menu_input_state.clone();
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }

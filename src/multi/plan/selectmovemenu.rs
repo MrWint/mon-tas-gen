@@ -1,9 +1,30 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::constants::*;
 use crate::metric::*;
 use crate::metric::battle::*;
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SelectMoveMenuPlanState {
+  handle_menu_input_state: HandleMenuInputState,
+  move_index: u8,
+  num_moves: u8,
+  distance_to_goal: u8,
+}
+impl PartialOrd for SelectMoveMenuPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    other.distance_to_goal.partial_cmp(&self.distance_to_goal)
+  }
+}
+impl PartialEq for SelectMoveMenuPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress HandleMenuInput_ inputs, selecting a chosen battle move
 pub struct SelectMoveMenuPlan<M> {
@@ -45,10 +66,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
   type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
-    PlanState::SelectMoveMenuState { handle_menu_input_state: self.handle_menu_input_state.clone(), move_index: self.move_index, num_moves: self.num_moves, distance_to_goal: std::cmp::min(self.distance_up(), self.distance_down()) }
+    PlanState::SelectMoveMenuState(SelectMoveMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone(), move_index: self.move_index, num_moves: self.num_moves, distance_to_goal: std::cmp::min(self.distance_up(), self.distance_down()) })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::SelectMoveMenuState { handle_menu_input_state, move_index, num_moves, distance_to_goal: _ } = state {
+    if let PlanState::SelectMoveMenuState(SelectMoveMenuPlanState { handle_menu_input_state, move_index, num_moves, distance_to_goal: _ }) = state {
       self.handle_menu_input_state = handle_menu_input_state.clone();
       self.move_index = *move_index;
       self.num_moves = *num_moves;

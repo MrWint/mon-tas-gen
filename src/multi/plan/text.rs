@@ -1,6 +1,29 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::metric::*;
 use crate::multi::*;
 use crate::rom::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TextPlanState {
+  printed_characters: u32,
+  ends_to_be_skipped: u32,
+}
+impl PartialOrd for TextPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    if self.ends_to_be_skipped != other.ends_to_be_skipped {
+      other.ends_to_be_skipped.partial_cmp(&self.ends_to_be_skipped)
+    } else {
+      self.printed_characters.partial_cmp(&other.printed_characters)
+    }
+  }
+}
+impl PartialEq for TextPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress PrintLetterDelay inputs
 pub struct TextPlan<M> {
@@ -36,10 +59,10 @@ impl<R: MultiRom + TextAddresses, M: Metric<R>> Plan<R> for TextPlan<M> {
   type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
-    PlanState::TextState { printed_characters: self.printed_characters, ends_to_be_skipped: self.ends_to_be_skipped }
+    PlanState::TextState(TextPlanState { printed_characters: self.printed_characters, ends_to_be_skipped: self.ends_to_be_skipped })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::TextState { printed_characters, ends_to_be_skipped, } = state {
+    if let PlanState::TextState(TextPlanState { printed_characters, ends_to_be_skipped, }) = state {
       self.printed_characters = *printed_characters;
       self.ends_to_be_skipped = *ends_to_be_skipped;
     } else { panic!("Loading incompatible plan state {:?}", state); }

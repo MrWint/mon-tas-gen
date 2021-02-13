@@ -1,7 +1,25 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::metric::*;
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TextScrollWaitPlanState  {
+  hjoy5_state: HJoy5State,
+}
+impl PartialOrd for TextScrollWaitPlanState {
+  fn partial_cmp(&self, _other: &Self) -> Option<Ordering> {
+    Some(Ordering::Equal)
+  }
+}
+impl PartialEq for TextScrollWaitPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress WaitForTextScrollButtonPress inputs or ShowPokedexDataInternal inputs
 pub struct TextScrollWaitPlan<M> {
@@ -29,10 +47,10 @@ impl<R: MultiRom, M: Metric<R>> Plan<R> for TextScrollWaitPlan<M> {
   type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
-    PlanState::TextScrollWaitState { hjoy5_state: self.hjoy5_state.clone() }
+    PlanState::TextScrollWaitState(TextScrollWaitPlanState { hjoy5_state: self.hjoy5_state.clone() })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::TextScrollWaitState { hjoy5_state, } = state {
+    if let PlanState::TextScrollWaitState(TextScrollWaitPlanState { hjoy5_state, }) = state {
       self.hjoy5_state = hjoy5_state.clone();
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }

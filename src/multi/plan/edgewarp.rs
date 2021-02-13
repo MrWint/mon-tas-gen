@@ -1,6 +1,12 @@
+use serde_derive::{Serialize, Deserialize};
+
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub struct EdgeWarpPlanState;
 
 // Plan to progress CheckWarpsNoCollisionLoop inputs
 pub struct EdgeWarpPlan;
@@ -11,10 +17,10 @@ impl<R: MultiRom> Plan<R> for EdgeWarpPlan {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::EdgeWarpState
+    PlanState::EdgeWarpState(EdgeWarpPlanState)
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::EdgeWarpState = state {
+    if let PlanState::EdgeWarpState(EdgeWarpPlanState) = state {
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
   fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) {}

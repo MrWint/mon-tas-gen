@@ -30,8 +30,8 @@ pub fn start() {
   // r.run(NamingScreenPlan::with_letter(b'U'));
   // r.run(SkipTextsPlan::new(7)); // oak speech
   // r.run(TextPlan::new()); // ... awaits let's go
-  // r.save("multi_red_intro_");
-  // r.load("multi_red_intro_");
+  // r.save("multi_red_intro");
+  // r.load("multi_red_intro");
   // r.run(OverworldOpenStartMenuPlan::new()); // Open start menu
   // r.run(StartMenuPlan::options()); // main menu
   // r.run(ChangeOptionsPlan::new()); // set options
@@ -85,8 +85,8 @@ pub fn start() {
   //     log::info!("Chosen DVs: {:?}", v); true
   //   }).into_unit()));
   // r.run(HoldTextDisplayOpenPlan::new());
-  // r.save("multi_red_after_starter_"); // DVs: 15 / 10 / 15 / 15
-  // r.load("multi_red_after_starter_");
+  // r.save("multi_red_after_starter"); // DVs: 15 / 10 / 15 / 15
+  // r.load("multi_red_after_starter");
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // I'll take this one then
   // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan::new())); // rival received // squirtle // !
   // r.run(WalkToPlan::new(5, 6)); // trigger rival fight
@@ -94,8 +94,8 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(225)); // Rival fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rival fight
   // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::TailWhip))));
-  // r.save("multi_red_after_rival1_"); // 8558
-  // r.load("multi_red_after_rival1_");
+  // r.save("multi_red_after_rival1"); // 8558
+  // r.load("multi_red_after_rival1");
   // r.run(EndTrainerBattlePlan::with_level_up(3)); // Rival1 fight
   // r.run(OverworldWaitPlan::new()); // advance map script (abSs buttons allowed)
   // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())); // after rival1 texts
@@ -124,22 +124,29 @@ pub fn start() {
   // r.run(WalkToPlan::new(11, 36)); // enter pallet town
   // r.run(WalkToPlan::new(12, 11)); // enter oak's lab // inputs: 13302
   // r.save("multi_red_test2");
-  r.load("multi_red_test2");
-  r.run(WalkToPlan::new(4, 2)); // next to oak
-  r.run(OverworldTurnPlan::new(R)); // turn towards Oak
-  r.run(OverworldInteractPlan::with(5)); // Talk to Oak
-  r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan::new())); // Oak speech: special pokeball, thank you
-  r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // Oak speech: Gramps
-  r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // Oak speech: What came for?
-  r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // Oak speech: Have something for you
-  r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan::new())); // Oak speech: hi-tech encyclopedia
-  r.run(SeqPlan::new(SkipTextsPlan::new(3), HoldTextDisplayOpenPlan::new())); // Oak speech: Took Pokedex
-  r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan::new())); // Oak speech: greatest undertaking
-  r.run(SeqPlan::new(SkipTextsPlan::new(8), HoldTextDisplayOpenPlan::new())); // Oak speech: leave it to me
-  r.run(WalkToPlan::new(4, 11)); // leave // inputs: 15949
-  r.run(EdgeWarpPlan::new()); // go outside
-  r.save("multi_red_after_oak_parcel");
-  // r.load("multi_red_after_oak_parcel");
+  // r.load("multi_red_test2");
+  // r.run(WalkToPlan::new(4, 2)); // next to oak
+  // r.run(OverworldTurnPlan::new(R)); // turn towards Oak
+  // r.run(OverworldInteractPlan::with(5)); // Talk to Oak
+  // r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan::new())); // Oak speech: special pokeball, thank you
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // Oak speech: Gramps
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // Oak speech: What came for?
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // Oak speech: Have something for you
+  // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan::new())); // Oak speech: hi-tech encyclopedia
+  // r.run(SeqPlan::new(SkipTextsPlan::new(3), HoldTextDisplayOpenPlan::new())); // Oak speech: Took Pokedex
+  // r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan::new())); // Oak speech: greatest undertaking
+  // r.run(SeqPlan::new(SkipTextsPlan::new(8), HoldTextDisplayOpenPlan::new())); // Oak speech: leave it to me
+  // r.run(WalkToPlan::new(4, 11)); // leave
+  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 15949
+  // r.save("multi_red_after_oak_parcel");
+  r.load("multi_red_after_oak_parcel");
+  r.run(WalkToPlan::new(10, -1)); // enter Route 1
+  r.run(WalkToPlan::new(11, -1)); // Enter Viridian
+  r.run(WalkToPlan::new(18, -1)); // Enter Route 2
+  r.run(WalkToPlan::new(3, 43)); // Enter Viridian Forest
+  r.run(WalkToPlan::new(5, 0)); // Enter Viridian Forest
+  r.save("multi_red_test");
+  // r.load("multi_red_test");
 
 
   // r.save("multi_red_test");

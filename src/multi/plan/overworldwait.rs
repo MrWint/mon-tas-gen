@@ -1,6 +1,11 @@
+use serde_derive::{Serialize, Deserialize};
+
 use crate::metric::overworld::gen1::*;
 use crate::multi::*;
 use crate::rom::*;
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub struct OverworldWaitPlanState;
 
 // Plan to progress JoypadOverworld inputs, waiting one input (with result NoAction)
 pub struct OverworldWaitPlan {
@@ -39,10 +44,10 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::OverworldWaitState
+    PlanState::OverworldWaitState(OverworldWaitPlanState)
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::OverworldWaitState = state {
+    if let PlanState::OverworldWaitState(OverworldWaitPlanState) = state {
     } else { panic!("Loading incompatible plan state {:?}", state); }
   }
   fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) {}

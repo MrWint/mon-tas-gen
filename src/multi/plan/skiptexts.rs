@@ -1,6 +1,32 @@
+use serde_derive::{Serialize, Deserialize};
+use std::{cmp::Ordering, rc::Rc};
+
 use crate::metric::*;
 use crate::multi::*;
 use crate::rom::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SkipTextsPlanState {
+  num_texts_remaining: u32,
+  at_wait: bool,
+  inner_plan: Rc<PlanState>,
+}
+impl PartialOrd for SkipTextsPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    if self.num_texts_remaining != other.num_texts_remaining {
+      other.num_texts_remaining.partial_cmp(&self.num_texts_remaining)
+    } else if self.at_wait != other.at_wait {
+      self.at_wait.partial_cmp(&other.at_wait)
+    } else {
+      self.inner_plan.partial_cmp(&other.inner_plan)
+    }
+  }
+}
+impl PartialEq for SkipTextsPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress CheckForUserInterruption inputs
 pub struct SkipTextsPlan<M> {
@@ -45,10 +71,10 @@ impl<R: MultiRom + TextAddresses, M: Metric<R>> Plan<R> for SkipTextsPlan<M> {
     let inner_plan = if self.at_wait {
       if self.num_texts_remaining <= 1 { Plan::<R>::save(&self.last_text_scroll_wait_plan) } else { Plan::<R>::save(&self.text_scroll_wait_plan) }
     } else { Plan::<R>::save(&self.text_plan) };
-    PlanState::SkipTextsState { num_texts_remaining: self.num_texts_remaining, at_wait: self.at_wait, inner_plan: std::rc::Rc::new(inner_plan) }
+    PlanState::SkipTextsState(SkipTextsPlanState { num_texts_remaining: self.num_texts_remaining, at_wait: self.at_wait, inner_plan: Rc::new(inner_plan) })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::SkipTextsState { num_texts_remaining, at_wait, inner_plan } = state {
+    if let PlanState::SkipTextsState(SkipTextsPlanState { num_texts_remaining, at_wait, inner_plan }) = state {
       self.num_texts_remaining = *num_texts_remaining;
       self.at_wait = *at_wait;
       if self.at_wait {

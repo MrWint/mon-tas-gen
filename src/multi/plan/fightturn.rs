@@ -1,5 +1,4 @@
 use serde_derive::{Serialize, Deserialize};
-use std::{ops::RangeInclusive, rc::Rc};
 
 use crate::constants::*;
 use crate::metric::*;
@@ -7,6 +6,45 @@ use crate::metric::battle::*;
 use crate::metric::battle::gen1::*;
 use crate::multi::*;
 use crate::rom::*;
+use std::cmp::Ordering;
+use std::{ops::RangeInclusive, rc::Rc};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FightTurnPlanState {
+  progress: FightTurnProgress,
+  actual_move_order: MoveOrder,
+  after_hit_text_count: u32,
+  pub enemy_hp: u16,
+  move_info: Option<MoveInfo>,
+  sub_plan: Rc<PlanState>,
+}
+impl PartialOrd for FightTurnPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    let enemy_hp_ord = self.enemy_hp.cmp(&other.enemy_hp);
+    let combine_with_enemy_hp = move |partial_ord: Option<Ordering>| {
+      match partial_ord {
+        None => None,
+        Some(Ordering::Equal) => Some(enemy_hp_ord),
+        Some(Ordering::Less) => if enemy_hp_ord == Ordering::Less { None } else { Some(Ordering::Less) },
+        Some(Ordering::Greater) => if enemy_hp_ord == Ordering::Greater { None } else { Some(Ordering::Greater) },
+      }
+    };
+    if self.progress > FightTurnProgress::BattleMenuSelectMove && other.progress > FightTurnProgress::BattleMenuSelectMove && self.actual_move_order != other.actual_move_order {
+      // State are incomparable if move order is different.
+      return None;
+    }
+    if self.progress != other.progress {
+      combine_with_enemy_hp(self.progress.partial_cmp(&other.progress))
+    } else {
+      combine_with_enemy_hp(self.sub_plan.partial_cmp(&other.sub_plan))
+    }
+  }
+}
+impl PartialEq for FightTurnPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum EnemyAttackDesc {
@@ -277,10 +315,10 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
       FightTurnProgress::SecondAttackAfterHitText => self.after_hit_text_plan.as_ref().unwrap().save(),
       FightTurnProgress::SecondAttackAfterEffectText => self.after_effect_text_plan.as_ref().unwrap().save(),
     };
-    PlanState::FightTurnState { progress, actual_move_order, after_hit_text_count, enemy_hp, move_info, sub_plan: Rc::new(sub_plan_state) }
+    PlanState::FightTurnState(FightTurnPlanState { progress, actual_move_order, after_hit_text_count, enemy_hp, move_info, sub_plan: Rc::new(sub_plan_state) })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::FightTurnState { progress, actual_move_order, after_hit_text_count, enemy_hp, move_info, sub_plan } = state {
+    if let PlanState::FightTurnState(FightTurnPlanState { progress, actual_move_order, after_hit_text_count, enemy_hp, move_info, sub_plan }) = state {
       self.progress = *progress;
       self.actual_move_order = *actual_move_order;
       self.after_hit_text_count = *after_hit_text_count;

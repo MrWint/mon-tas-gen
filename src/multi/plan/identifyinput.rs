@@ -1,6 +1,10 @@
+use serde_derive::{Serialize, Deserialize};
+
 use crate::multi::*;
 use crate::rom::*;
 
+#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub struct IdentifyInputPlanState;
 
 pub fn identify_input_print<R: Rom + InputIdentificationAddresses>(gb: &mut Gb<R>, s: &GbState) {
   if let Some(name) = identify_input(gb, s) {
@@ -23,7 +27,7 @@ pub struct IdentifyInputPlan;
 impl<R: MultiRom + InputIdentificationAddresses> Plan<R> for IdentifyInputPlan {
   type Value = ();
 
-  fn save(&self) -> PlanState { PlanState::IdentifyInputState }
+  fn save(&self) -> PlanState { PlanState::IdentifyInputState(IdentifyInputPlanState) }
   fn restore(&mut self, _state: &PlanState) { }
   fn initialize(&mut self, _gb: &mut Gb<R>, _state: &GbState) { }
   fn is_safe(&self) -> bool { true }

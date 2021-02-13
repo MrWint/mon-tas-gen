@@ -1,4 +1,4 @@
-use std::{cmp::{max, min}, ops::RangeInclusive, rc::Rc};
+use serde_derive::{Serialize, Deserialize};
 
 use crate::constants::*;
 use crate::metric::*;
@@ -6,6 +6,36 @@ use crate::metric::battle::*;
 use crate::metric::battle::gen1::*;
 use crate::multi::*;
 use crate::rom::*;
+use std::{cmp::{Ordering, max, min}, ops::RangeInclusive, rc::Rc};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FightKOPlanState {
+  num_turns: u16,
+  move_order: MoveOrder,
+  non_crit_damage: RangeInclusive<u16>,
+  crit_damage: RangeInclusive<u16>,
+  inner_plan: Rc<PlanState>,
+}
+impl PartialOrd for FightKOPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    if self.num_turns != other.num_turns {
+      let enemy_hp = if let PlanState::FightTurnState(FightTurnPlanState { enemy_hp, .. }) = *self.inner_plan { enemy_hp } else { panic!("unexpected inner plan state") };
+      let other_enemy_hp = if let PlanState::FightTurnState(FightTurnPlanState { enemy_hp, .. }) = *other.inner_plan { enemy_hp } else { panic!("unexpected inner plan state") };
+      if self.num_turns < other.num_turns {
+        if enemy_hp > other_enemy_hp { None } else { Some(Ordering::Greater) }
+      } else {
+        if enemy_hp < other_enemy_hp { None } else { Some(Ordering::Less) }
+      }
+    } else {
+      self.inner_plan.partial_cmp(&other.inner_plan)
+    }
+  }
+}
+impl PartialEq for FightKOPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 pub struct FightKOPlan<R> {
   num_turns: u16,
@@ -48,10 +78,10 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::FightKOState { num_turns: self.num_turns, move_order: self.move_order, non_crit_damage: self.non_crit_damage.clone(), crit_damage: self.crit_damage.clone(), inner_plan: Rc::new(self.fight_turn_plan.as_ref().unwrap().save()) }
+    PlanState::FightKOState(FightKOPlanState { num_turns: self.num_turns, move_order: self.move_order, non_crit_damage: self.non_crit_damage.clone(), crit_damage: self.crit_damage.clone(), inner_plan: Rc::new(self.fight_turn_plan.as_ref().unwrap().save()) })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::FightKOState { num_turns, move_order, non_crit_damage, crit_damage, inner_plan } = state {
+    if let PlanState::FightKOState(FightKOPlanState { num_turns, move_order, non_crit_damage, crit_damage, inner_plan }) = state {
       self.num_turns = *num_turns;
       self.move_order = *move_order;
       self.non_crit_damage = non_crit_damage.clone();

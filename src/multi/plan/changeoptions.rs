@@ -3,6 +3,23 @@ use serde_derive::{Serialize, Deserialize};
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+use std::cmp::Ordering;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ChangeOptionsPlanState {
+  progress: ChangeOptionsProgress,
+  hjoy5_state: HJoy5State,
+}
+impl PartialOrd for ChangeOptionsPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    self.progress.partial_cmp(&other.progress)
+  }
+}
+impl PartialEq for ChangeOptionsPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ChangeOptionsProgress {
@@ -36,10 +53,10 @@ impl<R: MultiRom> Plan<R> for ChangeOptionsPlan {
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::ChangeOptionsState { progress: self.progress, hjoy5_state: self.hjoy5_state.clone() }
+    PlanState::ChangeOptionsState(ChangeOptionsPlanState { progress: self.progress, hjoy5_state: self.hjoy5_state.clone() })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::ChangeOptionsState { progress, hjoy5_state, } = state {
+    if let PlanState::ChangeOptionsState(ChangeOptionsPlanState { progress, hjoy5_state, }) = state {
       self.progress = *progress;
       self.hjoy5_state = hjoy5_state.clone();
     } else { panic!("Loading incompatible plan state {:?}", state); }

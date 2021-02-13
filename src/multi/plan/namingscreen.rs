@@ -1,7 +1,31 @@
+use serde_derive::{Serialize, Deserialize};
+use std::cmp::Ordering;
+
 use crate::metric::*;
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NamingScreenPlanState {
+  letter_selected: bool,
+  delta: (i8, i8),
+  pressed_input_state: PressedInputState,
+}
+impl PartialOrd for NamingScreenPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    if self.letter_selected != other.letter_selected {
+      self.letter_selected.partial_cmp(&other.letter_selected)
+    } else {
+      (other.delta.0.abs() + other.delta.1.abs()).partial_cmp(&(self.delta.0.abs() + self.delta.1.abs()))
+    }
+  }
+}
+impl PartialEq for NamingScreenPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress DisplayNamingScreen inputs, entering single-letter names
 pub struct NamingScreenPlan<M> {
@@ -39,10 +63,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses, M: Metric<R>> Plan<R> for NamingScr
   type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
-    PlanState::NamingScreenState { letter_selected: self.letter_selected, delta: self.delta, pressed_input_state: self.pressed_input_state }
+    PlanState::NamingScreenState(NamingScreenPlanState { letter_selected: self.letter_selected, delta: self.delta, pressed_input_state: self.pressed_input_state })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::NamingScreenState { letter_selected, delta, pressed_input_state } = state {
+    if let PlanState::NamingScreenState(NamingScreenPlanState { letter_selected, delta, pressed_input_state }) = state {
       self.letter_selected = *letter_selected;
       self.delta = *delta;
       self.pressed_input_state = *pressed_input_state;

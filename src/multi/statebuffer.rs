@@ -108,8 +108,8 @@ impl<const N: usize> BlockedInputs<N> {
 pub struct MultiStateBuffer<const N: usize> {
   blocked_inputs: HashMap<u64, Vec<BlockedInputs<N>>>,
   states: HashMap<(u64, BlockedInputs<N>), MultiState<N>>,
-  // for each state, count number of states more advanced than this, and frame count
-  metrics: HashMap<(u64, BlockedInputs<N>), (u32, u32)>,
+  // for each state, count number of states more advanced than this, the number of states that are comparable to this, and frame count
+  metrics: HashMap<(u64, BlockedInputs<N>), (u32, u32, u32)>,
   max_size: usize,
 }
 impl<const N: usize> Default for MultiStateBuffer<N> {
@@ -142,16 +142,18 @@ impl<const N: usize> MultiStateBuffer<N> {
     let blocked_inputs = s.get_blocked_inputs();
     let frame_count = s.get_next_input_frame();
     let num_better_states = self.states.iter().filter(|(_, os)| s.compare_plans(os) == Some(Ordering::Less)).count() as u32;
+    let mut num_comparable_states = self.states.iter().filter(|(_, os)| s.compare_plans(os).is_some()).count() as u32;
     let blocked_input_list = self.blocked_inputs.entry(rng_fingerprint).or_insert(Vec::new());
     { // Compare to existing states with the same rng fingerprint
       let mut i = 0;
       while i < blocked_input_list.len() {
         let other_key = (rng_fingerprint, blocked_input_list[i].clone());
-        let &(mut other_num_better_states, other_frame_count) = self.metrics.get(&other_key).unwrap();
+        let &(mut other_num_better_states, mut other_num_comparable_states, other_frame_count) = self.metrics.get(&other_key).unwrap();
         // Account for new state as if it were already added to the buffer.
         if s.compare_plans(self.states.get(&other_key).unwrap()) == Some(Ordering::Greater) { other_num_better_states += 1; }
+        if s.compare_plans(self.states.get(&other_key).unwrap()).is_some() { other_num_comparable_states += 1; }
         // Try to determine a clearly superior state.
-        match num_better_states.cmp(&other_num_better_states).then(frame_count.cmp(&other_frame_count)).then_with(|| if blocked_inputs.contains(&blocked_input_list[i]) { Ordering::Greater } else if blocked_input_list[i].contains(&blocked_inputs) { Ordering::Less } else { Ordering::Equal }) {
+        match num_better_states.cmp(&other_num_better_states).then(num_comparable_states.cmp(&other_num_comparable_states)).then(frame_count.cmp(&other_frame_count)).then_with(|| if blocked_inputs.contains(&blocked_input_list[i]) { Ordering::Greater } else if blocked_input_list[i].contains(&blocked_inputs) { Ordering::Less } else { Ordering::Equal }) {
           Ordering::Less => {
             // Stored state is worse than current state, remove
             let old_blocked_input = blocked_input_list.swap_remove(i);
@@ -159,17 +161,25 @@ impl<const N: usize> MultiStateBuffer<N> {
             let tbr_key = (rng_fingerprint, old_blocked_input);
             let old_state = self.states.remove(&tbr_key).unwrap();
             { // Update metrics
-              let (old_num_better_states, _) = self.metrics.remove(&tbr_key).unwrap();
+              let (old_num_better_states, old_num_comparable_states, _) = self.metrics.remove(&tbr_key).unwrap();
               let mut assert_num_better_states = 0;
+              let mut assert_num_comparable_states = 0;
               for (key, os) in self.states.iter() {
-                match old_state.compare_plans(os) {
+                let cmp = old_state.compare_plans(os);
+                if cmp.is_some() {
+                  self.metrics.get_mut(key).unwrap().1 -= 1;
+                  assert_num_comparable_states += 1;
+                }
+                match cmp {
                   Some(Ordering::Less) => assert_num_better_states += 1,
                   Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 -= 1,
                   _ => {}
                 }
               }
               assert!(old_num_better_states == assert_num_better_states);
+              assert!(old_num_comparable_states == assert_num_comparable_states);
               // States removed here can't affect the num_better_states of the current item, because otherwise the current item would have been dropped instead by transitivity of the relation.
+              if old_state.compare_plans(&s).is_some() { num_comparable_states -= 1; }
             }
           },
           Ordering::Greater => {
@@ -191,15 +201,22 @@ impl<const N: usize> MultiStateBuffer<N> {
     let inserted_key = (rng_fingerprint, blocked_inputs);
     { // Update metrics
       let mut assert_num_better_states = 0;
+      let mut assert_num_comparable_states = 0;
       for (key, os) in self.states.iter() {
-        match s.compare_plans(os) {
+        let cmp = s.compare_plans(os);
+        if cmp.is_some() {
+          self.metrics.get_mut(key).unwrap().1 += 1;
+          assert_num_comparable_states += 1;
+        }
+        match cmp {
           Some(Ordering::Less) => assert_num_better_states += 1,
           Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 += 1,
           _ => {}
         }
       }
       assert!(num_better_states == assert_num_better_states);
-      self.metrics.insert(inserted_key.clone(), (num_better_states, frame_count));
+      assert!(num_comparable_states == assert_num_comparable_states);
+      self.metrics.insert(inserted_key.clone(), (num_better_states, num_comparable_states, frame_count));
     }
     self.states.insert(inserted_key, s);
     self.prune();
@@ -212,21 +229,28 @@ impl<const N: usize> MultiStateBuffer<N> {
   fn prune(&mut self) {
     assert!(self.states.len() <= self.max_size + 1);
     if self.states.len() > self.max_size {
-      let (tbr_key, (num_better_states, _)) = self.metrics.iter().max_by_key(|e| e.1).unwrap();
+      let (tbr_key, (num_better_states, num_comparable_states, _)) = self.metrics.iter().max_by_key(|e| e.1).unwrap();
       let tbr_key = tbr_key.clone();
-      log::trace!("Pruning state with {} better states", num_better_states);
+      log::trace!("Pruning state with {} better states and {} comparable states", num_better_states, num_comparable_states);
       let old_state = self.states.remove(&tbr_key).unwrap();
       { // Update metrics
-        let (old_num_better_states, _) = self.metrics.remove(&tbr_key).unwrap();
+        let (old_num_better_states, old_num_comparable_states, _) = self.metrics.remove(&tbr_key).unwrap();
         let mut assert_num_better_states = 0;
+        let mut assert_num_comparable_states = 0;
         for (key, os) in self.states.iter() {
-          match old_state.compare_plans(os) {
+          let cmp = old_state.compare_plans(os);
+          if cmp.is_some() {
+            self.metrics.get_mut(key).unwrap().1 -= 1;
+            assert_num_comparable_states += 1;
+          }
+          match cmp {
             Some(Ordering::Less) => assert_num_better_states += 1,
             Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 -= 1,
             _ => {}
           }
         }
         assert!(old_num_better_states == assert_num_better_states);
+        assert!(old_num_comparable_states == assert_num_comparable_states);
       }
       let blocked_input_list = self.blocked_inputs.get_mut(&tbr_key.0).unwrap();
       let blocked_input_list_pos = blocked_input_list.iter().position(|x| *x == tbr_key.1).unwrap();

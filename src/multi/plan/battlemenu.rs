@@ -1,6 +1,25 @@
+use serde_derive::{Serialize, Deserialize};
+
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
+use std::cmp::Ordering;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BattleMenuPlanState {
+  handle_menu_input_state: HandleMenuInputState,
+  correct_side: bool,
+}
+impl PartialOrd for BattleMenuPlanState {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    self.correct_side.partial_cmp(&other.correct_side)
+  }
+}
+impl PartialEq for BattleMenuPlanState {
+  fn eq(&self, other: &Self) -> bool {
+    self.partial_cmp(other) == Some(Ordering::Equal)
+  }
+}
 
 // Plan to progress HandleMenuInput_ inputs, selecting a chosen battle action
 pub struct BattleMenuPlan {
@@ -29,10 +48,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::BattleMenuState { handle_menu_input_state: self.handle_menu_input_state.clone(), correct_side: self.right_side == (self.goal_index >= 2) }
+    PlanState::BattleMenuState(BattleMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone(), correct_side: self.right_side == (self.goal_index >= 2) })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::BattleMenuState { handle_menu_input_state, correct_side } = state {
+    if let PlanState::BattleMenuState(BattleMenuPlanState { handle_menu_input_state, correct_side }) = state {
       self.handle_menu_input_state = handle_menu_input_state.clone();
       self.right_side = *correct_side == (self.goal_index >= 2);
     } else { panic!("Loading incompatible plan state {:?}", state); }
