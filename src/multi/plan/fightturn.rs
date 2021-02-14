@@ -24,7 +24,7 @@ impl PartialOrd for FightTurnPlanState {
     let combine_with_enemy_hp = move |partial_ord: Option<Ordering>| {
       match partial_ord {
         None => None,
-        Some(Ordering::Equal) => Some(enemy_hp_ord),
+        Some(Ordering::Equal) => Some(enemy_hp_ord.reverse()),
         Some(Ordering::Less) => if enemy_hp_ord == Ordering::Less { None } else { Some(Ordering::Less) },
         Some(Ordering::Greater) => if enemy_hp_ord == Ordering::Greater { None } else { Some(Ordering::Greater) },
       }
@@ -62,8 +62,17 @@ impl AttackDesc {
   pub fn hit(mov: Move, non_crit_damage: RangeInclusive<u16>) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage, crit_damage: 1..=0, effect: None } }
   }
+  pub fn hit_no_side_effect(mov: Move, non_crit_damage: RangeInclusive<u16>) -> Self {
+    Self { mov, typ: AttackType::Hit { non_crit_damage, crit_damage: 1..=0, effect: Some(MoveEffectResult::NoEffect) } }
+  }
+  pub fn crit_with_side_effect(mov: Move, crit_damage: RangeInclusive<u16>, effect: MoveEffectResult) -> Self {
+    Self { mov, typ: AttackType::Hit { non_crit_damage: 1..=0, crit_damage, effect: Some(effect) } }
+  }
   pub fn hit_or_crit_effect(mov: Move, non_crit_damage: RangeInclusive<u16>, crit_damage: RangeInclusive<u16>, effect: Option<MoveEffectResult>) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage, crit_damage, effect } }
+  }
+  pub fn hit_failed(mov: Move) -> Self {
+    Self { mov, typ: AttackType::HitFailed }
   }
   pub fn stat_up_down(mov: Move) -> Self {
     Self { mov, typ: AttackType::StatUpDown }
@@ -132,6 +141,12 @@ impl<R> FightTurnPlan<R> {
       after_effect_text_plan: None,
     }
   }
+  fn side_effect_text_skips(&self, mov: Move) -> u32 {
+    match mov {
+      Move::Ember => 0,
+      _ => 2,
+    }
+  }
 }
 impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleMonInfoAddresses + AIChooseMoveAddresses + BattleDetermineMoveOrderAddresses + BattleObedienceAddresses + Gen1TrainerAIAddresses + Gen1FightTurnAddresses + Gen1MoveEffectAddresses + TextAddresses> FightTurnPlan<R> {
   fn create_first_attack_used_move_text_plan(&mut self) -> Box<dyn Plan<R, Value=(u16, bool)>> {
@@ -188,7 +203,8 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
           match attack_desc.typ {
             AttackType::Hit { effect, .. } => {
               assert!(effect.unwrap_or(MoveEffectResult::NoEffect) != MoveEffectResult::NoEffect); // Has some effect texts
-              Box::new(SkipTextsPlan::with_metric(1, BattleBeforeMoveMetric::for_player()).with_skip_ends(2)) // Mon stat up/down/burned/...
+              let ends_to_be_skipped = self.side_effect_text_skips(attack_desc.mov);
+              Box::new(SkipTextsPlan::with_metric(1, BattleBeforeMoveMetric::for_player()).with_skip_ends(ends_to_be_skipped)) // Mon stat up/down/burned/...
             },
             AttackType::HitFailed | AttackType::EffectFailed => {
               Box::new(SkipTextsPlan::with_metric(1, BattleBeforeMoveMetric::for_player())) // But it failed
@@ -203,10 +219,11 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
       match self.player_attack.typ {
         AttackType::Hit { effect, .. } => {
           assert!(effect.unwrap_or(MoveEffectResult::NoEffect) != MoveEffectResult::NoEffect); // Has some effect texts
+          let ends_to_be_skipped = self.side_effect_text_skips(self.player_attack.mov);
           if let EnemyAttackDesc::NoAttack = self.enemy_attack {
-            Box::new(SkipTextsPlan::new(1).with_skip_ends(2)) // Mon stat up/down/burned/...
+            Box::new(SkipTextsPlan::new(1).with_skip_ends(ends_to_be_skipped)) // Mon stat up/down/burned/...
           } else {
-            Box::new(SkipTextsPlan::with_metric(1, BattleBeforeMoveMetric::for_enemy(&self.enemy_attack)).with_skip_ends(2)) // Mon stat up/down/burned/...
+            Box::new(SkipTextsPlan::with_metric(1, BattleBeforeMoveMetric::for_enemy(&self.enemy_attack)).with_skip_ends(ends_to_be_skipped)) // Mon stat up/down/burned/...
           }
         },
         AttackType::HitFailed | AttackType::EffectFailed => {
@@ -269,7 +286,8 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
           match attack_desc.typ {
             AttackType::Hit { effect, .. } => {
               assert!(effect.unwrap_or(MoveEffectResult::NoEffect) != MoveEffectResult::NoEffect); // Has some effect texts
-              Box::new(SkipTextsPlan::new(1).with_skip_ends(2)) // Mon stat up/down/burned/...
+              let ends_to_be_skipped = self.side_effect_text_skips(attack_desc.mov);
+              Box::new(SkipTextsPlan::new(1).with_skip_ends(ends_to_be_skipped)) // Mon stat up/down/burned/...
             },
             AttackType::HitFailed | AttackType::EffectFailed => {
               Box::new(SkipTextsPlan::new(1)) // But it failed
@@ -284,7 +302,8 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
       match self.player_attack.typ {
         AttackType::Hit { effect, .. } => {
           assert!(effect.unwrap_or(MoveEffectResult::NoEffect) != MoveEffectResult::NoEffect); // Has some effect texts
-          Box::new(SkipTextsPlan::new(1).with_skip_ends(2)) // Mon stat up/down/burned/...
+          let ends_to_be_skipped = self.side_effect_text_skips(self.player_attack.mov);
+          Box::new(SkipTextsPlan::new(1).with_skip_ends(ends_to_be_skipped)) // Mon stat up/down/burned/...
         },
         AttackType::HitFailed | AttackType::EffectFailed => {
           Box::new(SkipTextsPlan::new(1)) // But it failed

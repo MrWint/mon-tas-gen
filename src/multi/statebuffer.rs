@@ -159,6 +159,7 @@ impl<const N: usize> MultiStateBuffer<N> {
             let old_blocked_input = blocked_input_list.swap_remove(i);
             log::trace!("For RNG fingerprint {:x}, removing blocked inputs {:?} which are worse than new {:?}", rng_fingerprint, old_blocked_input, blocked_inputs);
             let tbr_key = (rng_fingerprint, old_blocked_input);
+            assert!(other_key == tbr_key);
             let old_state = self.states.remove(&tbr_key).unwrap();
             { // Update metrics
               let (old_num_better_states, old_num_comparable_states, _) = self.metrics.remove(&tbr_key).unwrap();
@@ -179,6 +180,25 @@ impl<const N: usize> MultiStateBuffer<N> {
               assert!(old_num_better_states == assert_num_better_states);
               assert!(old_num_comparable_states == assert_num_comparable_states);
               // States removed here can't affect the num_better_states of the current item, because otherwise the current item would have been dropped instead by transitivity of the relation.
+              // if s.compare_plans(&old_state) == Some(Ordering::Less) {
+              //   log::info!("{:?}", s.instances[0].plan_state);
+              //   log::info!("{:?}", old_state.instances[0].plan_state);
+              //   log::info!("{:?} vs {:?}", num_better_states, other_num_better_states);
+              //   log::info!("{:?} vs {:?}", num_comparable_states, other_num_comparable_states);
+              //   log::info!("{:?} vs {:?}", frame_count, other_frame_count);
+              //   for (_, os) in self.states.iter() {
+              //     if s.compare_plans(os) == Some(Ordering::Less) {
+              //       log::info!("{:?}", os.instances[0].plan_state);
+              //     }
+              //   }
+              //   log::info!("---");
+              //   for (_, os) in self.states.iter() {
+              //     if old_state.compare_plans(os) == Some(Ordering::Less) {
+              //       log::info!("{:?}", os.instances[0].plan_state);
+              //     }
+              //   }
+              //   assert!(s.compare_plans(&old_state) != Some(Ordering::Less));
+              // }
               if old_state.compare_plans(&s).is_some() { num_comparable_states -= 1; }
             }
           },

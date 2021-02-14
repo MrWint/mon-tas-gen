@@ -310,6 +310,8 @@ mod mainmenu;
 pub use mainmenu::*;
 mod namingscreen;
 pub use namingscreen::*;
+mod nexttrainermon;
+pub use nexttrainermon::*;
 mod overworldinteract;
 pub use overworldinteract::*;
 mod overworldjumpledge;
