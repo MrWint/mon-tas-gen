@@ -60,12 +60,15 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
 
   /// Progress all states with the fewest number of frames, prioritizing unsafe states.
   fn step<P: Plan<R>>(&mut self, plan: &mut P) {
+    let use_unsafe = !self.states_unsafe.is_empty();
     let states = if self.states_unsafe.is_empty() { &mut self.states } else { &mut self.states_unsafe };
     let min_frame = states.iter().map(|s| s.get_next_input_frame()).min().expect("Can't step: state buffer is empty");
     let old_states = std::mem::take(states);
     drop(states); // Stop the mut borrow.
     let num_processed_states = old_states.iter().filter(|s| s.get_next_input_frame() == min_frame).count();
-    log::debug!("performing step at frame {} with {} safe and {} unsafe states, moving {} of {} states", min_frame, self.states.len(), self.states_unsafe.len(), num_processed_states, old_states.len());
+    if !use_unsafe {
+      log::debug!("performing step at frame {} with {} safe and {} unsafe states, moving {} of {} states", min_frame, self.states.len(), self.states_unsafe.len(), num_processed_states, old_states.len());
+    }
     for state in old_states.into_iter() {
       if state.get_next_input_frame() == min_frame {
         self.step_state(state, plan);

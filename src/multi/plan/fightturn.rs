@@ -62,8 +62,14 @@ impl AttackDesc {
   pub fn hit(mov: Move, non_crit_damage: RangeInclusive<u16>) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage, crit_damage: 1..=0, effect: None } }
   }
+  pub fn crit(mov: Move, crit_damage: RangeInclusive<u16>) -> Self {
+    Self { mov, typ: AttackType::Hit { non_crit_damage: 1..=0, crit_damage, effect: None } }
+  }
   pub fn hit_no_side_effect(mov: Move, non_crit_damage: RangeInclusive<u16>) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage, crit_damage: 1..=0, effect: Some(MoveEffectResult::NoEffect) } }
+  }
+  pub fn crit_no_side_effect(mov: Move, crit_damage: RangeInclusive<u16>) -> Self {
+    Self { mov, typ: AttackType::Hit { non_crit_damage: 1..=0, crit_damage, effect: Some(MoveEffectResult::NoEffect) } }
   }
   pub fn crit_with_side_effect(mov: Move, crit_damage: RangeInclusive<u16>, effect: MoveEffectResult) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage: 1..=0, crit_damage, effect: Some(effect) } }

@@ -145,48 +145,87 @@ pub fn start() {
   // r.run(WalkToPlan::new(18, -1)); // Enter Route 2
   // r.run(WalkToPlan::new(3, 43)); // Enter Viridian Forest
   // r.run(WalkToPlan::new(5, 0)); // Enter Viridian Forest
-  // r.save("multi_red_test");
-  // r.load("multi_red_test");
-  // r.run(WalkToPlan::new(26, 33)); // Engage Bugcatcher
-  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // Engage Bugcatcher
-  // r.run(OverworldWaitPlan::trainer_battle(202)); // Bugcatcher fight
-  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rival fight
-  // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::PoisonSting, 4..=4))));
-  // r.save("multi_red_test2");
-  // r.load("multi_red_test2");
-  // r.run(NextTrainerMonPlan::with_level_up());
-  // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit(Move::Tackle, 4..=4))));
-  // r.save("multi_red_test3");
-  // r.load("multi_red_test3");
-  // r.run(EndTrainerBattlePlan::with_level_up(2)); // Bugcatcher fight //  #inputs: 23174
-  // r.save("multi_red_viridian_after_bugcatcher");
-  // r.load("multi_red_viridian_after_bugcatcher");
-  // r.run(WalkToPlan::new(2, 19));
-  // r.run(OverworldInteractPlan::with(4)); // Bugcatcher
-  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1));
-  // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::PoisonSting, 4..=4))));
-  // r.run(EndTrainerBattlePlan::with_learn_move(2)); // Bugcatcher fight // #inputs: 27097
-  // r.save("multi_red_viridian_after_bugcatcher2");
-  // r.load("multi_red_viridian_after_bugcatcher2");
-  // r.run(WalkToPlan::new(1, 0)); // Leave Forest
-  // r.run(EdgeWarpPlan::new()); // edge warp
-  // r.run(WalkToPlan::new(5, 0)); // Leave Viridian Forest
-  // r.run(WalkToPlan::new(8, -1)); // enter Pewter City
-  // r.run(WalkToPlan::new(16, 17)); // enter Gym
-  // r.run(WalkToPlan::new(4, 2)); // stand in front of Brock
-  // r.run(OverworldInteractPlan::with(1)); // Brock
-  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(9));
-  // r.save("multi_red_test");
-  // r.load("multi_red_test");
-  // r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))));
-  // r.run(NextTrainerMonPlan::with_level_up());
-  // r.save("multi_red_test2");
-  r.load("multi_red_test2");
-  r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Screech))));
-  r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 34202
-  r.save("multi_red_after_brock");
-  // r.load("multi_red_after_brock");
-
+  {
+  //   r.run(WalkToPlan::new(2, 19));
+  //   r.run(OverworldInteractPlan::with(4)); // Bugcatcher
+  //   r.run(StartTrainerBattlePlan::with_pre_battle_texts(1));
+  //   r.run(FightTurnPlan::new(AttackDesc::crit(Move::Scratch, 7..=7), EnemyAttackDesc::Attack(AttackDesc::crit_no_side_effect(Move::PoisonSting, 6..=6)), None));
+  //   r.run(FightTurnPlan::new(AttackDesc::crit(Move::Scratch, 6..=7), EnemyAttackDesc::Attack(AttackDesc::crit_no_side_effect(Move::PoisonSting, 6..=6)), None));
+  //   r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::PoisonSting, 4..=4))));
+  //   r.run(EndTrainerBattlePlan::with_level_up(2)); // Bugcatcher fight // #inputs: 23632
+  //   r.save("multi_red_viridian_after_bugcatcher2_");
+    // r.load("multi_red_viridian_after_bugcatcher2_");
+    // r.run(WalkToPlan::new(1, 0)); // Leave Forest
+    // r.run(EdgeWarpPlan::new()); // edge warp
+    // r.run(WalkToPlan::new(5, 0)); // Leave Viridian Forest
+    // r.run(WalkToPlan::new(8, -1)); // enter Pewter City
+    // r.run(WalkToPlan::new(16, 17)); // enter Gym
+    // r.run(WalkToPlan::new(3, 8)); // align with Trainer
+    // r.run(WalkToPlan::new(3, 7)); // align with Trainer
+    // r.run(OverworldInteractPlan::with(2)); // JrTrainerM
+    // r.run(StartTrainerBattlePlan::with_pre_battle_texts(3));
+    // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Scratch))));
+    // r.save("multi_red_test");
+    // r.load("multi_red_test");
+    // r.run(NextTrainerMonPlan::with_learn_move()); // #inputs: 27822
+    // r.run(FightTurnPlan::new(AttackDesc::crit_no_side_effect(Move::Ember, 15..=15), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Scratch, 7..=7)), None));
+    // r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::SandAttack))));
+    // r.run(EndTrainerBattlePlan::with_level_up(3)); // JrTrainerM fight //  #inputs: 29059
+    // r.save("multi_red_pewter_after_jrtrainerm");
+    // r.load("multi_red_pewter_after_jrtrainerm");
+    // r.run(WalkToPlan::new(4, 2)); // stand in front of Brock
+    // r.run(OverworldInteractPlan::with(1)); // Brock
+    // r.run(StartTrainerBattlePlan::with_pre_battle_texts(9));
+    // r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))));
+    // r.run(NextTrainerMonPlan::with_level_up());
+    // r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Screech))));
+    // r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 33490
+    // r.save("multi_red_after_brock_");
+    // r.load("multi_red_after_brock_");
+  }
+  {
+    // r.save("multi_red_test");
+    // r.load("multi_red_test");
+    // r.run(WalkToPlan::new(26, 33)); // Engage Bugcatcher
+    // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // Engage Bugcatcher
+    // r.run(OverworldWaitPlan::trainer_battle(202)); // Bugcatcher fight
+    // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rival fight
+    // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::PoisonSting, 4..=4))));
+    // r.save("multi_red_test2");
+    // r.load("multi_red_test2");
+    // r.run(NextTrainerMonPlan::with_level_up());
+    // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit(Move::Tackle, 4..=4))));
+    // r.save("multi_red_test3");
+    // r.load("multi_red_test3");
+    // r.run(EndTrainerBattlePlan::with_level_up(2)); // Bugcatcher fight //  #inputs: 23060
+    // r.save("multi_red_viridian_after_bugcatcher");
+    // r.load("multi_red_viridian_after_bugcatcher");
+    // r.run(WalkToPlan::new(2, 19));
+    // r.run(OverworldInteractPlan::with(4)); // Bugcatcher
+    // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1));
+    // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::PoisonSting, 4..=4))));
+    // r.run(EndTrainerBattlePlan::with_learn_move(2)); // Bugcatcher fight // #inputs: 26920
+    // r.save("multi_red_viridian_after_bugcatcher2");
+    r.load("multi_red_viridian_after_bugcatcher2");
+    r.run(WalkToPlan::new(1, 0)); // Leave Forest
+    r.run(EdgeWarpPlan::new()); // edge warp
+    r.run(WalkToPlan::new(5, 0)); // Leave Viridian Forest
+    r.run(WalkToPlan::new(8, -1)); // enter Pewter City
+    r.run(WalkToPlan::new(16, 17)); // enter Gym
+    r.run(WalkToPlan::new(4, 2)); // stand in front of Brock
+    r.run(OverworldInteractPlan::with(1)); // Brock
+    r.run(StartTrainerBattlePlan::with_pre_battle_texts(9));
+    r.save("multi_red_test");
+    r.load("multi_red_test");
+    r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))));
+    r.run(NextTrainerMonPlan::with_level_up());
+    r.save("multi_red_test2");
+    r.load("multi_red_test2");
+    r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Screech))));
+    r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 33750
+    r.save("multi_red_after_brock");
+    // r.load("multi_red_after_brock");
+  }
 
   // r.save("multi_red_test");
   // r.load("multi_red_test");
