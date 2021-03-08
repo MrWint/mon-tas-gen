@@ -30,8 +30,8 @@ pub fn start() {
   // r.run(NamingScreenPlan::with_letter(b'U'));
   // r.run(SkipTextsPlan::new(7)); // oak speech
   // r.run(TextPlan::new()); // ... awaits let's go
-  // r.save("multi_red_intro");
-  // r.load("multi_red_intro");
+  // r.save("multi_red_intro_");
+  // r.load("multi_red_intro_");
   // r.run(OverworldOpenStartMenuPlan::new()); // Open start menu
   // r.run(StartMenuPlan::options()); // main menu
   // r.run(ChangeOptionsPlan::new()); // set options
@@ -66,8 +66,8 @@ pub fn start() {
   // r.run(SeqPlan::new(SkipTextsPlan::new(12), HoldTextDisplayOpenPlan::new())); // you can have one, choose
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // What about me?
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // Can have one too
-  // r.save("multi_red_before_starter");
-  // r.load("multi_red_before_starter");
+  // r.save("multi_red_before_starter_");
+  // r.load("multi_red_before_starter_");
   // r.run(OverworldTurnPlan::new(R)); // turn towards Charmander
   // r.run(OverworldInteractPlan::with(2)); // Interact with Charmander Ball
   // r.run(TextScrollWaitPlan::new()); // Scroll dex text 1
@@ -85,8 +85,8 @@ pub fn start() {
   //     log::info!("Chosen DVs: {:?}", v); true
   //   }).into_unit()));
   // r.run(HoldTextDisplayOpenPlan::new());
-  // r.save("multi_red_after_starter"); // DVs: 15 / 10 / 15 / 15
-  // r.load("multi_red_after_starter");
+  // r.save("multi_red_after_starter_"); // DVs: 15 / 10 / 15 / 15
+  // r.load("multi_red_after_starter_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // I'll take this one then
   // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan::new())); // rival received // squirtle // !
   // r.run(WalkToPlan::new(5, 6)); // trigger rival fight
@@ -94,13 +94,13 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(225)); // Rival fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rival fight
   // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::TailWhip))));
-  // r.save("multi_red_after_rival1"); // 8558
-  // r.load("multi_red_after_rival1");
-  // r.run(EndTrainerBattlePlan::with_level_up(3)); // Rival1 fight
-  // r.run(OverworldWaitPlan::new()); // advance map script (abSs buttons allowed)
-  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())); // after rival1 texts
-  // r.run(WalkToPlan::new(5, 11)); // Leave lab
-  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 9551
+  // r.save("multi_red_after_rival1_"); // #inputs: 8343
+  r.load("multi_red_after_rival1_");
+  r.run(EndTrainerBattlePlan::with_level_up(3)); // Rival1 fight
+  r.run(OverworldWaitPlan::new()); // advance map script (abSs buttons allowed)
+  r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())); // after rival1 texts
+  r.run(WalkToPlan::new(5, 11)); // Leave lab
+  r.run(EdgeWarpPlan::new()); // go outside // inputs: 9548
   // r.run(WalkToPlan::new(10, -1));
   // r.run(WalkToPlan::new(11, -1)); // Enter Viridian
   // r.run(WalkToPlan::new(29, 19)); // Enter Mart, starts cutscene
@@ -206,24 +206,24 @@ pub fn start() {
     // r.run(FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::PoisonSting, 4..=4))));
     // r.run(EndTrainerBattlePlan::with_learn_move(2)); // Bugcatcher fight // #inputs: 26920
     // r.save("multi_red_viridian_after_bugcatcher2");
-    r.load("multi_red_viridian_after_bugcatcher2");
-    r.run(WalkToPlan::new(1, 0)); // Leave Forest
-    r.run(EdgeWarpPlan::new()); // edge warp
-    r.run(WalkToPlan::new(5, 0)); // Leave Viridian Forest
-    r.run(WalkToPlan::new(8, -1)); // enter Pewter City
-    r.run(WalkToPlan::new(16, 17)); // enter Gym
-    r.run(WalkToPlan::new(4, 2)); // stand in front of Brock
-    r.run(OverworldInteractPlan::with(1)); // Brock
-    r.run(StartTrainerBattlePlan::with_pre_battle_texts(9));
-    r.save("multi_red_test");
-    r.load("multi_red_test");
-    r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))));
-    r.run(NextTrainerMonPlan::with_level_up());
-    r.save("multi_red_test2");
-    r.load("multi_red_test2");
-    r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Screech))));
-    r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 33750
-    r.save("multi_red_after_brock");
+    // r.load("multi_red_viridian_after_bugcatcher2");
+    // r.run(WalkToPlan::new(1, 0)); // Leave Forest
+    // r.run(EdgeWarpPlan::new()); // edge warp
+    // r.run(WalkToPlan::new(5, 0)); // Leave Viridian Forest
+    // r.run(WalkToPlan::new(8, -1)); // enter Pewter City
+    // r.run(WalkToPlan::new(16, 17)); // enter Gym
+    // r.run(WalkToPlan::new(4, 2)); // stand in front of Brock
+    // r.run(OverworldInteractPlan::with(1)); // Brock
+    // r.run(StartTrainerBattlePlan::with_pre_battle_texts(9));
+    // r.save("multi_red_test");
+    // r.load("multi_red_test");
+    // r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))));
+    // r.run(NextTrainerMonPlan::with_level_up());
+    // r.save("multi_red_test2");
+    // r.load("multi_red_test2");
+    // r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Screech))));
+    // r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 33750
+    // r.save("multi_red_after_brock");
     // r.load("multi_red_after_brock");
   }
 

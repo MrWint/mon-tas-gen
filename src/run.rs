@@ -122,5 +122,6 @@ pub mod crystal_glitchless;
 pub mod multi_blue;
 pub mod multi_red;
 pub mod multi_testing;
+pub mod multi_yellow;
 pub mod silver_testing;
 pub mod yellow_testing;

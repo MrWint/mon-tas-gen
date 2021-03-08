@@ -1,4 +1,5 @@
 #![feature(ptr_internals)]
+#![warn(rust_2018_idioms)]
 
 pub mod big_array;
 pub mod bk2;

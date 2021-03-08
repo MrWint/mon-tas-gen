@@ -32,7 +32,7 @@ struct ArrayVisitor<T, const N: usize> {
 impl<'de, T: Sized + Deserialize<'de>, const N: usize> Visitor<'de> for ArrayVisitor<T, N> {
   type Value = [T; N];
 
-  fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+  fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
     formatter.write_str(&format!("an array of length {}", N))
   }
 

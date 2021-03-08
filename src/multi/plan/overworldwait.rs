@@ -1,5 +1,6 @@
 use serde_derive::{Serialize, Deserialize};
 
+use crate::metric::*;
 use crate::metric::overworld::gen1::*;
 use crate::multi::*;
 use crate::rom::*;
@@ -8,40 +9,30 @@ use crate::rom::*;
 pub struct OverworldWaitPlanState;
 
 // Plan to progress JoypadOverworld inputs, waiting one input (with result NoAction)
-pub struct OverworldWaitPlan {
-  // instance state
-
+pub struct OverworldWaitPlan<M> {
   // config state
-  expected_result: OverworldInteractionResult,
+  metric: M,
 }
-impl OverworldWaitPlan {
-  pub fn new() -> Self {
+impl<M> OverworldWaitPlan<M> {
+  pub fn with_metric(metric: M) -> Self {
     Self {
-      // Set instance state to dummy values, will be initialize()'d later.
-
-      // Default config state.
-      expected_result: OverworldInteractionResult::NoAction,
+      metric,
     }
+  }
+}
+impl<R: JoypadAddresses + Gen1OverworldAddresses + Gen1DVAddresses> OverworldWaitPlan<Expect<R, OverworldInteractionMetric>> {
+  pub fn new() -> Self {
+    Self::with_metric(OverworldInteractionMetric.expect(OverworldInteractionResult::NoAction))
   }
   pub fn auto_walk(direction: Input) -> Self {
-    Self {
-      // Set instance state to dummy values, will be initialize()'d later.
-
-      // Default config state.
-      expected_result: OverworldInteractionResult::Walked { direction },
-    }
+    Self::with_metric(OverworldInteractionMetric.expect(OverworldInteractionResult::Walked { direction }))
   }
   pub fn trainer_battle(id: u8) -> Self {
-    Self {
-      // Set instance state to dummy values, will be initialize()'d later.
-
-      // Default config state.
-      expected_result: OverworldInteractionResult::TrainerBattle { species: id },
-    }
+    Self::with_metric(OverworldInteractionMetric.expect(OverworldInteractionResult::TrainerBattle { species: id }))
   }
 }
-impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAddresses> Plan<R> for OverworldWaitPlan {
-  type Value = ();
+impl<R: MultiRom, M: Metric<R>> Plan<R> for OverworldWaitPlan<M> {
+  type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
     PlanState::OverworldWaitState(OverworldWaitPlanState)
@@ -55,12 +46,12 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
   fn get_blockable_inputs(&self) -> Input { Input::empty() }
 
   fn canonicalize_input(&self, _input: Input) -> Option<Input> { Some(Input::empty()) }
-  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<M::ValueType>)> {
     gb.restore(s);
     gb.input(input);
-    if get_overworld_interaction_result(gb) == self.expected_result {
-      gb.step();
-      Some((gb.save(), Some(())))
+    if let Some(metric_value) = self.metric.evaluate(gb) {
+      if !gb.is_at_input() { gb.step(); }
+      Some((gb.save(), Some(metric_value)))
     } else { None }
   }
 }

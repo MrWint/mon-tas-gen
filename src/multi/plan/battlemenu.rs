@@ -9,10 +9,15 @@ use std::cmp::Ordering;
 pub struct BattleMenuPlanState {
   handle_menu_input_state: HandleMenuInputState,
   correct_side: bool,
+  correct_index: bool,
 }
 impl PartialOrd for BattleMenuPlanState {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    self.correct_side.partial_cmp(&other.correct_side)
+    if self.correct_side != other.correct_side {
+      self.correct_side.partial_cmp(&other.correct_side)
+    } else {
+      self.correct_index.partial_cmp(&other.correct_index)
+    }
   }
 }
 impl PartialEq for BattleMenuPlanState {
@@ -48,10 +53,10 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
   type Value = ();
 
   fn save(&self) -> PlanState {
-    PlanState::BattleMenuState(BattleMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone(), correct_side: self.right_side == (self.goal_index >= 2) })
+    PlanState::BattleMenuState(BattleMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone(), correct_side: self.right_side == (self.goal_index >= 2), correct_index: self.handle_menu_input_state.current_item & 1 == self.goal_index & 1 })
   }
   fn restore(&mut self, state: &PlanState) {
-    if let PlanState::BattleMenuState(BattleMenuPlanState { handle_menu_input_state, correct_side }) = state {
+    if let PlanState::BattleMenuState(BattleMenuPlanState { handle_menu_input_state, correct_side, correct_index: _ }) = state {
       self.handle_menu_input_state = handle_menu_input_state.clone();
       self.right_side = *correct_side == (self.goal_index >= 2);
     } else { panic!("Loading incompatible plan state {:?}", state); }
@@ -81,7 +86,13 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
     match self.handle_menu_input_state.get_result(input) {
       HandleMenuInputResult::DoNothing => Some(Input::empty()),
-      HandleMenuInputResult::ScrollTo { current_item: _ } => Some(D),
+      HandleMenuInputResult::ScrollTo { current_item } => {
+        if self.handle_menu_input_state.current_item & 1 != self.goal_index & 1 && current_item & 1 == self.goal_index & 1 {
+          Some(D)
+        } else if self.handle_menu_input_state.current_item & 1 != self.goal_index & 1 || current_item & 1 == self.goal_index & 1 {
+          Some(Input::empty())
+        } else { None }
+      },
       HandleMenuInputResult::Exit { current_item, input: exit_input } => {
         if self.right_side {
           if exit_input.intersects(L) {
@@ -111,11 +122,15 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
         self.handle_menu_input_state = HandleMenuInputState::from_gb(gb);
         Some((new_state, None))
       },
-      HandleMenuInputResult::ScrollTo { current_item: _ } => {
-        // Scrolling is effectively waiting since you can always reach the goal index within one frame
+      HandleMenuInputResult::ScrollTo { current_item } => {
+        // In Red/Blue, scrolling is effectively waiting since you can always reach the goal index within one frame
         gb.restore(s);
         gb.input(input);
-        gb.delay_step();
+        if self.handle_menu_input_state.current_item & 1 != self.goal_index & 1 && current_item & 1 == self.goal_index & 1 {
+          gb.step();
+        } else {
+          gb.delay_step();
+        }
         let new_state = gb.save();
         self.handle_menu_input_state = HandleMenuInputState::from_gb(gb);
         Some((new_state, None))

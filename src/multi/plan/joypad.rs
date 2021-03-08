@@ -84,6 +84,7 @@ pub struct HandleMenuInputState {
   wrapping_enabled: bool,
   watch_moving_oob: bool,
   poll_count_instant_exit: bool,
+  a_button_priority: bool,
 }
 impl HandleMenuInputState {
   pub fn unknown() -> HandleMenuInputState {
@@ -95,6 +96,7 @@ impl HandleMenuInputState {
       wrapping_enabled: false,
       watch_moving_oob: false,
       poll_count_instant_exit: false,
+      a_button_priority: false,
     }
   }
   pub fn from_gb_state<R: MultiRom + HandleMenuInputAddresses>(gb: &mut Gb<R>, state: &GbState) -> HandleMenuInputState {
@@ -109,6 +111,7 @@ impl HandleMenuInputState {
     let wrapping_enabled = gb.gb.read_memory(R::MENU_WRAPPING_ENABLED_MEM_ADDRESS) > 0;
     let watch_moving_oob = gb.gb.read_memory(R::MENU_WATCH_MOVING_OOB_MEM_ADDRESS) > 0;
     let poll_count_instant_exit = gb.gb.read_memory(R::MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS) == 1;
+    let a_button_priority = R::MENU_A_BUTTON_PRIORITY;
   
     let res = HandleMenuInputState {
       hjoy5,
@@ -118,6 +121,7 @@ impl HandleMenuInputState {
       wrapping_enabled,
       watch_moving_oob,
       poll_count_instant_exit,
+      a_button_priority,
     };
     log::trace!("HandleMenuInput state: {:?}", res);
     res
@@ -131,7 +135,9 @@ impl HandleMenuInputState {
       }
       return HandleMenuInputResult::DoNothing;
     }
-    if hjoy5.contains(Input::UP) {
+    if self.a_button_priority && hjoy5.contains(Input::A) {
+      // Skip directional key checks and go to watched keys check directly.
+    } else if hjoy5.contains(Input::UP) {
       if current_item > 0 {
         current_item -= 1;
       } else if self.wrapping_enabled {

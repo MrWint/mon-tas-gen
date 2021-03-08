@@ -41,7 +41,12 @@ pub trait HandleMenuInputAddresses {
   const MENU_WATCHED_KEYS_MEM_ADDRESS: u16; // wMenuWatchedKeys
   const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16; // wMenuWatchMovingOutOfBounds
   const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16; // wMenuJoypadPollCount
+  const MENU_A_BUTTON_PRIORITY: bool; // whether A button is checked before directional buttons in HandleMenuInput_. True in Yellow.
   const BATTLE_START_SAVED_MENU_ITEM: u16; // wBattleAndStartSavedMenuItem
+  const LIST_SCROLL_OFFSET_MEM_ADDRESS: u16; // wListScrollOffset
+  const LIST_COUNT_MEM_ADDRESS: u16; // wListCount
+  const MENU_ITEM_QUANTITY_MEM_ADDRESS: u16; // wItemQuantity
+  const MENU_MAX_ITEM_QUANTITY_MEM_ADDRESS: u16; // wMaxItemQuantity
 }
 pub trait JoypadLowSensitivityAddresses {
   const JOYPAD_HJOY6_MEM_ADDRESS: u16; // hJoy6
@@ -81,6 +86,7 @@ pub trait Gen1OverworldAddresses {
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32;
   const OVERWORLD_A_BUTTON_Z_CHECK_1: i32; // .displayDialogue - 12
   const OVERWORLD_A_BUTTON_Z_CHECK_2: i32; // .displayDialogue - 3
+  const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32; // 3f:4f20 InitializePikachuTextID
   const OVERWORLD_DISPLAY_TEXT_ADDRESS: i32;
   const OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS: u16;
   const OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS: i32; // .noDirectionButtonsPressed - 3
@@ -371,7 +377,12 @@ macro_rules! impl_red_blue_common_addresses {
       const MENU_WATCHED_KEYS_MEM_ADDRESS: u16 = 0xcc29; // wMenuWatchedKeys
       const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
       const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
+      const MENU_A_BUTTON_PRIORITY: bool = false; // whether A button is checked before directional buttons in HandleMenuInput_. True in Yellow.
       const BATTLE_START_SAVED_MENU_ITEM: u16 = 0xcc2d; // wBattleAndStartSavedMenuItem
+      const LIST_SCROLL_OFFSET_MEM_ADDRESS: u16 = 0xcc36; // wListScrollOffset
+      const LIST_COUNT_MEM_ADDRESS: u16 = 0xd12a; // wListCount
+      const MENU_ITEM_QUANTITY_MEM_ADDRESS: u16 = 0xcf96; // wItemQuantity
+      const MENU_MAX_ITEM_QUANTITY_MEM_ADDRESS: u16 = 0xcf97; // wMaxItemQuantity
     }
     impl JoypadOverworldAddresses for $t {
       const FLAGS_D733_MEM_ADDRESS: u16 = 0xd733; // wFlags_D733
@@ -413,6 +424,7 @@ macro_rules! impl_red_blue_common_addresses {
       const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0965; // HandleFlyWarpOrDungeonWarp
       const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_047d-12; // .displayDialogue - 12
       const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_047d-3; // .displayDialogue - 3
+      const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32 = 0; // 3f:4f20 InitializePikachuTextID
       const OVERWORLD_DISPLAY_TEXT_ADDRESS: i32 = 0x0_0496; // at call DisplayTextID
       const OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS: u16 = 0xFF8C; // hSpriteIndexOrTextID
       const OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS: i32 = 0x0_04cd-3; // .noDirectionButtonsPressed - 3
@@ -626,11 +638,16 @@ impl HandleMenuInputAddresses for Yellow {
   const MENU_WATCHED_KEYS_MEM_ADDRESS: u16 = 0xcc29; // wMenuWatchedKeys
   const MENU_WATCH_MOVING_OOB_MEM_ADDRESS: u16 = 0xcc37; // wMenuWatchMovingOutOfBounds
   const MENU_JOYPAD_POLL_COUNT_MEM_ADDRESS: u16 = 0xcc34; // wMenuJoypadPollCount
+  const MENU_A_BUTTON_PRIORITY: bool = true; // whether A button is checked before directional buttons in HandleMenuInput_. True in Yellow.
   const BATTLE_START_SAVED_MENU_ITEM: u16 = 0xcc2d; // wBattleAndStartSavedMenuItem
+  const LIST_SCROLL_OFFSET_MEM_ADDRESS: u16 = 0xcc36; // wListScrollOffset
+  const LIST_COUNT_MEM_ADDRESS: u16 = 0xd129; // wListCount
+  const MENU_ITEM_QUANTITY_MEM_ADDRESS: u16 = 0xcf95; // wItemQuantity
+  const MENU_MAX_ITEM_QUANTITY_MEM_ADDRESS: u16 = 0xcf96; // wMaxItemQuantity
 }
 impl JoypadOverworldAddresses for Yellow {
   const FLAGS_D733_MEM_ADDRESS: u16 = 0xd732; // wFlags_D733
-  const CUR_MAP_MEM_ADDRESS: u16 = 0xd35e; // wCurMap
+  const CUR_MAP_MEM_ADDRESS: u16 = 0xd35d; // wCurMap
   const FLAGS_D730_MEM_ADDRESS: u16 = 0xd72f; // wd730
   const SIMULATED_JOYPAD_OVERRIDE_MASK_MEM_ADDRESS: u16 = 0xcd3b; // wOverrideSimulatedJoypadStatesMask
   const SIMULATED_JOYPAD_STATES_INDEX_MEM_ADDRESS: u16 = 0xcd38; // wSimulatedJoypadStatesIndex
@@ -668,6 +685,7 @@ impl Gen1OverworldAddresses for Yellow {
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0794; // HandleFlyWarpOrDungeonWarp
   const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_02b2; // different in Yellow
   const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_02c5-3; // .displayDialogue - 3
+  const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32 = 0x3f_4f20; // InitializePikachuTextID
   const OVERWORLD_DISPLAY_TEXT_ADDRESS: i32 = 0x0_02DE; // at call DisplayTextID
   const OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS: u16 = 0xFF8C; // hSpriteIndexOrTextID
   const OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS: i32 = 0x0_02f8-3; // .noDirectionButtonsPressed - 3
@@ -677,7 +695,7 @@ impl Gen1OverworldAddresses for Yellow {
   const OVERWORLD_BATTLE_LEVEL_MEM_ADDRESS: u16 = 0xD126; // wCurEnemyLVL
   const OVERWORLD_TURNING_DONE_ADDRESS: i32 = 0x0_0381; // at .handleDirectionButtonPress -> jp OverworldLoop
   const OVERWORLD_MOVING_DIRECTION_MEM_ADDRESS: u16 = 0xD527; // wPlayerMovingDirection
-  const OVERWORLD_JUMP_LEDGE_ADDRESS: i32 = 0x682b+4; // HandleLedges.foundMatch + 4
+  const OVERWORLD_JUMP_LEDGE_ADDRESS: i32 = 0x6_682b+4; // HandleLedges.foundMatch + 4
   const OVERWORLD_LAND_COLLISION_ADDRESS: i32 = 0x0_0A75; // CollisionCheckOnLand.setCarry
   const OVERWORLD_LAND_COLLISION_NO_WARP_ADDRESS: i32 = 0x0_0242; // OverworldLoop
   const OVERWORLD_WATER_COLLISION_ADDRESS: i32 = 0x0_0D08; // CollisionCheckOnWater.setCarry
@@ -722,7 +740,7 @@ impl InputIdentificationAddresses for Yellow {
     (0x0_28CF, 0x3_402D, 0x0_28D2, "HoldTextDisplayOpen"),
     (0x0_2C81, 0x3_402D, 0x0_2C84, "DisplayChooseQuantityMenu"),
     (0x0_3879, 0x3_402D, 0x0_387C, "WaitForTextScrollButtonPress"),
-    (0x0_3AD6, 0x3_402D, 0x0_3AD9, "HandleMenuInputPokemonSelection"),
+    (0x0_3AD6, 0x3_402D, 0x0_3AD9, "HandleMenuInput_"),
     (0x0_0502, 0x3_402D, 0x0_0505, "CheckWarpsNoCollisionLoop"),
     (0x0_0C5B, 0x3_402D, 0x0_0C5E, "JoypadOverworld"),
     (0x3F_5ABC, 0x3_402D, 0x3F_5ABF, "PikaPicAnimTimerAndJoypad"),

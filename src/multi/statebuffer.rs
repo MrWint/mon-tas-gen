@@ -1,13 +1,13 @@
 use serde_derive::{Serialize, Deserialize};
 
-use std::cmp::{max, Ordering};
+use std::{cmp::Ordering, collections::BTreeMap};
 use std::collections::hash_map::HashMap;
-use std::iter::FromIterator;
 use super::*;
 use crate::big_array::BigArray;
 
 pub const MULTI_STATE_BUFFER_SINGLE_RNG_MAX_SIZE: usize = 4; // how many states with the same RNG value are kept at most.
-pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 256;
+pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
+pub const MULTI_STATE_BUFFER_HARD_LIMIT_MAX_SIZE: usize = MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE * 16;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct MultiStateItem {
@@ -84,7 +84,7 @@ impl<const N: usize> MultiState<N> {
   }
   /// Returns the frame at which the next instance can make progress (i.e. both input nybbles are defined).
   pub fn get_next_input_frame(&self) -> u32 {
-    self.instances.iter().map(|instance| max(instance.gb_state.get_input_frame_lo(), instance.gb_state.get_input_frame_hi())).min().unwrap()
+    self.instances.iter().map(|instance| instance.gb_state.get_input_frame_lo()).min().unwrap()
   }
 
   fn get_blocked_inputs(&self) -> BlockedInputs<N> {
@@ -104,6 +104,47 @@ impl<const N: usize> BlockedInputs<N> {
   }
 }
 
+#[derive(Default, Serialize, Deserialize)]
+pub struct StateBuffer<const N: usize> {
+  frame_buffers: BTreeMap<u32, MultiStateBuffer<N>>,
+}
+impl<const N: usize> StateBuffer<N> {
+  pub fn new() -> Self {
+    Self { frame_buffers: BTreeMap::new() }
+  }
+  pub fn is_empty(&self) -> bool {
+    self.frame_buffers.is_empty()
+  }
+  pub fn get_min_input_frame(&self) -> Option<u32> {
+    self.frame_buffers.iter().next().map(|x| *x.0)
+  }
+  pub fn get_max_input_frame(&self) -> Option<u32> {
+    self.frame_buffers.iter().rev().next().map(|x| *x.0)
+  }
+  pub fn fetch_min_input_frame_states(&mut self) -> MultiStateBuffer<N> {
+    let min_input_frame = self.get_min_input_frame().expect("StateBuffer is empty");
+    self.frame_buffers.remove(&min_input_frame).unwrap()
+  }
+  pub fn count_states(&self) -> usize {
+    self.frame_buffers.values().map(|buffer| buffer.len()).sum()
+  }
+  pub fn add_state(&mut self, s: MultiState<N>) {
+    let buffer = self.frame_buffers.entry(s.get_next_input_frame()).or_default();
+    buffer.add_state(s);
+    // if self.count_states() > MULTI_STATE_BUFFER_HARD_LIMIT_MAX_SIZE {
+    //   for (_, buf) in self.frame_buffers.iter_mut() {
+    //     if buf.len() > 1 {
+    //       buf.prune();
+    //       break;
+    //     }
+    //   }
+    // }
+  }
+  pub fn iter(&self) -> std::iter::Flatten<std::collections::btree_map::Values<'_, u32, MultiStateBuffer<N>>> {
+    self.frame_buffers.values().flatten()
+  }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct MultiStateBuffer<const N: usize> {
   blocked_inputs: HashMap<u64, Vec<BlockedInputs<N>>>,
@@ -116,8 +157,7 @@ impl<const N: usize> Default for MultiStateBuffer<N> {
   fn default() -> Self { Self::with_max_size(MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE) }
 }
 impl<const N: usize> MultiStateBuffer<N> {
-  pub fn new() -> Self { Default::default() }
-  pub fn with_max_size(max_size: usize) -> Self {
+  fn with_max_size(max_size: usize) -> Self {
     MultiStateBuffer {
       blocked_inputs: HashMap::with_capacity(0), // don't allocate.
       states: HashMap::with_capacity(0), // don't allocate.
@@ -126,14 +166,8 @@ impl<const N: usize> MultiStateBuffer<N> {
     }
   }
 
-  pub fn from_iter_sized<I: IntoIterator<Item=MultiState<N>>>(iter: I, max_size: usize) -> Self {
-    let mut sb = MultiStateBuffer::with_max_size(max_size);
-    sb.add_all(iter);
-    sb
-  }
-
   /// Adds a state to the buffer.
-  pub fn add_state(&mut self, s: MultiState<N>) {
+  fn add_state(&mut self, s: MultiState<N>) {
     if self.states.capacity() == 0 {
       self.states.reserve(self.max_size + 1); // Reserve one additional element to hold excess before pruning.
       self.metrics.reserve(self.max_size + 1); // Reserve one additional element to hold excess before pruning.
@@ -180,25 +214,7 @@ impl<const N: usize> MultiStateBuffer<N> {
               assert!(old_num_better_states == assert_num_better_states);
               assert!(old_num_comparable_states == assert_num_comparable_states);
               // States removed here can't affect the num_better_states of the current item, because otherwise the current item would have been dropped instead by transitivity of the relation.
-              // if s.compare_plans(&old_state) == Some(Ordering::Less) {
-              //   log::info!("{:?}", s.instances[0].plan_state);
-              //   log::info!("{:?}", old_state.instances[0].plan_state);
-              //   log::info!("{:?} vs {:?}", num_better_states, other_num_better_states);
-              //   log::info!("{:?} vs {:?}", num_comparable_states, other_num_comparable_states);
-              //   log::info!("{:?} vs {:?}", frame_count, other_frame_count);
-              //   for (_, os) in self.states.iter() {
-              //     if s.compare_plans(os) == Some(Ordering::Less) {
-              //       log::info!("{:?}", os.instances[0].plan_state);
-              //     }
-              //   }
-              //   log::info!("---");
-              //   for (_, os) in self.states.iter() {
-              //     if old_state.compare_plans(os) == Some(Ordering::Less) {
-              //       log::info!("{:?}", os.instances[0].plan_state);
-              //     }
-              //   }
-              //   assert!(s.compare_plans(&old_state) != Some(Ordering::Less));
-              // }
+              assert!(s.compare_plans(&old_state) != Some(Ordering::Less));
               if old_state.compare_plans(&s).is_some() { num_comparable_states -= 1; }
             }
           },
@@ -239,66 +255,46 @@ impl<const N: usize> MultiStateBuffer<N> {
       self.metrics.insert(inserted_key.clone(), (num_better_states, num_comparable_states, frame_count));
     }
     self.states.insert(inserted_key, s);
-    self.prune();
-  }
-  /// Adds multiple states to the buffer.
-  pub fn add_all<I: IntoIterator<Item=MultiState<N>>>(&mut self, iter: I) {
-    for s in iter.into_iter() { self.add_state(s); }
+    if self.states.len() > self.max_size {
+      self.prune();
+    }
   }
   /// Removes states until it doesn't exceed ```max_size``` anymore.
   fn prune(&mut self) {
     assert!(self.states.len() <= self.max_size + 1);
-    if self.states.len() > self.max_size {
-      let (tbr_key, (num_better_states, num_comparable_states, _)) = self.metrics.iter().max_by_key(|e| e.1).unwrap();
-      let tbr_key = tbr_key.clone();
-      log::trace!("Pruning state with {} better states and {} comparable states", num_better_states, num_comparable_states);
-      let old_state = self.states.remove(&tbr_key).unwrap();
-      { // Update metrics
-        let (old_num_better_states, old_num_comparable_states, _) = self.metrics.remove(&tbr_key).unwrap();
-        let mut assert_num_better_states = 0;
-        let mut assert_num_comparable_states = 0;
-        for (key, os) in self.states.iter() {
-          let cmp = old_state.compare_plans(os);
-          if cmp.is_some() {
-            self.metrics.get_mut(key).unwrap().1 -= 1;
-            assert_num_comparable_states += 1;
-          }
-          match cmp {
-            Some(Ordering::Less) => assert_num_better_states += 1,
-            Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 -= 1,
-            _ => {}
-          }
+    let (tbr_key, (num_better_states, num_comparable_states, _)) = self.metrics.iter().max_by_key(|e| e.1).unwrap();
+    let tbr_key = tbr_key.clone();
+    log::trace!("Pruning state with {} better states and {} comparable states", num_better_states, num_comparable_states);
+    let old_state = self.states.remove(&tbr_key).unwrap();
+    { // Update metrics
+      let (old_num_better_states, old_num_comparable_states, _) = self.metrics.remove(&tbr_key).unwrap();
+      let mut assert_num_better_states = 0;
+      let mut assert_num_comparable_states = 0;
+      for (key, os) in self.states.iter() {
+        let cmp = old_state.compare_plans(os);
+        if cmp.is_some() {
+          self.metrics.get_mut(key).unwrap().1 -= 1;
+          assert_num_comparable_states += 1;
         }
-        assert!(old_num_better_states == assert_num_better_states);
-        assert!(old_num_comparable_states == assert_num_comparable_states);
+        match cmp {
+          Some(Ordering::Less) => assert_num_better_states += 1,
+          Some(Ordering::Greater) => self.metrics.get_mut(key).unwrap().0 -= 1,
+          _ => {}
+        }
       }
-      let blocked_input_list = self.blocked_inputs.get_mut(&tbr_key.0).unwrap();
-      let blocked_input_list_pos = blocked_input_list.iter().position(|x| *x == tbr_key.1).unwrap();
-      blocked_input_list.swap_remove(blocked_input_list_pos);
+      assert!(old_num_better_states == assert_num_better_states);
+      assert!(old_num_comparable_states == assert_num_comparable_states);
     }
+    let blocked_input_list = self.blocked_inputs.get_mut(&tbr_key.0).unwrap();
+    let blocked_input_list_pos = blocked_input_list.iter().position(|x| *x == tbr_key.1).unwrap();
+    blocked_input_list.swap_remove(blocked_input_list_pos);
   }
 
-  pub fn is_empty(&self) -> bool {
-    self.states.is_empty()
-  }
   pub fn len(&self) -> usize {
     self.states.len()
   }
-  pub fn is_full(&self) -> bool {
-    self.states.len() >= self.max_size
-  }
-  pub fn get_max_size(&self) -> usize {
-    self.max_size
-  }
   pub fn iter<'a>(&'a self) -> std::collections::hash_map::Values<'a, (u64, BlockedInputs<N>), MultiState<N>> {
     self.into_iter()
-  }
-}
-impl<const N: usize> FromIterator<MultiState<N>> for MultiStateBuffer<N> {
-  fn from_iter<I: IntoIterator<Item=MultiState<N>>>(iter: I) -> Self {
-    let mut sb = MultiStateBuffer::new();
-    sb.add_all(iter);
-    sb
   }
 }
 

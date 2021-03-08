@@ -120,6 +120,7 @@ pub struct FightTurnPlan<R> {
   player_attack: AttackDesc,
   enemy_attack: EnemyAttackDesc,
   move_order: Option<MoveOrder>,
+  skip_battle_menu: bool,
 
   battle_menu_plan: Option<Box<dyn Plan<R, Value=()>>>,
   select_move_menu_plan: Option<Box<dyn Plan<R, Value=MoveOrder>>>,
@@ -139,6 +140,7 @@ impl<R> FightTurnPlan<R> {
       player_attack,
       enemy_attack,
       move_order,
+      skip_battle_menu: false,
 
       battle_menu_plan: None,
       select_move_menu_plan: None,
@@ -147,6 +149,7 @@ impl<R> FightTurnPlan<R> {
       after_effect_text_plan: None,
     }
   }
+  pub fn skip_battle_menu(self) -> Self { Self { skip_battle_menu: true, ..self } }
   fn side_effect_text_skips(&self, mov: Move) -> u32 {
     match mov {
       Move::Ember => 0,
@@ -389,9 +392,15 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
   fn initialize(&mut self, gb: &mut Gb<R>, state: &GbState) {
     gb.restore(state);
     self.enemy_hp = BattleMonInfoFn::new(Who::Enemy).invoke(gb).hp;
-    self.battle_menu_plan = Some(Box::new(BattleMenuPlan::fight()));
-    self.battle_menu_plan.as_mut().unwrap().initialize(gb, &state);
-    self.progress = FightTurnProgress::BattleMenuSelectFight;
+    if self.skip_battle_menu {
+      self.select_move_menu_plan = Some(Box::new(SelectMoveMenuPlan::with_metric(self.player_attack.mov, MoveSelectMetric::new(&self))));
+      self.select_move_menu_plan.as_mut().unwrap().initialize(gb, &state);
+      self.progress = FightTurnProgress::BattleMenuSelectMove;
+    } else {
+      self.battle_menu_plan = Some(Box::new(BattleMenuPlan::fight()));
+      self.battle_menu_plan.as_mut().unwrap().initialize(gb, &state);
+      self.progress = FightTurnProgress::BattleMenuSelectFight;
+    }
   }
   fn is_safe(&self) -> bool {
     match self.progress {

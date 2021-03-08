@@ -11,6 +11,7 @@ pub enum OverworldInteractionResult {
   WarpTo { map: u8, entrance: u8 },
   FlyWarpOrDungeonWarp,
   DisplayText { id: u8 },
+  YellowPikachuInteraction,
   WildEncounter { species: Pokemon, level: u8, dvs: DVs },
   TrainerBattle { species: u8 },
   Turned { direction: Input },
@@ -41,7 +42,7 @@ pub fn input_to_dir(input: Input) -> u8 {
   }
 }
 
-pub struct OverworldInteractionMetric {}
+pub struct OverworldInteractionMetric;
 impl<R: JoypadAddresses + Gen1OverworldAddresses + Gen1DVAddresses> Metric<R> for OverworldInteractionMetric {
   type ValueType = OverworldInteractionResult;
 
@@ -71,7 +72,9 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen1OverworldAddres
   
   if hit == R::OVERWORLD_A_BUTTON_Z_CHECK_1 {
     if gb.gb().read_registers().z_flag() { return OverworldInteractionResult::NoAction; }
-    assert!(gb.step_until(&[R::OVERWORLD_A_BUTTON_Z_CHECK_2]) != 0);
+    hit = gb.step_until(&[R::OVERWORLD_A_BUTTON_Z_CHECK_2, R::OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS]);
+    if hit == R::OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS { return OverworldInteractionResult::YellowPikachuInteraction; }
+    assert!(hit != 0);
     if gb.gb().read_registers().z_flag() { return OverworldInteractionResult::NoAction; }
     hit = gb.step_until(&[R::OVERWORLD_DISPLAY_TEXT_ADDRESS, R::OVERWORLD_INIT_BATTLE_COMMON_ADDRESS, R::OVERWORLD_NEW_BATTLE_NO_BATTLE, R::OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS]);
   }

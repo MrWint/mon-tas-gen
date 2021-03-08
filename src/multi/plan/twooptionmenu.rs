@@ -1,7 +1,7 @@
 use serde_derive::{Serialize, Deserialize};
 use std::cmp::Ordering;
 
-use crate::multi::*;
+use crate::{metric::*, multi::*};
 use crate::rom::*;
 use gambatte::inputs::*;
 
@@ -21,25 +21,38 @@ impl PartialEq for TwoOptionMenuPlanState {
 }
 
 // Plan to progress HandleMenuInput_ inputs, selecting an option in a two-option menu (DisplayTwoOptionMenu)
-pub struct TwoOptionMenuPlan {
+pub struct TwoOptionMenuPlan<M> {
   // instance state
   handle_menu_input_state: HandleMenuInputState,
 
   // config state
   choose_primary: bool,
+  metric: M,
 }
-impl TwoOptionMenuPlan {
+impl TwoOptionMenuPlan<NullMetric> {
   pub fn yes() -> Self { Self::with_choose_primary(true) }
   pub fn no() -> Self { Self::with_choose_primary(false) }
   fn with_choose_primary(choose_primary: bool) -> Self {
     Self {
       handle_menu_input_state: HandleMenuInputState::unknown(),
       choose_primary,
+      metric: NullMetric,
     }
   }
 }
-impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputIdentificationAddresses> Plan<R> for TwoOptionMenuPlan {
-  type Value = ();
+impl<M> TwoOptionMenuPlan<M> {
+  pub fn yes_with_metric(metric: M) -> Self { Self::with_metric(true, metric) }
+  pub fn no_with_metric(metric: M) -> Self { Self::with_metric(false, metric) }
+  fn with_metric(choose_primary: bool, metric: M) -> Self {
+    Self {
+      handle_menu_input_state: HandleMenuInputState::unknown(),
+      choose_primary,
+      metric,
+    }
+  }
+}
+impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputIdentificationAddresses, M: Metric<R>> Plan<R> for TwoOptionMenuPlan<M> {
+  type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
     PlanState::TwoOptionMenuState(TwoOptionMenuPlanState { handle_menu_input_state: self.handle_menu_input_state.clone(), })
@@ -71,7 +84,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
       },
     }
   }
-  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<M::ValueType>)> {
     match self.handle_menu_input_state.get_result(input) {
       HandleMenuInputResult::DoNothing => {
         gb.restore(s);
@@ -100,9 +113,11 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
         }
         gb.restore(s);
         gb.input(input);
-        gb.step();
-        Some((gb.save(), Some(())))
-    },
+        if let Some(metric_value) = self.metric.evaluate(gb) {
+          if !gb.is_at_input() { gb.step(); }
+          Some((gb.save(), Some(metric_value)))
+        } else { None }
+      },
     }
   }
 }

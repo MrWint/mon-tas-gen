@@ -421,7 +421,7 @@ fn gen1_calc_enemy_stats<R: BattleMonInfoAddresses>(gb: &dyn GbI<R>, species: Po
   }
 }
 
-pub struct CatchSuccessMetric {}
+pub struct CatchSuccessMetric;
 impl<R: JoypadAddresses + BattleCatchMonAddresses> Metric<R> for CatchSuccessMetric {
   type ValueType = ();
 

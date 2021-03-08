@@ -220,7 +220,9 @@ impl<R: Rom,P: Plan<R, Value=()>, Q: Plan<R>> Plan<R> for SeqPlan<P, Q> {
 pub enum PlanState {
   NullState,
   BattleMenuState(BattleMenuPlanState),
+  BuySellQuitMenuState(BuySellQuitMenuPlanState),
   ChangeOptionsState(ChangeOptionsPlanState),
+  ChooseQuantityMenuState(ChooseQuantityMenuPlanState),
   EdgeWarpState(EdgeWarpPlanState),
   FightKOState(FightKOPlanState),
   FightTurnState(FightTurnPlanState),
@@ -228,17 +230,22 @@ pub enum PlanState {
   IdentifyInputState(IdentifyInputPlanState),
   IntroNameMenuState(IntroNameMenuPlanState),
   ListState(ListPlanState),
+  ListMenuState(ListMenuPlanState),
   MainMenuState(MainMenuPlanState),
   NamingScreenState(NamingScreenPlanState),
+  OverworldEncounterState(OverworldEncounterPlanState),
   OverworldInteractState(OverworldInteractPlanState),
   OverworldJumpLedgeState(OverworldJumpLedgePlanState),
   OverworldOpenStartMenuState(OverworldOpenStartMenuPlanState),
   OverworldTurnState(OverworldTurnPlanState),
   OverworldWaitState(OverworldWaitPlanState),
+  PartyMenuState(PartyMenuPlanState),
   SelectMoveMenuState(SelectMoveMenuPlanState),
   SeqState(SeqPlanState),
   SkipIntroState(SkipIntroPlanState),
   SkipTextsState(SkipTextsPlanState),
+  SkipYellowIntroState(SkipYellowIntroPlanState),
+  SkipYellowTitleState(SkipYellowTitlePlanState),
   StartMenuState(StartMenuPlanState),
   StartMenuCloseState(StartMenuClosePlanState),
   TextState(TextPlanState),
@@ -257,25 +264,32 @@ impl PartialOrd for PlanState {
     match self {
       PlanState::NullState => if let PlanState::NullState = other { Some(Ordering::Equal) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::BattleMenuState(state) => if let PlanState::BattleMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::BuySellQuitMenuState(state) => if let PlanState::BuySellQuitMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::ChangeOptionsState(state) => if let PlanState::ChangeOptionsState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::ChooseQuantityMenuState(state) => if let PlanState::ChooseQuantityMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::EdgeWarpState(state) => if let PlanState::EdgeWarpState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::FightKOState(state) => if let PlanState::FightKOState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::FightTurnState(state) => if let PlanState::FightTurnState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::HoldTextDisplayOpenState(state) => if let PlanState::HoldTextDisplayOpenState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::IdentifyInputState(state) => if let PlanState::IdentifyInputState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::ListState(state) => if let PlanState::ListState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::ListMenuState(state) => if let PlanState::ListMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::IntroNameMenuState(state) => if let PlanState::IntroNameMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::MainMenuState(state) => if let PlanState::MainMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::NamingScreenState(state) => if let PlanState::NamingScreenState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::OverworldEncounterState(state) => if let PlanState::OverworldEncounterState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::OverworldInteractState(state) => if let PlanState::OverworldInteractState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::OverworldJumpLedgeState(state) => if let PlanState::OverworldJumpLedgeState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::OverworldOpenStartMenuState(state) => if let PlanState::OverworldOpenStartMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::OverworldTurnState(state) => if let PlanState::OverworldTurnState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::OverworldWaitState(state) => if let PlanState::OverworldWaitState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::PartyMenuState(state) => if let PlanState::PartyMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::SelectMoveMenuState(state) => if let PlanState::SelectMoveMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::SeqState(state) => if let PlanState::SeqState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::SkipIntroState(state) => if let PlanState::SkipIntroState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::SkipTextsState(state) => if let PlanState::SkipTextsState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::SkipYellowIntroState(state) => if let PlanState::SkipYellowIntroState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
+      PlanState::SkipYellowTitleState(state) => if let PlanState::SkipYellowTitleState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::StartMenuState(state) => if let PlanState::StartMenuState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::StartMenuCloseState(state) => if let PlanState::StartMenuCloseState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
       PlanState::TextState(state) => if let PlanState::TextState(other_state) = other { state.partial_cmp(other_state) } else { panic!("Comparing invalid plan states {:?} and {:?}", self, other); },
@@ -288,8 +302,12 @@ impl PartialOrd for PlanState {
 
 mod battlemenu;
 pub use battlemenu::*;
+mod buysellquitmenu;
+pub use buysellquitmenu::*;
 mod changeoptions;
 pub use changeoptions::*;
+mod choosequantitymenu;
+pub use choosequantitymenu::*;
 mod edgewarp;
 pub use edgewarp::*;
 mod endtrainerbattle;
@@ -306,12 +324,16 @@ mod intronamemenu;
 pub use intronamemenu::*;
 mod joypad;
 pub use joypad::*;
+mod listmenu;
+pub use listmenu::*;
 mod mainmenu;
 pub use mainmenu::*;
 mod namingscreen;
 pub use namingscreen::*;
 mod nexttrainermon;
 pub use nexttrainermon::*;
+mod overworldencounter;
+pub use overworldencounter::*;
 mod overworldinteract;
 pub use overworldinteract::*;
 mod overworldjumpledge;
@@ -322,12 +344,18 @@ mod overworldturn;
 pub use overworldturn::*;
 mod overworldwait;
 pub use overworldwait::*;
+mod partymenu;
+pub use partymenu::*;
 mod selectmovemenu;
 pub use selectmovemenu::*;
 mod skipintro;
 pub use skipintro::*;
 mod skiptexts;
 pub use skiptexts::*;
+mod skipyellowintro;
+pub use skipyellowintro::*;
+mod skipyellowtitle;
+pub use skipyellowtitle::*;
 mod startmenu;
 pub use startmenu::*;
 mod starttrainerbattle;

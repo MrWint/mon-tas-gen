@@ -29,6 +29,7 @@ pub struct StartMenuPlan {
 
   // config state
   goal_index: u8,
+  options_yellow: bool,
 }
 impl StartMenuPlan {
   pub fn dex() -> Self { Self::with_index(0) }
@@ -37,11 +38,19 @@ impl StartMenuPlan {
   pub fn info() -> Self { Self::with_index(3) }
   pub fn save() -> Self { Self::with_index(4) }
   pub fn options() -> Self { Self::with_index(5) }
+  pub fn options_yellow() -> Self {
+    Self {
+      handle_menu_input_state: HandleMenuInputState::unknown(),
+      goal_index: 5,
+      options_yellow: true,
+    }
+  }
   pub fn close() -> SeqPlan<Self, StartMenuClosePlan> { SeqPlan::new(Self::with_index(6), StartMenuClosePlan::new()) }
   fn with_index(index: u8) -> Self {
     Self {
       handle_menu_input_state: HandleMenuInputState::unknown(),
       goal_index: index,
+      options_yellow: false,
     }
   }
 
@@ -94,7 +103,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
     if self.is_close() {
       if self.get_effective_index() == self.goal_index { A | B | START } else { B |START }
     } else if self.get_effective_index() == self.goal_index {
-      A
+      if self.options_yellow { A | L } else { A }
     } else {
       let mut blocked_inputs = Input::empty();
       if self.distance_down() <= 3 { blocked_inputs |= D; }
@@ -123,7 +132,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
           let dist_down = self.distance_down();
           if dist_down > 0 && dist_down <= 3 { Some(D) } else { None }
         } else {
-          if self.get_effective_index() == self.goal_index && !exit_input.intersects(B | START) {
+          if self.get_effective_index() == self.goal_index && !exit_input.intersects(B | START) && (!self.options_yellow || (!exit_input.intersects(R) && exit_input.intersects(L))) {
             Some(A)
           } else { None }
         }
@@ -187,7 +196,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
             Some((new_state, None))
           } else { None }
         } else {
-          if self.get_effective_index() == self.goal_index && !exit_input.intersects(B | START) {
+          if self.get_effective_index() == self.goal_index && !exit_input.intersects(B | START) && (!self.options_yellow || (!exit_input.intersects(R) && exit_input.intersects(L))) {
             gb.restore(s);
             gb.input(input);
             gb.step();

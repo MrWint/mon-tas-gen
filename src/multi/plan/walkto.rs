@@ -85,6 +85,7 @@ pub struct WalkToPlan {
   // config state
   dest_x: usize,
   dest_y: usize,
+  move_past_pikachu: bool,
 }
 impl WalkToPlan {
   pub fn new(dest_x: isize, dest_y: isize) -> Self {
@@ -99,8 +100,10 @@ impl WalkToPlan {
       // Default config state.
       dest_x: (dest_x + 6) as usize,
       dest_y: (dest_y + 6) as usize,
+      move_past_pikachu: false,
     }
   }
+  pub fn with_move_past_pikachu(self) -> Self { Self { move_past_pikachu: true, ..self } }
   fn causes_turn(&self, input: Input) -> bool {
     if let Some(turnframe_dir) = self.turnframe_direction {
       turnframe_dir != input_to_dir(input)
@@ -167,8 +170,11 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
     let (held, pressed) = self.joypad_overworld_state.get_input(input);
     if pressed.intersects(START) { return None; } // Opening start menu is not allowed
     if pressed.intersects(A) { return Some(A); } // Allow pressing A to delay
+    let move_past_pikachu_mask = if self.move_past_pikachu { B } else { NIL };
     for &dir in &[D, U, L ,R] {
-      if held.intersects(dir) { return if self.causes_turn(dir) || self.allowed_walk(dir) { Some(dir) } else { None }; }
+      if held.intersects(dir) {
+        return if self.causes_turn(dir) || self.allowed_walk(dir) { Some(dir | (held & move_past_pikachu_mask)) } else { None };
+      }
     }
     Some(Input::empty())
   }

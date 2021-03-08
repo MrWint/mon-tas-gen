@@ -116,9 +116,9 @@ impl<I: Iterator> CollectIntoArray for I {
 
 pub struct MultiGbRunner<const N: usize> {
   instances: [Box<dyn IMultiGbExecutor>; N],
-  states: MultiStateBuffer<N>,
-  states_unsafe: MultiStateBuffer<N>,
-  final_states: MultiStateBuffer<N>,
+  states: StateBuffer<N>,
+  states_unsafe: StateBuffer<N>,
+  final_states: StateBuffer<N>,
 }
 impl<const N: usize> MultiGbRunner<N> {
   pub fn new(instances: [Box<dyn IMultiGbExecutor>; N]) -> Self {
@@ -126,9 +126,9 @@ impl<const N: usize> MultiGbRunner<N> {
     let initial_state = MultiState::new(instances.iter().map(|instance| instance.save()).collect_into_array(), InputLog::new());
     let mut result = Self {
       instances,
-      states: MultiStateBuffer::new(),
-      states_unsafe: MultiStateBuffer::new(),
-      final_states: MultiStateBuffer::new(),
+      states: StateBuffer::new(),
+      states_unsafe: StateBuffer::new(),
+      final_states: StateBuffer::new(),
     };
     result.add_state(initial_state);
     result
@@ -141,25 +141,26 @@ impl<const N: usize> MultiGbRunner<N> {
   }
 
   pub fn run_until(&mut self, end_frame: u32) {
-    while !self.has_finished_states() && self.states.iter().map(|s| s.get_next_input_frame()).min().unwrap_or(0) <= end_frame {
+    while !self.has_finished_states() && self.states.get_min_input_frame().unwrap_or(0) <= end_frame {
       self.step();
     }
   }
 
   /// Progress all states with the fewest number of frames, prioritizing unsafe states.
   pub fn step(&mut self) {
-    let states = if self.states_unsafe.is_empty() { &mut self.states } else { &mut self.states_unsafe };
-    let min_frame = states.iter().map(|s| s.get_next_input_frame()).min().expect("Can't step: state buffer is empty");
-    let old_states = std::mem::take(states);
+    let use_unsafe = !self.states_unsafe.is_empty();
+    let states = if !use_unsafe { &mut self.states } else { &mut self.states_unsafe };
+    let min_frame = states.get_min_input_frame().expect("Can't step: state buffer is empty");
+    let max_frame = states.get_max_input_frame().unwrap_or(min_frame);
+    let min_frame_states = states.fetch_min_input_frame_states();
     drop(states); // Stop the mut borrow.
-    let num_processed_states = old_states.iter().filter(|s| s.get_next_input_frame() == min_frame).count();
-    log::debug!("performing step at frame {} with {} safe and {} unsafe states, moving {} of {} states", min_frame, self.states.len(), self.states_unsafe.len(), num_processed_states, old_states.len());
-    for state in old_states.into_iter() {
-      if state.get_next_input_frame() == min_frame {
-        self.step_state(state);
-      } else {
-        self.add_state(state);
-      }
+    if !use_unsafe {
+      let num_processed_states = min_frame_states.len();
+      let num_remaining_states = self.states.count_states();
+      log::debug!("performing step at frame {} (max frame {} total states {}), moving {} states", min_frame, max_frame, num_remaining_states + num_processed_states, num_processed_states);
+    }
+    for state in min_frame_states.into_iter() {
+      self.step_state(state);
     }
   }
   fn step_state(&mut self, s: MultiState<N>) {
@@ -325,12 +326,14 @@ impl<const N: usize> MultiGbRunner<N> {
     let mut f = ::flate2::read::GzDecoder::new(f);
     self.states = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
     self.states_unsafe = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
-    self.final_states = MultiStateBuffer::default();
-    let stored_final_states: MultiStateBuffer<N> = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
+    self.final_states = StateBuffer::default();
+    let mut stored_final_states: StateBuffer<N> = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
 
     // Final states are not final anymore after the plans have been extended.
-    for state in stored_final_states.into_iter() {
-      self.add_state(state);
+    while !stored_final_states.is_empty() {
+      for state in stored_final_states.fetch_min_input_frame_states().into_iter() {
+        self.add_state(state);
+      }
     }
   }
 

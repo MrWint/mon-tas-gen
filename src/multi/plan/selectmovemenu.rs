@@ -35,6 +35,7 @@ pub struct SelectMoveMenuPlan<M> {
 
   // config state
   mov: Move,
+  use_select: bool,
   metric: M,
 }
 impl SelectMoveMenuPlan<NullMetric> {
@@ -48,9 +49,11 @@ impl<M> SelectMoveMenuPlan<M> {
       num_moves: 0,
 
       mov,
+      use_select: false,
       metric,
     }
   }
+  pub fn use_select(self) -> Self { Self { use_select: true, ..self } }
   #[inline]
   fn get_effective_index(&self) -> u8 {
     self.handle_menu_input_state.current_item - 1
@@ -101,7 +104,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
     match self.handle_menu_input_state.get_result(input) {
       HandleMenuInputResult::DoNothing => Some(Input::empty()),
       HandleMenuInputResult::ScrollTo { current_item } => {
-        assert!(current_item == self.handle_menu_input_state.current_item); // All up/down movements in the move select menu are watched and lead to an exit
+        assert!(current_item == self.handle_menu_input_state.current_item, "input {:?} led to scroll from {:?} to {}", input, self.handle_menu_input_state, current_item); // All up/down movements in the move select menu are watched and lead to an exit
         Some(Input::empty())
       },
       HandleMenuInputResult::Exit { current_item: _, input: exit_input } => {
@@ -111,11 +114,11 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
         } else if exit_input.intersects(D) {
           let dist_down = self.distance_down();
           if dist_down > 0 && dist_down <= self.num_moves / 2 { Some(D) } else { None }
-        } else {
-          if self.get_effective_index() == self.move_index && !exit_input.intersects(SELECT | B) {
-            Some(A)
-          } else { None }
-        }
+        } else if exit_input.intersects(SELECT) {
+          if self.use_select && self.get_effective_index() == self.move_index { Some(SELECT) } else { None }
+        } else if !self.use_select && self.get_effective_index() == self.move_index && !exit_input.intersects(B) {
+          Some(A)
+        } else { None }
       },
     }
   }
@@ -161,8 +164,8 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
             self.handle_menu_input_state = HandleMenuInputState::from_gb(gb);
             Some((new_state, None))
           } else { None }
-        } else {
-          if self.get_effective_index() == self.move_index && !exit_input.intersects(SELECT | B) {
+        } else if exit_input.intersects(SELECT) {
+          if self.use_select && self.get_effective_index() == self.move_index {
             gb.restore(s);
             gb.input(input);
             if let Some(metric_value) = self.metric.evaluate(gb) {
@@ -170,7 +173,14 @@ impl<R: Rom + JoypadLowSensitivityAddresses + HandleMenuInputAddresses + InputId
               Some((gb.save(), Some(metric_value)))
             } else { None }
           } else { None }
-        }
+        } else if !self.use_select && self.get_effective_index() == self.move_index && !exit_input.intersects(B) {
+          gb.restore(s);
+          gb.input(input);
+          if let Some(metric_value) = self.metric.evaluate(gb) {
+            if !gb.is_at_input() { gb.step(); }
+            Some((gb.save(), Some(metric_value)))
+          } else { None }
+        } else { None }
       },
     }
   }

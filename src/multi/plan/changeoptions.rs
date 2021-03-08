@@ -37,6 +37,7 @@ pub struct ChangeOptionsPlan {
   progress: ChangeOptionsProgress,
 
   // config state
+  is_yellow: bool,
 }
 impl ChangeOptionsPlan {
   pub fn new() -> Self {
@@ -46,8 +47,10 @@ impl ChangeOptionsPlan {
       progress: ChangeOptionsProgress::ChangeTextSpeed,
 
       // Default config state.
+      is_yellow: false,
     }
   }
+  pub fn for_yellow(self) -> Self { Self { is_yellow: true, ..self } }
 }
 impl<R: MultiRom> Plan<R> for ChangeOptionsPlan {
   type Value = ();
@@ -63,6 +66,7 @@ impl<R: MultiRom> Plan<R> for ChangeOptionsPlan {
   }
   fn initialize(&mut self, gb: &mut Gb<R>, state: &GbState) {
     self.hjoy5_state = HJoy5State::from_gb_state(gb, state);
+    self.progress = if self.is_yellow { ChangeOptionsProgress::Close } else { ChangeOptionsProgress::ChangeTextSpeed };
   }
   fn is_safe(&self) -> bool { true }
   fn get_blockable_inputs(&self) -> Input {
