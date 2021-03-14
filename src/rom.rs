@@ -84,6 +84,7 @@ pub trait Gen1OverworldAddresses {
   const OVERWORLD_WARP_MAP_MEM_ADDRESS: u16;
   const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16;
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32;
+  const OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS: i32; // CheckForHiddenObjectOrBookshelfOrCardKeyDoor.hiddenObjectNotFound - 7
   const OVERWORLD_A_BUTTON_Z_CHECK_1: i32; // .displayDialogue - 12
   const OVERWORLD_A_BUTTON_Z_CHECK_2: i32; // .displayDialogue - 3
   const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32; // 3f:4f20 InitializePikachuTextID
@@ -422,6 +423,7 @@ macro_rules! impl_red_blue_common_addresses {
       const OVERWORLD_WARP_MAP_MEM_ADDRESS: u16 = 0xFF8B; // hWarpDestinationMap
       const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16 = 0xD42F; // wDestinationWarpID
       const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0965; // HandleFlyWarpOrDungeonWarp
+      const OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS: i32 = 0x0_3edd - 4; // CheckForHiddenObjectOrBookshelfOrCardKeyDoor.hiddenObjectNotFound - 4
       const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_047d-12; // .displayDialogue - 12
       const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_047d-3; // .displayDialogue - 3
       const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32 = 0; // 3f:4f20 InitializePikachuTextID
@@ -683,6 +685,7 @@ impl Gen1OverworldAddresses for Yellow {
   const OVERWORLD_WARP_MAP_MEM_ADDRESS: u16 = 0xFF8B; // hWarpDestinationMap
   const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16 = 0xD42E; // wDestinationWarpID
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0794; // HandleFlyWarpOrDungeonWarp
+  const OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS: i32 = 0x0_3f1f - 7; // CheckForHiddenObjectOrBookshelfOrCardKeyDoor.hiddenObjectNotFound - 7
   const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_02b2; // different in Yellow
   const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_02c5-3; // .displayDialogue - 3
   const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32 = 0x3f_4f20; // InitializePikachuTextID

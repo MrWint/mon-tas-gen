@@ -296,6 +296,12 @@ impl<const N: usize> MultiStateBuffer<N> {
   pub fn iter<'a>(&'a self) -> std::collections::hash_map::Values<'a, (u64, BlockedInputs<N>), MultiState<N>> {
     self.into_iter()
   }
+  pub fn into_sorted_iter(self) -> std::iter::Map<std::vec::IntoIter<((u32, u32, u32), MultiState<N>)>, fn(((u32, u32, u32), MultiState<N>)) -> MultiState<N>> {
+    let MultiStateBuffer { states, metrics, .. } = self;
+    let mut states: Vec<_> = states.into_iter().map(|(key, state)| (*metrics.get(&key).unwrap(), state)).collect();
+    states.sort_by_key(|(metric, _)| *metric);
+    states.into_iter().map(|(_, s)| s)
+  }
 }
 
 impl<const N: usize> IntoIterator for MultiStateBuffer<N> {

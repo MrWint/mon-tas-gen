@@ -61,7 +61,12 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
       let num_remaining_states = self.states.count_states();
       log::debug!("performing step at frame {} (max frame {} total states {}), moving {} states", min_frame, max_frame, num_remaining_states + num_processed_states, num_processed_states);
     }
-    for state in min_frame_states.into_iter() {
+    for state in min_frame_states.into_sorted_iter() {
+      const FULL_STATE_BUFFER_CUTOFF: usize = MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE * 18;
+      if self.states.count_states() > FULL_STATE_BUFFER_CUTOFF {
+        log::info!("Discarding all remaining current states, self.states is full ({})", self.states.count_states());   
+        break;
+      }
       self.step_state(state, plan);
     }
   }

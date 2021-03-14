@@ -39,6 +39,9 @@ impl OverworldInteractPlan {
       id,
     }
   }
+  pub fn with_hidden_item() -> Self {
+    Self::with(0xff)
+  }
 }
 impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAddresses> Plan<R> for OverworldInteractPlan {
   type Value = ();
@@ -68,6 +71,11 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
     match get_overworld_interaction_result(gb) {
       OverworldInteractionResult::DisplayText { id } => {
         if id != self.id { return None; }
+        gb.step();
+        Some((gb.save(), Some(())))
+      },
+      OverworldInteractionResult::HiddenItem => {
+        if 0xff != self.id { return None; }
         gb.step();
         Some((gb.save(), Some(())))
       },

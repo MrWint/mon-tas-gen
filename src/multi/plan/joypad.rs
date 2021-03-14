@@ -69,7 +69,7 @@ impl HJoy5State {
     if !self.hjoy7 { return pressed_input; }
     if !pressed_input.is_empty() { return input; }
     if self.frame_counter { return Input::empty(); }
-    if !input.contains(Input::A | Input::B) { return input; }
+    if !input.intersects(Input::A | Input::B) { return input; }
     if self.hjoy6 { input } else { Input::empty() }
   }
 }

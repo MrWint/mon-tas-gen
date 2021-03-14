@@ -155,7 +155,7 @@ impl<R: JoypadAddresses + Gen1FightTurnAddresses> Metric<R> for Gen1NormalHitMet
   }
 }
 
-pub struct Gen1MoveSuccessMetric {}
+pub struct Gen1MoveSuccessMetric;
 impl<R: JoypadAddresses + Gen1FightTurnAddresses> Metric<R> for Gen1MoveSuccessMetric {
   type ValueType = FightTurnResult;
 
