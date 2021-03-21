@@ -1,6 +1,7 @@
 use serde_derive::{Serialize, Deserialize};
 use std::cmp::Ordering;
 
+use crate::metric::*;
 use crate::metric::overworld::gen1::*;
 use crate::multi::*;
 use crate::rom::*;
@@ -22,29 +23,42 @@ impl PartialEq for OverworldInteractPlanState {
 }
 
 // Plan to progress JoypadOverworld inputs
-pub struct OverworldInteractPlan {
+pub struct OverworldInteractPlan<M> {
   // instance state
   joypad_overworld_state: JoypadOverworldState,
 
   // config state
   id: u8,
+  metric: M,
 }
-impl OverworldInteractPlan {
+impl OverworldInteractPlan<NullMetric> {
   pub fn with(id: u8) -> Self {
+    Self::with_metric(id, NullMetric)
+  }
+  pub fn with_hidden_item() -> Self {
+    Self::with(0xff)
+  }
+  pub fn with_card_key_door() -> Self {
+    Self::with(0xfe)
+  }
+}
+impl<M> OverworldInteractPlan<M> {
+  pub fn with_metric(id: u8, metric: M) -> Self {
     Self {
       // Set instance state to dummy values, will be initialize()'d later.
       joypad_overworld_state: JoypadOverworldState::unknown(),
 
       // Default config state.
       id,
+      metric,
     }
   }
-  pub fn with_hidden_item() -> Self {
-    Self::with(0xff)
+  pub fn with_hidden_item_metric(metric: M) -> Self {
+    Self::with_metric(0xff, metric)
   }
 }
-impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAddresses> Plan<R> for OverworldInteractPlan {
-  type Value = ();
+impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAddresses, M: Metric<R>> Plan<R> for OverworldInteractPlan<M> {
+  type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
     PlanState::OverworldInteractState(OverworldInteractPlanState { joypad_overworld_state: self.joypad_overworld_state.clone() })
@@ -65,19 +79,30 @@ impl<R: MultiRom + JoypadOverworldAddresses + Gen1OverworldAddresses + Gen1DVAdd
     if pressed.intersects(START) { return None; } // Opening start menu is not allowed
     Some(pressed & A)
   }
-  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<Self::Value>)> {
     gb.restore(s);
     gb.input(input);
     match get_overworld_interaction_result(gb) {
       OverworldInteractionResult::DisplayText { id } => {
         if id != self.id { return None; }
-        gb.step();
-        Some((gb.save(), Some(())))
+        if let Some(metric_value) = self.metric.evaluate(gb) {
+          if !gb.is_at_input() { gb.step(); }
+          Some((gb.save(), Some(metric_value)))
+        } else { None }
       },
       OverworldInteractionResult::HiddenItem => {
         if 0xff != self.id { return None; }
-        gb.step();
-        Some((gb.save(), Some(())))
+        if let Some(metric_value) = self.metric.evaluate(gb) {
+          if !gb.is_at_input() { gb.step(); }
+          Some((gb.save(), Some(metric_value)))
+        } else { None }
+      },
+      OverworldInteractionResult::CardKeyDoor => {
+        if 0xfe != self.id { return None; }
+        if let Some(metric_value) = self.metric.evaluate(gb) {
+          if !gb.is_at_input() { gb.step(); }
+          Some((gb.save(), Some(metric_value)))
+        } else { None }
       },
       OverworldInteractionResult::NoAction => {
         gb.delay_step();

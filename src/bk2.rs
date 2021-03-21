@@ -44,7 +44,7 @@ impl Bk2Writer {
     zip.write_all(b"\r\n")?;
 
     zip.start_file("SyncSettings.json", FileOptions::default())?;
-    zip.write_all(br#"{"o":{"$type":"BizHawk.Emulation.Cores.Nintendo.Gameboy.Gameboy+GambatteSyncSettings, BizHawk.Emulation.Cores","ConsoleMode":2,"GBACGB":true,"MulticartCompat":false,"RealTimeRTC":false,"EqualLengthFrames":"#)?;
+    zip.write_all(br#"{"o":{"$type":"BizHawk.Emulation.Cores.Nintendo.Gameboy.Gameboy+GambatteSyncSettings, BizHawk.Emulation.Cores","EnableBIOS":true,"ConsoleMode":3,"MulticartCompat":false,"RealTimeRTC":false,"EqualLengthFrames":"#)?;
     zip.write_all(if self.equal_length_frames { b"true" } else { b"false" })?;
     zip.write_all(br#","RTCDivisorOffset":"#)?;
     zip.write_all(format!("{}", self.rtc_divisor_offset).as_bytes())?;
@@ -52,14 +52,14 @@ impl Bk2Writer {
     zip.write_all(b"\r\n")?;
 
     zip.start_file("Header.txt", FileOptions::default())?;
-    zip.write_all(b"MovieVersion BizHawk v2.0.0\r\n")?;
+    zip.write_all(b"MovieVersion BizHawk v2.0\r\n")?;
     zip.write_all(format!("Author {}\r\n", self.author).as_bytes())?;
-    zip.write_all(b"emuVersion Version 2.3.0\r\n")?;
+    zip.write_all(b"emuVersion Version 2.5.2\r\n")?;
     zip.write_all(b"Platform GB\r\n")?;
     zip.write_all(format!("GameName {}\r\n", self.game_name).as_bytes())?;
     zip.write_all(format!("SHA1 {}\r\n", self.sha1).as_bytes())?;
     zip.write_all(format!("BoardName {}\r\n", self.board_name).as_bytes())?;
-    zip.write_all(b"GBC_Firmware_World 1293D68BF9643BC4F36954C1E80E38F39864528D\r\n")?;
+    zip.write_all(b"GBC_Firmware_AGB FA5287E24B0FA533B3B5EF2B28A81245346C1A0F\r\n")?;
     zip.write_all(b"IsCGBMode 1\r\n")?;
     zip.write_all(b"Core Gambatte\r\n")?;
 

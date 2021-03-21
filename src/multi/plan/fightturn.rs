@@ -59,6 +59,9 @@ pub struct AttackDesc {
   typ: AttackType,
 }
 impl AttackDesc {
+  pub fn ohko(mov: Move) -> Self {
+    Self { mov, typ: AttackType::Hit { non_crit_damage: 1..=65535, crit_damage: 1..=65535, effect: None } }
+  }
   pub fn hit(mov: Move, non_crit_damage: RangeInclusive<u16>) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage, crit_damage: 1..=0, effect: None } }
   }
@@ -70,6 +73,9 @@ impl AttackDesc {
   }
   pub fn crit_no_side_effect(mov: Move, crit_damage: RangeInclusive<u16>) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage: 1..=0, crit_damage, effect: Some(MoveEffectResult::NoEffect) } }
+  }
+  pub fn hit_with_side_effect(mov: Move, non_crit_damage: RangeInclusive<u16>, effect: MoveEffectResult) -> Self {
+    Self { mov, typ: AttackType::Hit { non_crit_damage, crit_damage: 1..=0, effect: Some(effect) } }
   }
   pub fn crit_with_side_effect(mov: Move, crit_damage: RangeInclusive<u16>, effect: MoveEffectResult) -> Self {
     Self { mov, typ: AttackType::Hit { non_crit_damage: 1..=0, crit_damage, effect: Some(effect) } }
@@ -831,8 +837,8 @@ impl UseMoveMetric {
     assert!(attack.mov == move_info.mov);
     Self {
       typ: attack.typ.clone(),
-      max_damage: move_info.max_damage,
-      max_crit_damage: move_info.max_crit_damage,
+      max_damage: if attack.mov.is_ohko() { 0xffff } else { move_info.max_damage },
+      max_crit_damage: if attack.mov.is_ohko() { 0xffff } else { move_info.max_crit_damage },
       is_effective: move_info.is_effective,
       before_opp_move_metric,
     }

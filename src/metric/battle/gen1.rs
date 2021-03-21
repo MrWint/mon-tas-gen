@@ -148,7 +148,7 @@ impl<R: JoypadAddresses + Gen1FightTurnAddresses> Metric<R> for Gen1NormalHitMet
     let critical_hit = gb.gb().read_memory_word_be(R::CRITICAL_HIT_MEM_ADDRESS) != 0;
 
     let expected_max_damage = if critical_hit { self.expected_max_crit_damage } else  { self.expected_max_damage };
-    assert!(max_damage == expected_max_damage, "max damage {} doesn't match expected value {}", max_damage, expected_max_damage);
+    assert!((expected_max_damage == 0xffff && max_damage >= 0x3fff) || max_damage == expected_max_damage, "max damage {} doesn't match expected value {}", max_damage, expected_max_damage);
 
     if critical_hit { Some(FightTurnResult::CriticalHit { damage, }) }
     else { Some(FightTurnResult::Hit { damage, }) }

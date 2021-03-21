@@ -211,7 +211,7 @@ impl JoypadOverworldState {
   }
   pub fn get_input(&self, mut input: Input) -> (Input, Input) {
     let pressed = self.pressed.get_pressed_input(input);
-    if self.forced_downwards && !input.contains(Input::DOWN | Input::UP | Input::LEFT | Input::RIGHT | Input::B | Input::A) {
+    if self.forced_downwards && !input.intersects(Input::DOWN | Input::UP | Input::LEFT | Input::RIGHT | Input::B | Input::A) {
       input = Input::DOWN;
     }
     if !self.simulating_button_presses || input.intersects(self.simulating_button_presses_override_mask) { return (input, pressed); }

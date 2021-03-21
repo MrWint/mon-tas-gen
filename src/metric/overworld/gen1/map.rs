@@ -41,7 +41,8 @@ impl Map {
       for y in 0..self.height {
         for x in 0..self.width {
           let block = blocks[map_block_width * (y >> 1) + (x >> 1)];
-          let tile = gb.read_rom(tileset_blocks_ptr + i32::from(block)*0x10 + (x as i32 & 1)*2 + (y as i32 & 1)*8+4);
+          let tile_address = tileset_blocks_ptr + i32::from(block)*0x10 + (x as i32 & 1)*2 + (y as i32 & 1)*8+4;
+          let tile = gb.read_rom((tile_address & 0xff_7fff) | 0x00_4000); // Some invalid tiles exist on Route 22 due to tileset mismatch of connected maps, ignore
           self.tile.push(tile);
         }
       }

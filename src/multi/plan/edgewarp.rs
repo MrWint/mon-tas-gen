@@ -1,5 +1,6 @@
 use serde_derive::{Serialize, Deserialize};
 
+use crate::metric::*;
 use crate::multi::*;
 use crate::rom::*;
 use gambatte::inputs::*;
@@ -9,12 +10,17 @@ use gambatte::inputs::*;
 pub struct EdgeWarpPlanState;
 
 // Plan to progress CheckWarpsNoCollisionLoop inputs
-pub struct EdgeWarpPlan;
-impl EdgeWarpPlan {
-  pub fn new() -> Self { Self }
+pub struct EdgeWarpPlan<M> {
+  metric: M,
 }
-impl<R: MultiRom> Plan<R> for EdgeWarpPlan {
-  type Value = ();
+impl EdgeWarpPlan<NullMetric> {
+  pub fn new() -> Self { Self::with_metric(NullMetric) }
+}
+impl<M> EdgeWarpPlan<M> {
+  pub fn with_metric(metric: M) -> Self { Self { metric } }
+}
+impl<R: MultiRom, M: Metric<R>> Plan<R> for EdgeWarpPlan<M> {
+  type Value = M::ValueType;
 
   fn save(&self) -> PlanState {
     PlanState::EdgeWarpState(EdgeWarpPlanState)
@@ -30,12 +36,14 @@ impl<R: MultiRom> Plan<R> for EdgeWarpPlan {
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
     if input.intersects(U | D | L | R) { Some(U) } else { None }
   }
-  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<()>)> {
+  fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<Self::Value>)> {
     if input.intersects(U | D | L | R) {
       gb.restore(s);
       gb.input(input);
-      gb.step();
-      Some((gb.save(), Some(())))
+      if let Some(metric_value) = self.metric.evaluate(gb) {
+        if !gb.is_at_input() { gb.step(); }
+        Some((gb.save(), Some(metric_value)))
+      } else { None }
     } else { None }
   }
 }

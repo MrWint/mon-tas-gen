@@ -199,7 +199,7 @@ pub fn start() {
   // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // Catch tutorial
   // r.run(OverworldWaitPlan::new()); // advance map script (ab buttons allowed)
   // r.run(OverworldWaitPlan::with_metric(OverworldInteractionMetric.filter(|r| if let OverworldInteractionResult::WildEncounter { species: Pokemon::Rattata, ..} = r { true } else { false })));
-  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Wild Pikachu appeared!
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Wild Rattata appeared!
   // r.save("multi_yellow_test3");
   // r.load("multi_yellow_test3");
   // r.run(TextPlan::new().with_skip_ends(2));
@@ -686,20 +686,1989 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(230)); // initiate Rocket fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
   // r.save("multi_yellow_test");
-  r.load("multi_yellow_test");
-  r.run(BattleMenuPlan::fight());
-  r.run(SelectMoveMenuPlan::new(Move::BubbleBeam).use_select());
-  r.run(SelectMoveMenuPlan::new(Move::Thrash).use_select());
-  r.run(SeqPlan::new(
-    SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
-    TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(64, 102).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 37 } else { false }), false).with_skip_ends(4))); // A used Thrash
-  r.run(SeqPlan::new(
-    NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
-    TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(75, 120).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 39 } else { false }), false).with_skip_ends(0))); // A thrashing about
-  r.run(EndTrainerBattlePlan::new(1));
-  r.save("multi_yellow_after_nugget6"); // #inputs: 101753
+  // r.load("multi_yellow_test");
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SelectMoveMenuPlan::new(Move::BubbleBeam).use_select());
+  // r.run(SelectMoveMenuPlan::new(Move::Thrash).use_select());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(64, 102).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 37 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(75, 120).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 39 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_after_nugget6"); // #inputs: 101753
   // r.load("multi_yellow_after_nugget6");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(3), HoldTextDisplayOpenPlan)); // Rocket after battle texts
+  // r.run(WalkToPlan::new(6, 6)); // Charmander
+  // r.run(OverworldInteractPlan::with(9));
+  // r.run(SkipTextsPlan::new(5));
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(TextPlan::new().with_skip_ends(2)); // Got Charmander
+  // r.run(SkipTextsPlan::new(1)); // Give nickname?
+  // r.run(TextPlan::new().with_skip_ends(2)); // to Charmander?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(NamingScreenPlan::with_letter(b'C'));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Take care of Charmander
+  // r.run(WalkToPlan::new(20, 8)); // Route 25
+  // r.run(WalkToPlan::new(14, 7)); // Hiker
+  // r.run(OverworldWaitPlan::new()); // Point-blank Trainer script load
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Hiker
+  // r.run(OverworldWaitPlan::trainer_battle(209)); // initiate Hiker fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Hiker
+  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route25_after_hiker"); // #inputs: 104918
+  // r.load("multi_yellow_route25_after_hiker");
+  // r.run(WalkToPlan::new(18, 7)); // Lass1
+  // r.run(OverworldTurnPlan::new(D));
+  // r.run(OverworldInteractPlan::with(4));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Lass1
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(67, 108).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 41 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(56, 89).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 43 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route25_after_lass1"); //  #inputs: 106991
+  // r.load("multi_yellow_route25_after_lass1");
+  // r.run(WalkToPlan::new(24, 6)); // Jr Trainer M
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Jr Trainer M
+  // r.run(OverworldWaitPlan::trainer_battle(205)); // initiate Jr Trainer M fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Jr Trainer M
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(75, 120).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 34 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_level_up_and_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(70, 119).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 36 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route25_after_jrtrainerm"); // #inputs: 109247
+  // r.load("multi_yellow_route25_after_jrtrainerm");
+  // r.run(WalkToPlan::new(35, 4)); // Lass2
+  // r.run(WalkToPlan::new(36, 4)); // Lass2
+  // r.run(OverworldInteractPlan::with(6));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(2)); // Lass2
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(64, 108).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 36 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(78, 133).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 35 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(64, 108).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 36 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route25_after_lass2"); // #inputs: 111833
+  // r.load("multi_yellow_route25_after_lass2");
+  // r.run(WalkToPlan::new(38, 4)); // Ether
+  // r.run(OverworldInteractPlan::with_hidden_item());
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Ether
+  // r.run(WalkToPlan::new(45, 3)); // Enter Bill's House
+  // r.run(WalkToPlan::new(4, 5)); // Bill
+  // r.run(WalkToPlan::new(5, 5)); // Bill
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(SkipTextsPlan::new(10));
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan));
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(1, 5)); // Desk
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_hidden_item()); // interact with desk
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan));
+  // r.run(OverworldWaitPlan::new()); // map script
+  // r.run(OverworldWaitPlan::auto_walk(R)); // map script
+  // r.run(OverworldWaitPlan::auto_walk(R)); // map script
+  // r.run(OverworldWaitPlan::auto_walk(R)); // map script
+  // r.run(SkipTextsPlan::new(8));
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // SS Anne Ticket
+  // r.run(SeqPlan::new(SkipTextsPlan::new(9), HoldTextDisplayOpenPlan));
+  // r.run(WalkToPlan::new(3, 6)); // leave
+  // r.run(WalkToPlan::new(3, 7)); // leave
+  // r.run(EdgeWarpPlan::new());
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(-1, 11)); // Route 24
+  // r.run(WalkToPlan::new(14, 36)); // Cearulean
+  // r.run(WalkToPlan::new(24, 2)); // Cearulean
+  // r.run(OverworldJumpLedgePlan::new(D));
+  // r.run(WalkToPlan::new(27, 11)); // Enter house
+  // r.run(WalkToPlan::new(3, 0)); // Leave house
+  // r.run(WalkToPlan::new(30, 9)); // Trigger Rocket fight
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan));
+  // r.run(OverworldWaitPlan::trainer_battle(230)); // initiate Rocket fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rocket
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(56, 94).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 53 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(58, 98).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 50 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::with_level_up(2));
+  // r.save("multi_yellow_cerulean_after_rocket"); // #inputs: 119059
+  // r.load("multi_yellow_cerulean_after_rocket");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(3), HoldTextDisplayOpenPlan)); // Rocket after battle texts
+  // r.run(WalkToPlan::new(28, 36)); // Enter Route 5
+  // r.run(WalkToPlan::new(17, 27)); // Underground
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(4, 4)); // Underground
+  // r.run(WalkToPlan::new(4, 4)); // Underground
+  // r.run(OverworldInteractPlan::with_hidden_item()); // pick up item
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Full Restore
+  // r.run(WalkToPlan::new(2, 40)); // Underground
+  // r.run(WalkToPlan::new(2, 41)); // Underground
+  // r.run(WalkToPlan::new(4, 7)); // Leave Underground
+  // r.run(EdgeWarpPlan::new());
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(11, 28)); // F
+  // r.run(WalkToPlan::new(11, 29)); // F
+  // r.run(OverworldInteractPlan::with(5));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // F
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(75, 122).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 41 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(75, 122).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 41 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(75, 122).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 41 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route6_after_jrtrainerf"); // #inputs: 124426
+  // r.load("multi_yellow_route6_after_jrtrainerf");
+  // r.run(WalkToPlan::new(10, 30)); // M
+  // r.run(WalkToPlan::new(10, 31)); // M
+  // r.run(OverworldWaitPlan::new()); // Point-blank Trainer script load
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // JrTrainerM
+  // r.run(OverworldWaitPlan::trainer_battle(205)); // JrTrainerM fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // JrTrainerM fight
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(88, 144).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 41 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::EnemyFirst)), // Quick Attack
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(9, 13).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage == 12 } else { false }), false).with_skip_ends(4))); // Enemy Raticate used Quick Attack
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::new(1), // critical hit
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(58, 94).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 46 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route6_after_jrtrainerm"); // #inputs: 126717
+  // r.load("multi_yellow_route6_after_jrtrainerm");
+  // r.run(WalkToPlan::new(9, 36)); // Vermilion City
+  // r.run(WalkToPlan::new(18, 30)); // Dock
+  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan)); // Dock
+  // r.run(WalkToPlan::new(18, 31)); // Dock
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(14, 2)); // Dock
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(7, 7)); // Evade NPC
+  // r.run(WalkToPlan::new(2, 6)); // 1F
+  // r.run(WalkToPlan::new(3, 11)); // Avoid stairs
+  // r.run(WalkToPlan::new(37, 9)); // Rival encounter
+  // r.run(WalkToPlan::new(37, 8)); // Rival encounter
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // Rival
+  // r.run(OverworldWaitPlan::trainer_battle(242)); // initiate Rival fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Thrash { turns: 3 }).and_then(Gen1NormalHitMetric::with_expected_max_damage(79, 129)).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 47 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(83, 136).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 38 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(40, 65).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 48 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_level_up_and_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(57, 92).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 55 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(3)); // Rival fight //  #inputs: 132778
+  // r.save("multi_yellow_ssanne_after_rival");
+  // r.load("multi_yellow_ssanne_after_rival");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Rival texts
+  // r.run(WalkToPlan::new(36, 4)); // 2F
+  // r.run(WalkToPlan::new(4, 4)); // Captain
+  // r.run(WalkToPlan::new(4, 3)); // Captain
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(SkipTextsPlan::new(4));
+  // r.run(TextPlan::new()); // Rub Rub
+  // r.run(SkipTextsPlan::new(8));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan)); // got HM01
+  // r.run(WalkToPlan::new(0, 7)); // 1F
+  // r.run(WalkToPlan::new(2, 4)); // 0F
+  // r.run(WalkToPlan::new(7, 7)); // Evade NPC
+  // r.run(WalkToPlan::new(26, 0)); // Evade NPC
+  // r.run(EdgeWarpPlan::with_metric(VermilionFirstTrashCanMetric.expect(4)));
+  // r.run(WalkToPlan::new(15, 16)); // Cut bush
+  // r.run(WalkToPlan::new(15, 17)); // Cut bush
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(OverworldOpenStartMenuPlan::new());
+  // r.run(StartMenuPlan::items());
+  // r.run(ListMenuPlan::choose(8));
+  // r.run(ItemUseTossMenuPlan::use_());
+  // r.run(SkipTextsPlan::new(1)); // Booted up TM
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  // r.run(TextPlan::new().with_skip_ends(2)); // Teach Cut?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(PartyMenuPlan::choose(2)); // Charmander
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // learned move
+  // r.run(ListMenuPlan::choose(6));
+  // r.run(ItemUseTossMenuPlan::use_());
+  // r.run(SkipTextsPlan::new(1)); // Booted up TM
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  // r.run(TextPlan::new().with_skip_ends(2)); // Teach Dig?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(PartyMenuPlan::choose(2)); // Charmander
+  // r.run(OverrideMovePlan::choose(0));
+  // r.run(ListMenuPlan::quit());
+  // r.run(StartMenuPlan::mon());
+  // r.run(PartyMenuPlan::choose(2)); // Charmander
+  // r.run(PartyMonMenuPlan::choose(1)); // Cut
+  // r.run(TextScrollWaitPlan::new()); // used cut
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(12, 19)); // Enter Gym
+  // r.run(WalkToPlan::new(4, 9)); // Can 1
+  // r.run(OverworldTurnPlan::new(L));
+  // r.run(OverworldInteractPlan::with_hidden_item_metric(VermilionSecondTrashCanMetric.expect(7))); // First trash can
+  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan)); // First switch
+  // r.run(OverworldTurnPlan::new(R));
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Second trash can
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Second switch
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(WalkToPlan::new(5, 3)); // Surge
+  // r.run(WalkToPlan::new(5, 2)); // Surge
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(10)); // Surge
+  // r.run(FightTurnPlan::new(AttackDesc::hit_with_side_effect(Move::BubbleBeam, 11..=16, MoveEffectResult::Success), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)), None));
+  // r.run(FightKOPlan::new(Move::Thrash, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(3)); // Surge fight //  #inputs: 142372
+  // r.save("multi_yellow_after_surge");
+  // r.load("multi_yellow_after_surge");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Surge after fight texts
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Got TM
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Surge after fight texts
+  // r.run(WalkToPlan::new(5, 17)); // leave
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(15, 19)); // Cut bush
+  // r.run(OverworldOpenStartMenuPlan::new());
+  // r.run(StartMenuPlan::mon());
+  // r.run(PartyMenuPlan::choose(2)); // Charmander
+  // r.run(PartyMonMenuPlan::choose(1)); // Cut
+  // r.run(TextScrollWaitPlan::new()); // used cut
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(9, 13)); // Fanclub
+  // r.run(WalkToPlan::new(1, 1)); // Fanclub
+  // r.run(WalkToPlan::new(2, 1)); // Fanclub
+  // r.run(OverworldInteractPlan::with(5));
+  // r.run(SkipTextsPlan::new(7)); // Fanclub
+  // r.run(TextPlan::new()); // hear about mons?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SkipTextsPlan::new(18)); // Fanclub
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Got Voucher
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Fanclub
+  // r.run(WalkToPlan::new(2, 6)); // leave Fanclub
+  // r.run(WalkToPlan::new(2, 7)); // leave Fanclub
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(40, 14)); // Route 8
+  // r.run(WalkToPlan::new(4, 5)); // Enter Diglett's cave
+  // r.run(OverworldOpenStartMenuPlan::new());
+  // r.run(StartMenuPlan::mon());
+  // r.run(PartyMenuPlan::choose(2)); // Charmander
+  // r.run(PartyMonMenuPlan::choose(0)); // Dig
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(OverworldWaitPlan::fly_warp());
+  // r.run(WalkToPlan::new(13, 25)); // Enter Bike Shop
+  // r.run(WalkToPlan::new(6, 5)); // Enter Bike Shop
+  // r.run(WalkToPlan::new(6, 4)); // Enter Bike Shop
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Get Bike
+  // r.run(WalkToPlan::new(3, 6)); // Leave Bike Shop
+  // r.run(WalkToPlan::new(3, 7)); // Leave Bike Shop
+  // r.run(EdgeWarpPlan::new());
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(OverworldOpenStartMenuPlan::new());
+  // r.run(StartMenuPlan::items());
+  // r.run(ListMenuPlan::swap(0)); // Pokeballs
+  // r.run(ListMenuPlan::swap(9)); // Bike
+  // r.run(ListMenuPlan::choose(8)); // TM24
+  // r.run(ItemUseTossMenuPlan::use_());
+  // r.run(SkipTextsPlan::new(1)); // Booted up TM
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  // r.run(TextPlan::new().with_skip_ends(2)); // Teach Thunderbolt?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(PartyMenuPlan::choose(0)); // Nidoking
+  // r.run(OverrideMovePlan::choose(3)); // Forget Double Kick
+  // r.run(ListMenuPlan::choose(0)); // Bike
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // r.run(WalkToPlan::new(19, 26)); // Bush
+  // r.run(WalkToPlan::new(19, 27)); // Bush
+  // r.run(OverworldOpenStartMenuPlan::new());
+  // r.run(StartMenuPlan::mon());
+  // r.run(PartyMenuPlan::choose(2)); // Charmander
+  // r.run(PartyMonMenuPlan::choose(1)); // Cut
+  // r.run(TextScrollWaitPlan::new()); // used cut
+  // r.run(WalkToPlan::new(40, 17)); // Route 9
+  // r.run(WalkToPlan::new(4, 8)); // Bush
+  // r.run(OverworldOpenStartMenuPlan::new());
+  // r.run(StartMenuPlan::mon());
+  // r.run(PartyMenuPlan::choose(2)); // Charmander
+  // r.run(PartyMonMenuPlan::choose(1)); // Cut
+  // r.run(TextScrollWaitPlan::new()); // used cut
+  // r.run(WalkToPlan::new(13, 8)); // JrTrainerF
+  // r.run(WalkToPlan::new(13, 9)); // JrTrainerF
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(2)); // JrTrainerF
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Thrash { turns: 3 }).and_then(Gen1NormalHitMetric::with_expected_max_damage(59, 95)).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 47 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(79, 128).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 48 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_level_up_and_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(61, 103).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 47 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  //   r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(81, 138).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 48 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route9_after_jrtrainerf"); // #inputs: 152290
+  // r.load("multi_yellow_route9_after_jrtrainerf");
+  // r.run(WalkToPlan::new(12, 10));
+  // r.run(OverworldJumpLedgePlan::new(D)); // Jump ledge
+  // r.run(WalkToPlan::new(40, 10));
+  // r.run(WalkToPlan::new(40, 9)); // Bugcatcher
+  // r.run(OverworldInteractPlan::with(9));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Bugcatcher
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(74, 126).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 51 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(81, 138).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 49 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(59, 99).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 57 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_route9_after_bugcatcher"); // #inputs: 155070
+  // r.load("multi_yellow_route9_after_bugcatcher");
+  // r.run(WalkToPlan::new(51, 4));
+  // r.run(OverworldJumpLedgePlan::new(D)); // Jump ledge
+  // r.run(WalkToPlan::new(60, 8)); // Route 10
+  // r.run(WalkToPlan::new(8, 17)); // Rock Tunnel
+  // r.run(WalkToPlan::new(23, 6));
+  // r.run(WalkToPlan::new(23, 7)); // Pokemaniac
+  // r.run(OverworldInteractPlan::with(4));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Pokemaniac
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SelectMoveMenuPlan::new(Move::Thrash).use_select());
+  // r.run(SelectMoveMenuPlan::new(Move::BubbleBeam).use_select());
+  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack).skip_battle_menu());
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_rock_tunnel_after_pokemaniac1"); // #inputs: 158027
+  // r.load("multi_yellow_rock_tunnel_after_pokemaniac1");
+  // r.run(WalkToPlan::new(37, 3)); // B1F
+  // r.run(WalkToPlan::new(27, 30)); // Pokemaniac
+  // r.run(OverworldInteractPlan::with(8));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Pokemaniac
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_rock_tunnel_after_pokemaniac2"); // #inputs: 159747
+  // r.load("multi_yellow_rock_tunnel_after_pokemaniac2");
+  // r.run(WalkToPlan::new(14, 30)); // Lass
+  // r.run(WalkToPlan::new(14, 29)); // Lass
+  // r.run(OverworldInteractPlan::with(6));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(2)); // Lass
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(58, 95).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 55 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(62, 101).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 55 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_rock_tunnel_after_lass"); // #inputs: 161765
+  // r.load("multi_yellow_rock_tunnel_after_lass");
+  // r.run(WalkToPlan::new(27, 3)); // 1F
+  // r.run(WalkToPlan::new(17, 11)); // B1F
+  // r.run(WalkToPlan::new(8, 10)); // Hiker
+  // r.run(WalkToPlan::new(7, 10)); // Hiker
+  // r.run(OverworldInteractPlan::with(2));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Hiker
+  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_rock_tunnel_after_hiker"); // #inputs: 165321
+  // r.load("multi_yellow_rock_tunnel_after_hiker");
+  // r.run(WalkToPlan::new(3, 3)); // 1F
+  // r.run(WalkToPlan::new(24, 24)); // JrTrainerF
+  // r.run(WalkToPlan::new(23, 24)); // JrTrainerF
+  // r.run(OverworldInteractPlan::with(6));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // JrTrainerF
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(86, 147).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 49 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(63, 108).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 51 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(79, 135).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 49 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(EndTrainerBattlePlan::new(1));
+  // r.save("multi_yellow_rock_tunnel_after_jrtrainerf"); // #inputs: 168063
+  // r.load("multi_yellow_rock_tunnel_after_jrtrainerf");
+  // r.run(WalkToPlan::new(15, 33)); // leave
+  // r.run(WalkToPlan::new(14, 53)); // bush
+  // r.run(WalkToPlan::new(15, 53)); // bush
+  // r.run(OverworldInteractPlan::with_hidden_item());
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Max Ether
+  // r.run(WalkToPlan::new(15, 60)); // ledge
+  // r.run(OverworldJumpLedgePlan::new(D)); // Jump ledge
+  // r.run(WalkToPlan::new(9, 72)); // Lavender Town
+  // r.run(WalkToPlan::new(-1, 8)); // Route 8
+  // r.run(WalkToPlan::new(47, 13)); // Juggler
+  // r.run(OverworldInteractPlan::with(8));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Juggler
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::with_level_up(1));
+  // r.save("multi_yellow_route_8_after_juggler"); // #inputs: 171154
+  // r.load("multi_yellow_route_8_after_juggler");
+  // r.run(WalkToPlan::new(13, 3)); // underground
+  // r.run(WalkToPlan::new(4, 4)); // underground
+  // r.run(OverworldOpenStartMenuPlan::new());
+  // r.run(StartMenuPlan::items());
+  // r.run(ListMenuPlan::choose(0)); // Bike
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // r.run(WalkToPlan::new(21, 3)); // Elixer
+  // r.run(WalkToPlan::new(21, 4)); // Elixer
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Elixer
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Elixer
+  // r.run(WalkToPlan::new(2, 4)); // underground
+  // r.run(WalkToPlan::new(2, 5)); // underground
+  // r.run(WalkToPlan::new(4, 7)); // underground
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(-1, 3)); // Celadon City
+  // r.save("multi_yellow_celadon");
+  // r.load("multi_yellow_celadon");
+  // r.run(WalkToPlan::new(10, 13)); // Mart
+  // r.run(WalkToPlan::new(12, 1)); // 2F
+  // { // buy TM07 x2
+  //   r.run(WalkToPlan::new(9, 3));
+  //   r.run(WalkToPlan::new(8, 3));
+  //   r.run(OverworldInteractPlan::with(2));
+  //   r.run(TextPlan::new()); // How can I help you
+  //   r.run(BuySellQuitMenuPlan::buy());
+  //   r.run(TextPlan::new()); // Take your time
+  //   r.run(SeqPlan::new(ListMenuPlan::choose(3), ChooseQuantityMenuPlan::new(2))); // Choose TM07 x2
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Item? // That will be
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Price // Okay?
+  //   r.run(TwoOptionMenuPlan::yes()); // buy
+  //   r.run(SkipTextsPlan::new(1)); // Here you go
+  //   r.run(ListMenuPlan::quit()); // exit buy menu
+  //   r.run(TextPlan::new()); // Anything else?
+  //   r.run(BuySellQuitMenuPlan::quit());
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Thank you!
+  // }
+  // r.run(WalkToPlan::new(16, 1)); // 3F
+  // r.run(WalkToPlan::new(12, 1)); // 4F
+  // { // buy Doll x2
+  //   r.run(WalkToPlan::new(5, 5));
+  //   r.run(OverworldTurnPlan::new(D));
+  //   r.run(OverworldInteractPlan::with(1));
+  //   r.run(TextPlan::new()); // How can I help you
+  //   r.run(BuySellQuitMenuPlan::buy());
+  //   r.run(TextPlan::new()); // Take your time
+  //   r.run(SeqPlan::new(ListMenuPlan::choose(0), ChooseQuantityMenuPlan::new(2))); // Choose Doll x2
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Item? // That will be
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Price // Okay?
+  //   r.run(TwoOptionMenuPlan::yes()); // buy
+  //   r.run(SkipTextsPlan::new(1)); // Here you go
+  //   r.run(ListMenuPlan::quit()); // exit buy menu
+  //   r.run(TextPlan::new()); // Anything else?
+  //   r.run(BuySellQuitMenuPlan::quit());
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Thank you!
+  // }
+  // r.run(WalkToPlan::new(16, 1)); // 5F
+  // r.run(WalkToPlan::new(12, 1)); // 6F
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(12, 3));
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with(5));
+  // r.run(SkipTextsPlan::new(1)); // Vanding Machine text
+  // r.run(VendingMachineMenuPlan::fresh_water());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(1), HoldTextDisplayOpenPlan)); // Vanding Machine text
+  // r.run(WalkToPlan::new(15, 2)); // 5F
+  // { // buy XSpd x6
+  //   r.run(WalkToPlan::new(5, 5));
+  //   r.run(OverworldTurnPlan::new(U));
+  //   r.run(OverworldInteractPlan::with(3));
+  //   r.run(TextPlan::new()); // How can I help you
+  //   r.run(BuySellQuitMenuPlan::buy());
+  //   r.run(TextPlan::new()); // Take your time
+  //   r.run(SeqPlan::new(ListMenuPlan::choose(5), ChooseQuantityMenuPlan::new(7))); // Choose XSpd x7
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Item? // That will be
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Price // Okay?
+  //   r.run(TwoOptionMenuPlan::yes()); // buy
+  //   r.run(SkipTextsPlan::new(1)); // Here you go
+  //   r.run(ListMenuPlan::quit()); // exit buy menu
+  //   r.run(TextPlan::new()); // Anything else?
+  //   r.run(BuySellQuitMenuPlan::quit());
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Thank you!
+  // }
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(1, 1)); // Elevator
+  // r.run(WalkToPlan::new(3, 2)); // Elevator
+  // r.run(WalkToPlan::new(3, 1)); // Elevator
+  // r.run(OverworldInteractPlan::with(1)); // Elevator
+  // r.run(SeqPlan::new(ListMenuPlan::choose(0), HoldTextDisplayOpenPlan)); // 1F
+  // r.run(WalkToPlan::new(2, 2)); // Elevator
+  // r.run(WalkToPlan::new(2, 3)); // Elevator
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(2, 6)); // leave
+  // r.run(WalkToPlan::new(2, 7)); // leave
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(-1, 18));
+  // r.run(WalkToPlan::new(34, 10)); //  #inputs: 177743
+  // r.run(OverworldTurnPlan::new(U));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(1)); // Cut
+  //   r.run(TextScrollWaitPlan::new()); // used cut
+  // }
+  // r.run(WalkToPlan::new(25, 5));
+  // r.run(WalkToPlan::new(24, 5));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(0, 2));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(7, 5)); // Fly House
+  // r.run(WalkToPlan::new(2, 4)); // Fly
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Fly // #inputs: 178979
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(WalkToPlan::new(2, 7));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::swap(1)); // TM34
+  //   r.run(ListMenuPlan::swap(12)); // Doll
+  //   r.run(ListMenuPlan::choose(11)); // TM07
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(SkipTextsPlan::new(1)); // Booted up TM
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Teach Horn Drill?
+  //   r.run(TwoOptionMenuPlan::yes());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(OverrideMovePlan::choose(0)); // Forget Bubblebeam
+  //   r.run(ListMenuPlan::choose(15)); // HM02
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(SkipTextsPlan::new(1)); // Booted up TM
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Teach Fly?
+  //   r.run(TwoOptionMenuPlan::yes());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // learned move
+  //   r.run(ListMenuPlan::quit());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.save("multi_yellow_test4");
+  //   r.load("multi_yellow_test4");
+  //   r.run(FlyToPlan::to_lavender_town());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // r.run(WalkToPlan::new(14, 5)); // Enter Tower
+  // r.run(WalkToPlan::new(18, 9)); // 2F
+  // r.run(WalkToPlan::new(16, 5)); // Rival
+  // r.run(WalkToPlan::new(15, 5)); // Rival
+  // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // Rival
+  // r.run(OverworldWaitPlan::trainer_battle(242)); // initiate Rival fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
+  // r.save("multi_yellow_test5");
+  // r.load("multi_yellow_test5");
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Thrash { turns: 3 }).and_then(Gen1NormalHitMetric::with_expected_max_damage(79, 130)).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 54 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(55, 90).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 46 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(51, 84).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 53 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(63, 103).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 66 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(EndTrainerBattlePlan::with_level_up(2)); // Rival fight //  #inputs: 185042
+  // r.save("multi_yellow_tower_after_rival");
+  // r.load("multi_yellow_tower_after_rival");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan)); // rival post-fight text
+  // r.run(WalkToPlan::new(3, 9)); // 3F
+  // r.run(WalkToPlan::new(18, 9)); // 4F
+  // r.run(WalkToPlan::new(17, 7)); // Channeler
+  // r.run(WalkToPlan::new(16, 7)); // Channeler
+  // r.run(OverworldInteractPlan::with(2));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Channeler
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 188557
+  // r.save("multi_yellow_tower_after_channeler1");
+  // r.load("multi_yellow_tower_after_channeler1");
+  // r.run(WalkToPlan::new(13, 10)); // Elixer
+  // r.run(OverworldInteractPlan::with(4)); // Elixer
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Elixer
+  // r.run(WalkToPlan::new(3, 9)); // 5F
+  // r.run(WalkToPlan::new(11, 9)); // Heal pad
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // heal pad
+  // r.run(WalkToPlan::new(18, 9)); // 6F
+  // r.run(WalkToPlan::new(15, 5)); // Channeler
+  // r.run(OverworldWaitPlan::new()); // Point-blank Trainer script load
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Channeler
+  // r.run(OverworldWaitPlan::trainer_battle(245)); // Bugcatcher fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 191669
+  // r.save("multi_yellow_tower_after_channeler2");
+  // r.load("multi_yellow_tower_after_channeler2");
+  // r.run(WalkToPlan::new(11, 5)); // Channeler
+  // r.run(WalkToPlan::new(10, 5)); // Channeler
+  // r.run(OverworldInteractPlan::with(2));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Channeler
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 193258
+  // r.save("multi_yellow_tower_after_channeler3");
+  // r.load("multi_yellow_tower_after_channeler3");
+  // r.run(WalkToPlan::new(6, 6)); // Rare Candy
+  // r.run(WalkToPlan::new(6, 7)); // Rare Candy
+  // r.run(OverworldInteractPlan::with(4));
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Rare Candy
+  // r.run(WalkToPlan::new(10, 16)); // Ghost
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Ghost
+  // r.run(OverworldWaitPlan::with_metric(OverworldInteractionMetric.filter(|r| if let OverworldInteractionResult::WildEncounter { species: Pokemon::Marowak, ..} = r { true } else { false })));
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Wild // Ghost // appeared
+  // r.run(SkipTextsPlan::new(1)); // Can't be ID'd
+  // r.run(TextPlan::new().with_skip_ends(2));
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // Doll
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Use doll
+  // r.run(SkipTextsPlan::new(1)); // Marowak gone
+  // r.run(TextPlan::new()); // Marowak gone
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Marowak gone
+  // r.save("multi_yellow_tower_after_marowak");
+  // r.load("multi_yellow_tower_after_marowak");
+  // r.run(WalkToPlan::new(9, 16)); // 7F
+  // r.run(WalkToPlan::new(10, 12)); // Rocket
+  // r.run(SeqPlan::new(TextPlan::new(), HoldTextDisplayOpenPlan)); // Rocket text
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Rocket text
+  // r.run(OverworldWaitPlan::trainer_battle(230)); // Rocket fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rocket fight
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::new(1)); // Rocket fight //  #inputs: 197919
+  // r.save("multi_yellow_tower_after_rocket");
+  // r.load("multi_yellow_tower_after_rocket");
+  // r.run(SkipTextsPlan::new(1)); // Rocket after text
+  // r.run(SeqPlan::new(TextPlan::new(), HoldTextDisplayOpenPlan)); // Rocket after text
+  // r.run(WalkToPlan::new(10, 4));
+  // r.run(OverworldInteractPlan::with(3));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(12), HoldTextDisplayOpenPlan)); // Fuji
+  // r.run(WalkToPlan::new(2, 1));
+  // r.run(OverworldTurnPlan::new(R));
+  // r.run(OverworldInteractPlan::with(5)); // Fuji
+  // r.run(SkipTextsPlan::new(5)); // Fuji
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Poke FLute
+  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan)); // Fuji
+  // r.run(WalkToPlan::new(2, 7));
+  // r.run(EdgeWarpPlan::new());
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.run(FlyToPlan::to_celadon_city());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // r.run(WalkToPlan::new(41, 9)); // Center
+  // r.run(WalkToPlan::new(3, 3)); // Center
+  // r.run(OverworldInteractPlan::with(1)); // Center
+  // r.run(SkipTextsPlan::new(3)); // Center
+  // r.run(TwoOptionMenuPlan::yes()); // Center
+  // r.run(TextPlan::new()); // Center
+  // r.run(SkipTextsPlan::new(2)); // Center
+  // r.run(SeqPlan::new(TextCommandPausePlan::new(), SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan))); // Center
+  // r.run(WalkToPlan::new(3, 7)); // go outside
+  // r.run(EdgeWarpPlan::new()); // go outside
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(-1, 18));
+  // r.run(WalkToPlan::new(27, 10));
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::swap(1)); // Doll
+  //   r.run(ListMenuPlan::swap(14)); // XSpd
+  //   r.run(ListMenuPlan::choose(17)); // Flute
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(SkipTextsPlan::new(1)); // Played flute
+  //   r.run(StartMenuClosePlan::new());
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Snorlax fight
+  //   r.run(OverworldWaitPlan::with_metric(OverworldInteractionMetric.filter(|r| if let OverworldInteractionResult::WildEncounter { species: Pokemon::Snorlax, ..} = r { true } else { false })));
+  // }
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Wild Snorlax appeared!
+  // r.run(TextPlan::new().with_skip_ends(2)); // Go, Nidoking!
+  // r.run(BattleMenuPlan::run());
+  // r.run(SkipTextsPlan::new(1)); // Got away safely! // #inputs: 203604
+  // r.save("multi_yellow_after_snorlax");
+  // r.load("multi_yellow_after_snorlax");
+  // r.run(WalkToPlan::new(24, 10));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(0, 8));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(11, 18));
+  // r.run(WalkToPlan::new(13, 142));
+  // r.run(OverworldJumpLedgePlan::new(D));
+  // r.run(WalkToPlan::new(32, 8));
+  // r.run(WalkToPlan::new(33, 8));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(7, 4));
+  // r.run(EdgeWarpPlan::new()); // #inputs: 206154
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(50, 8)); // Fuchsia
+  // r.run(WalkToPlan::new(18, 3)); // Enter Safari // 207167
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(3, 2));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Welcome
+  // r.run(OverworldWaitPlan::auto_walk(R));
+  // r.run(SkipTextsPlan::new(3)); // Welcome
+  // r.run(TextPlan::new()); // Do Safari?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Welcome
+  // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // Welcome // #inputs: 207903
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(29, 11));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(0, 5));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(3, 35));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(19, 5));
+  // r.run(WalkToPlan::new(19, 6));
+  // r.run(OverworldInteractPlan::with(4));
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Gold Teeth
+  // r.run(WalkToPlan::new(3, 3)); // Surf house
+  // r.run(WalkToPlan::new(3, 5));
+  // r.run(WalkToPlan::new(3, 4));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(SkipTextsPlan::new(7)); // Surf
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan)); // Get HM // #inputs: 211561
+  // r.run(WalkToPlan::new(3, 7));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Dig
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.run(FlyToPlan::to_fuchsia_city());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(5, 27)); // Enter Gym
+  // r.run(WalkToPlan::new(7, 9));
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with(3));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(2)); // Juggler
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Thrash { turns: 3 }).and_then(Gen1NormalHitMetric::with_expected_max_damage(61, 104)).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 83 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(61, 104).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 83 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_level_up_and_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(89, 147).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 70 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(68, 112).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 83 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 216690
+  // r.save("multi_yellow_fuchsia_after_juggler1");
+  // r.load("multi_yellow_fuchsia_after_juggler1");
+  // r.run(WalkToPlan::new(1, 7)); // Juggler
+  // r.run(OverworldWaitPlan::new()); // Point-blank Trainer script load
+  // r.run(SeqPlan::new(SkipTextsPlan::new(3), HoldTextDisplayOpenPlan)); // Juggler
+  // r.run(OverworldWaitPlan::trainer_battle(221)); // Juggler fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Juggler
+  // r.run(BattleMenuPlan::fight());
+  // r.run(SeqPlan::new(
+  //   SelectMoveMenuPlan::with_metric(Move::Thrash, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)),
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(61, 101).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 90 } else { false }), false).with_skip_ends(4))); // A used Thrash
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(SeqPlan::new(
+  //   NextTrainerMonPlan::with_metric(AIChooseMoveMetric.expect(Move::Confusion).and_then(BattleMoveOrderMetric).expect(MoveOrder::PlayerFirst)),
+  //   SeqPlan::new(
+  //     TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(44, 72).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 39 } else { false }).into_unit(), false).with_skip_ends(0), // A thrashing about
+  //     TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(62, 116).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage <= 99+2 } else { false }), false).with_skip_ends(4)))); // Hypno used confusion
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, BattleMoveOrderMetric.expect(MoveOrder::PlayerFirst)), // super effective
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(44, 72).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 68 } else { false }), false).with_skip_ends(0))); // A thrashing about
+  // r.run(SkipTextsPlan::new(1)); // critical hit
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 219998
+  // r.save("multi_yellow_fuchsia_after_juggler2");
+  // r.load("multi_yellow_fuchsia_after_juggler2");
+  // r.run(WalkToPlan::new(3, 10)); // Koga
+  // r.run(OverworldTurnPlan::new(R));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(9)); // Koga
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // XSpd
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used XSpd
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, AIChooseMoveMetric.expect(Move::SleepPowder).and_then(TrainerAIMetric).expect(TrainerAIAction::NoAction)).with_skip_ends(2), // Speed rose
+  //   TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Failed), false).with_skip_ends(4))); // Venonat used Sleep Powder
+  // r.run(SkipTextsPlan::new(1)); // Didin't affect Nidoking // 221455
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::with_level_up(3)); // #inputs: 223671
+  // r.save("multi_yellow_fuchsia_after_koga");
+  // r.load("multi_yellow_fuchsia_after_koga");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // after texts
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not enough space
+  // r.run(WalkToPlan::new(5, 16));
+  // r.run(WalkToPlan::new(5, 17));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(22, 30));
+  // r.run(OverworldJumpLedgePlan::new(R)); // Jump ledge
+  // r.run(WalkToPlan::new(27, 27)); // Strength house
+  // r.run(WalkToPlan::new(2, 5));
+  // r.run(WalkToPlan::new(2, 4));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(SkipTextsPlan::new(10)); // after texts
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan)); // Get HM04 // #inputs: 225902
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(4, 6));
+  // r.run(WalkToPlan::new(4, 7));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(4)); // Ether
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(TextPlan::new()); // which technique?
+  //   r.run(SelectMoveMenuPlan::new(Move::HornDrill));
+  //   r.run(SkipTextsPlan::new(1)); // PP restored
+  //   r.run(ListMenuPlan::swap(2)); // Helix Fossil
+  //   r.run(ListMenuPlan::swap(9)); // Elixer
+  //   r.run(ListMenuPlan::choose(17)); // HM03
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(SkipTextsPlan::new(1)); // Booted up HM
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Teach Surf?
+  //   r.run(TwoOptionMenuPlan::yes());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(OverrideMovePlan::choose(2)); // Override Leer
+  //   r.run(ListMenuPlan::quit());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.run(FlyToPlan::to_pallet_town());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // r.run(WalkToPlan::new(4, 12));
+  // r.run(WalkToPlan::new(4, 13));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(PartyMonMenuPlan::choose(0)); // Surf
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Got on
+  //   r.run(OverworldWaitPlan::auto_walk(D));
+  // }
+  // r.run(WalkToPlan::new(4, 18));
+  // r.run(WalkToPlan::new(3, 90));
+  // r.run(WalkToPlan::new(4, 4));
+  // r.run(WalkToPlan::new(6, 3));
+  // r.run(WalkToPlan::new(5, 10)); // 2F
+  // r.run(WalkToPlan::new(6, 1)); // 3F
+  // r.run(WalkToPlan::new(10, 6)); // 2F
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_hidden_item());
+  // r.run(SkipTextsPlan::new(1)); // Switch
+  // r.run(TextPlan::new()); // press?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Who wouldn't? // #inputs: 230872
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(16, 14));
+  // r.run(OverworldWaitPlan::fly_warp());
+  // r.run(WalkToPlan::new(21, 23)); // B1F
+  // r.run(WalkToPlan::new(19, 24));
+  // r.run(OverworldInteractPlan::with(5));
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found TM14
+  // r.run(WalkToPlan::new(18, 26)); // Switch
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_hidden_item());
+  // r.run(SkipTextsPlan::new(1)); // Switch
+  // r.run(TextPlan::new()); // press?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Who wouldn't? // #inputs: 232451
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(WalkToPlan::new(20, 4)); // Switch
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_hidden_item());
+  // r.run(SkipTextsPlan::new(1)); // Switch
+  // r.run(TextPlan::new()); // press?
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Who wouldn't? // #inputs: 233493
+  // r.save("multi_yellow_test4");
+  // r.load("multi_yellow_test4");
+  // r.run(WalkToPlan::new(5, 12)); // Secret Key
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(19)); // TM14
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(SkipTextsPlan::new(1)); // Booted up HM
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Teach Blizzard?
+  //   r.run(TwoOptionMenuPlan::yes());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(OverrideMovePlan::choose(1)); // Override Thrash
+  //   r.run(ListMenuPlan::quit());
+  //   r.run(StartMenuPlan::close());
+  // }
+  // r.run(OverworldInteractPlan::with(8));
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Secret Key
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Dig
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(35, 30));
+  // r.run(WalkToPlan::new(35, 31));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(1)); // Cut
+  //   r.run(TextScrollWaitPlan::new()); // used cut
+  // }
+  // r.run(WalkToPlan::new(12, 27)); // Enter Gym
+  // r.run(WalkToPlan::new(1, 4));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(1)); // Cut
+  //   r.run(TextScrollWaitPlan::new()); // used cut
+  // }
+  // r.run(WalkToPlan::new(3, 4)); // Beauty
+  // r.run(OverworldWaitPlan::new()); // Point-blank Trainer script load
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Beauty
+  // r.run(OverworldWaitPlan::trainer_battle(218)); // Beauty fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Beauty fight
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 238715
+  // r.save("multi_yellow_celadon_after_beauty");
+  // r.load("multi_yellow_celadon_after_beauty");
+  // r.run(WalkToPlan::new(4, 4)); // Erika
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(13)); // Erika
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::with_level_up(3)); // #inputs: 241804
+  // r.save("multi_yellow_celadon_after_erika");
+  // r.load("multi_yellow_celadon_after_erika");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // after texts
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not enough space
+  // r.run(WalkToPlan::new(5, 5));
+  // r.run(WalkToPlan::new(5, 6));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(1)); // Cut
+  //   r.run(TextScrollWaitPlan::new()); // used cut
+  // }
+  // r.run(WalkToPlan::new(5, 17));
+  // r.run(EdgeWarpPlan::new()); // edge warp
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.run(FlyToPlan::to_cinnabar_island());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(18, 3)); // Gym
+  // r.run(WalkToPlan::new(15, 9)); // Q1
+  // r.run(WalkToPlan::new(15, 8)); // Q1
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Q1
+  // r.run(SkipTextsPlan::new(9)); // Q1
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Q1 // #inputs: 244353
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(10, 2)); // Q2
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Q2
+  // r.run(SkipTextsPlan::new(2)); // Q2
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::no());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Q2 // #inputs: 245050
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(9, 8)); // Q3
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Q3
+  // r.run(SkipTextsPlan::new(1)); // Q3
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::no());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Q3
+  // r.run(WalkToPlan::new(9, 14)); // Q4
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Q4
+  // r.run(SkipTextsPlan::new(3)); // Q4
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::no());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Q4
+  // r.run(WalkToPlan::new(1, 15)); // Q5
+  // r.run(WalkToPlan::new(1, 14)); // Q5
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Q5
+  // r.run(SkipTextsPlan::new(3)); // Q5
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::yes());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Q5
+  // r.run(WalkToPlan::new(1, 9)); // Q6
+  // r.run(WalkToPlan::new(1, 8)); // Q6
+  // r.run(OverworldInteractPlan::with_hidden_item()); // Q6
+  // r.run(SkipTextsPlan::new(1)); // Q6
+  // r.run(TextPlan::new());
+  // r.run(TwoOptionMenuPlan::no());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Q6
+  // r.run(WalkToPlan::new(3, 5)); // Blaine
+  // r.run(WalkToPlan::new(3, 4)); // Blaine
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(6)); // Blaine
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // XSpd
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used XSpd
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, AIChooseMoveMetric.expect(Move::QuickAttack).and_then(TrainerAIMetric).expect(TrainerAIAction::NoAction)).with_skip_ends(2), // Speed rose
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(18, 41).filter(|v| if let FightTurnResult::Hit { damage } = v { (14..=(17-2)).contains(damage) } else { false }), false).with_skip_ends(4))); // Ninetales used Quick Attack
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 250710
+  // r.save("multi_yellow_after_blaine");
+  // r.load("multi_yellow_after_blaine");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // after texts
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not enough space
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Dig
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(50, 10));
+  // r.run(WalkToPlan::new(11, 10));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(3, 3));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(15), HoldTextDisplayOpenPlan)); // Give drink // #inputs: 252542
+  // r.run(WalkToPlan::new(5, 3));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(20, 10));
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(18, 21)); // enter Silph Co
+  // r.run(WalkToPlan::new(26, 0)); // 1F
+  // r.run(WalkToPlan::new(26, 0)); // 2F
+  // r.run(WalkToPlan::new(24, 0)); // 3F
+  // r.run(WalkToPlan::new(26, 0)); // 4F
+  // r.run(WalkToPlan::new(14, 3));
+  // r.run(WalkToPlan::new(13, 3));
+  // r.run(OverworldInteractPlan::with_hidden_item());
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Elixer
+  // r.run(WalkToPlan::new(8, 14));
+  // r.run(WalkToPlan::new(8, 15));
+  // r.run(OverworldInteractPlan::with(2));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Rocket
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 256272
+  // r.save("multi_yellow_saffron_after_rocket1");
+  // r.load("multi_yellow_saffron_after_rocket1");
+  // r.run(WalkToPlan::new(9, 15));
+  // r.run(WalkToPlan::new(17, 16));
+  // r.run(WalkToPlan::new(17, 15));
+  // r.run(WalkToPlan::new(20, 16));
+  // r.run(OverworldInteractPlan::with(8));
+  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Card Key
+  // r.run(WalkToPlan::new(9, 15));
+  // r.run(WalkToPlan::new(17, 16));
+  // r.run(WalkToPlan::new(17, 15));
+  // r.run(WalkToPlan::new(9, 13));
+  // r.run(WalkToPlan::new(8, 13));
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(OverworldInteractPlan::with_card_key_door()); // Door
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Card Key
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Card Key
+  // r.run(WalkToPlan::new(3, 15));
+  // r.run(WalkToPlan::new(18, 9));
+  // r.run(OverworldTurnPlan::new(L));
+  // r.run(OverworldInteractPlan::with_card_key_door()); // Door
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Card Key
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Card Key
+  // r.run(WalkToPlan::new(11, 11));
+  // r.run(WalkToPlan::new(3, 2));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Rival
+  // r.run(SeqPlan::new(SkipTextsPlan::new(9), HoldTextDisplayOpenPlan)); // Rival
+  // r.run(OverworldWaitPlan::trainer_battle(242)); // initiate Rival fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(2)); // Elixer
+  // r.run(PartyMenuPlan::choose(0)); // Nidoking
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, AIChooseMoveMetric.expect(Move::Psybeam).and_then(TrainerAIMetric).expect(TrainerAIAction::NoAction)), // PP was restored
+  //   TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Failed), false).with_skip_ends(4))); // Kadabra used Psybeam
+  // r.run(SkipTextsPlan::new(1)); // Move failed
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 263017
+  // r.save("multi_yellow_saffron_after_rival");
+  // r.load("multi_yellow_saffron_after_rival");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(14), HoldTextDisplayOpenPlan)); // after texts
+  // r.run(WalkToPlan::new(5, 7));
+  // r.run(WalkToPlan::new(3, 3));
+  // r.run(SeqPlan::new(TextPlan::new(), HoldTextDisplayOpenPlan)); // Rocket
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Rocket
+  // r.run(OverworldWaitPlan::trainer_battle(230)); // Rocket fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rocket fight
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1)); // Rocket fight //  #inputs: 266747
+  // r.save("multi_yellow_saffron_after_rocket");
+  // r.load("multi_yellow_saffron_after_rocket");
+  // r.run(SkipTextsPlan::new(2)); // after text
+  // r.run(SeqPlan::new(TextPlan::new(), HoldTextDisplayOpenPlan));
+  // r.run(WalkToPlan::new(6, 14));
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with_card_key_door()); // Door
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Card Key
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Card Key
+  // r.run(WalkToPlan::new(6, 13));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // Giovanni
+  // r.run(OverworldWaitPlan::trainer_battle(229)); // Giovanni fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Giovanni fight
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 270969
+  // r.save("multi_yellow_saffron_after_giovanni");
+  // r.load("multi_yellow_saffron_after_giovanni");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // Giovanni post-fight text
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Dig
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(50, 10));
+  // r.run(WalkToPlan::new(11, 10));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(5, 3));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(20, 10));
+  // r.run(WalkToPlan::new(34, 3)); // Enter Gym // 273063
+  // r.run(WalkToPlan::new(11, 15));
+  // r.run(WalkToPlan::new(15, 15));
+  // r.run(WalkToPlan::new(15, 5));
+  // r.run(WalkToPlan::new(1, 5));
+  // r.run(WalkToPlan::new(9, 10));
+  // r.run(WalkToPlan::new(9, 9));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(8)); // Sabrina
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // XSpd
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used XSpd
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, AIChooseMoveMetric.expect(Move::Flash).and_then(TrainerAIMetric).expect(TrainerAIAction::NoAction)).with_skip_ends(2), // Speed rose
+  //   TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Failed), false).with_skip_ends(4))); // Abra used Flash
+  // r.run(SkipTextsPlan::new(1)); // But it failed
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::with_level_up(6)); // #inputs: 277089
+  // r.save("multi_yellow_saffron_after_sabrina");
+  // r.load("multi_yellow_saffron_after_sabrina");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(8), HoldTextDisplayOpenPlan)); // after texts
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not enough space
+  // r.run(WalkToPlan::new(11, 11));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Dig
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.run(FlyToPlan::to_viridian_city());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(8)); // Max Ether
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(TextPlan::new()); // which technique?
+  //   r.run(SelectMoveMenuPlan::new(Move::HornDrill));
+  //   r.run(SkipTextsPlan::new(1)); // PP restored
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(32, 7)); // Enter Gym
+  // r.run(WalkToPlan::new(15, 5));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan));
+  // r.run(OverworldWaitPlan::trainer_battle(231)); // Cooltrainer fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Cooltrainer
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 281316
+  // r.save("multi_yellow_viridian_after_cooltrainerm");
+  // r.load("multi_yellow_viridian_after_cooltrainerm");
+  // r.run(WalkToPlan::new(10, 4));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan));
+  // r.run(OverworldWaitPlan::trainer_battle(224)); // Blackbelt fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Blackbelt
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Thunderbolt, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 284145
+  // r.save("multi_yellow_viridian_after_blackbelt");
+  // r.load("multi_yellow_viridian_after_blackbelt");
+  // r.run(WalkToPlan::new(16, 16));
+  // r.run(WalkToPlan::new(16, 17));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(32, 7)); // Enter Gym
+  // r.run(WalkToPlan::new(15, 6));
+  // r.run(WalkToPlan::new(2, 3));
+  // r.run(WalkToPlan::new(2, 2));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(10)); // Giovanni
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // XSpd
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used XSpd
+  // r.run(SkipTextsPlan::with_metric(1, TrainerAIMetric.expect(TrainerAIAction::GuardSpec)).with_skip_ends(2)); // Speed rose
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used Guard Spec
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // on Dugtrio
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // enemy // mon // fainted
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // mon // gained // num XP
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // I defeated U
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // First defeat text
+  // r.run(SkipTextsPlan::new(3)); // Additional defeat texts
+  // r.run(TextPlan::new()); // Additional defeat texts
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // player got // X for winning // #inputs: 290003
+  // r.save("multi_yellow_viridian_after_giovanni");
+  // r.load("multi_yellow_viridian_after_giovanni");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(8), HoldTextDisplayOpenPlan)); // after texts
+  // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // after texts
+  // r.run(WalkToPlan::new(15, 6));
+  // r.run(WalkToPlan::new(16, 16));
+  // r.run(WalkToPlan::new(16, 17));
+  // r.run(EdgeWarpPlan::new());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(16)); // HM04
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(SkipTextsPlan::new(1)); // Booted up HM
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Teach Strength?
+  //   r.run(TwoOptionMenuPlan::yes());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(OverrideMovePlan::choose(0)); // Override Dig
+  //   r.run(ListMenuPlan::choose(19)); // TM27
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(SkipTextsPlan::new(1)); // Booted up TM
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
+  //   r.run(TextPlan::new().with_skip_ends(2)); // Teach Fissure?
+  //   r.run(TwoOptionMenuPlan::yes());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(OverrideMovePlan::choose(3)); // Override Thunderbolt
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(OverworldJumpLedgePlan::new(D));
+  // r.run(WalkToPlan::new(-1, 17)); // Route 22
+  // r.run(WalkToPlan::new(29, 5)); // Rival
+  // r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan)); // Rival
+  // r.run(OverworldWaitPlan::trainer_battle(242)); // initiate Rival fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // XSpd
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used XSpd
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, AIChooseMoveMetric.expect(Move::Slash).and_then(TrainerAIMetric).expect(TrainerAIAction::NoAction)).with_skip_ends(2), // Speed rose
+  //   TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(30, 70).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage <= 27 } else { false }), false).with_skip_ends(4))); // Sandslash used Swift
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack)); // 295560
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::with_level_up(2)); // #inputs: 298795
+  // r.save("multi_yellow_route22_after_rival");
+  // r.load("multi_yellow_route22_after_rival");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Rival
+  // r.run(WalkToPlan::new(21, 6));
+  // r.run(OverworldJumpLedgePlan::new(D));
+  // r.run(WalkToPlan::new(8, 5));
+  // r.run(WalkToPlan::new(4, 2));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(4, 0));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(7, 136));
+  // r.run(SkipTextsPlan::new(1)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(9, 119));
+  // r.run(SkipTextsPlan::new(1)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(10, 105));
+  // r.run(SkipTextsPlan::new(1)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(10, 104));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(PartyMonMenuPlan::choose(0)); // Surf
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Got on
+  //   r.run(OverworldWaitPlan::auto_walk(U));
+  // }
+  // r.run(WalkToPlan::new(10, 96));
+  // r.run(SkipTextsPlan::new(1)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(10, 85));
+  // r.run(SkipTextsPlan::new(1)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(8, 71));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(11, 56));
+  // r.run(SkipTextsPlan::new(1)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(7, 35));
+  // r.run(SkipTextsPlan::new(1)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Badge check
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Badge check
+  // r.run(WalkToPlan::new(4, 31));
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Strength
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // Used Strength // #inputs: 304235
+  // }
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(WalkToPlan::new(5, 14));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(4, 16));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(5, 16));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(6, 16));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(7, 16));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(7, 17));
+  // r.run(WalkToPlan::new(9, 17));
+  // r.run(OverworldPushBoulderPlan::new(U));
+  // r.run(WalkToPlan::new(9, 16));
+  // r.run(OverworldPushBoulderPlan::new(U));
+  // r.run(WalkToPlan::new(8, 14));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(9, 14));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(10, 14));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(11, 14));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(12, 14));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(13, 14));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(14, 14));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(16, 15));
+  // r.run(OverworldPushBoulderPlan::new(U));
+  // r.run(WalkToPlan::new(16, 14));
+  // r.run(OverworldPushBoulderPlan::new(U));
+  // r.run(WalkToPlan::new(15, 12));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(17, 11));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(1, 1)); // 2F
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Strength
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // Used Strength // #inputs: 306673
+  // }
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(WalkToPlan::new(5, 14));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(3, 13));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(3, 14));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(4, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(3, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(23, 7)); // 3F
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Strength
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // Used Strength // #inputs: 308107
+  // }
+  // r.save("multi_yellow_test3");
+  // r.load("multi_yellow_test3");
+  // r.run(WalkToPlan::new(22, 5));
+  // r.run(WalkToPlan::new(22, 4));
+  // r.run(OverworldPushBoulderPlan::new(U));
+  // r.run(WalkToPlan::new(22, 3));
+  // r.run(OverworldPushBoulderPlan::new(U));
+  // r.run(WalkToPlan::new(23, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(22, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(21, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(20, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(19, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(18, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(17, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(16, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(15, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(14, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(13, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(12, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(11, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(10, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(9, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(8, 1));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(6, 0));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(7, 2));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(6, 2));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(5, 2));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(4, 2));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(2, 1));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(2, 2));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(2, 3));
+  // r.run(OverworldPushBoulderPlan::new(D));
+  // r.run(WalkToPlan::new(1, 5));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(17, 5));
+  // r.run(WalkToPlan::new(20, 15));
+  // r.run(WalkToPlan::new(21, 15));
+  // r.run(OverworldPushBoulderPlan::new(R));
+  // r.run(WalkToPlan::new(23, 15));
+  // r.run(OverworldWaitPlan::fly_warp());
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(2)); // Charmander
+  //   r.run(PartyMonMenuPlan::choose(0)); // Strength
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // Used Strength // #inputs: 311735
+  // }
+  // r.save("multi_yellow_test4");
+  // r.load("multi_yellow_test4");
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(2)); // Elixer
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(SkipTextsPlan::new(1)); // PP restored
+  // r.run(ListMenuPlan::choose(0)); // Bike
+  //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
+  // }
+  // r.run(WalkToPlan::new(24, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(23, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(22, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(21, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(20, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(19, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(18, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(17, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(16, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(15, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(14, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(13, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(12, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(11, 16));
+  // r.run(OverworldPushBoulderPlan::new(L));
+  // r.run(WalkToPlan::new(22, 14));
+  // r.run(WalkToPlan::new(25, 14));
+  // r.run(WalkToPlan::new(26, 8));
+  // r.run(WalkToPlan::new(29, 7));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(10, -1));
+  // r.run(WalkToPlan::new(10, 5));
+  // r.run(WalkToPlan::new(15, 9));
+  // r.run(WalkToPlan::new(15, 8));
+  // r.run(OverworldInteractPlan::with_hidden_item()); // PC
+  // r.run(SkipTextsPlan::new(1)); // PC access
+  // r.run(PCMainMenuPlan::mon()); // Bill's PC
+  // r.run(SkipTextsPlan::new(2)); // Bill's PC
+  // r.run(BillsPCMenuPlan::deposit()); // Bill's PC
+  // r.run(ListMenuPlan::choose(1)); // Deposit Pidgey
+  // r.run(DepositWithdrawMenuPlan::deposit()); // Deposit Pidgey
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // Pidgey deposited
+  // r.run(BillsPCMenuPlan::deposit()); // Bill's PC
+  // r.run(ListMenuPlan::choose(1)); // Deposit Charmander
+  // r.run(DepositWithdrawMenuPlan::deposit()); // Deposit Charmander
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // Charmander deposited
+  // r.run(BillsPCMenuPlan::quit()); // Bill's PC
+  // r.run(PCMainMenuPlan::quit()); // PC
+  // r.run(HoldTextDisplayOpenPlan); // PC // #inputs: 315177
+  // r.save("multi_yellow_test5");
+  // r.load("multi_yellow_test5");
+  // r.run(WalkToPlan::new(8, 0));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(WalkToPlan::new(4, 2));
+  // r.run(OverworldTurnPlan::new(R));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(9));
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 319964
+  // r.save("multi_yellow_after_lorelei");
+  // r.load("multi_yellow_after_lorelei");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan)); // after text
+  // r.run(WalkToPlan::new(4, 1));
+  // r.run(WalkToPlan::new(4, 0));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(WalkToPlan::new(4, 2));
+  // r.run(OverworldTurnPlan::new(R));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(10));
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 324457
+  // r.save("multi_yellow_after_bruno");
+  // r.load("multi_yellow_after_bruno");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // after text
+  // r.run(WalkToPlan::new(4, 1));
+  // r.run(WalkToPlan::new(4, 0));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(OverworldWaitPlan::auto_walk(U));
+  // r.run(WalkToPlan::new(4, 2));
+  // r.run(OverworldTurnPlan::new(R));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(12));
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // XSpd
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used XSpd
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, AIChooseMoveMetric.expect(Move::Lick).and_then(TrainerAIMetric).expect(TrainerAIAction::NoAction)).with_skip_ends(2), // Speed rose
+  //   TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Failed), false).with_skip_ends(4))); // Gengar used Lick
+  // r.run(SkipTextsPlan::new(1)); // But it failed // 326329
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up()); // 326844
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack)); // 327628 - 327411 = 217
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::with_level_up(2)); // #inputs: 329390
+  // r.save("multi_yellow_after_agatha");
+  // r.load("multi_yellow_after_agatha");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan)); // after text
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(2)); // Elixer
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(PartyMenuPlan::choose(0)); // Nidoking
+  //   r.run(SkipTextsPlan::new(1)); // PP restored
+  //   r.run(ListMenuPlan::quit());
+  //   r.run(StartMenuPlan::close());
+  // }
+  // r.run(WalkToPlan::new(4, 1));
+  // r.run(WalkToPlan::new(4, 0));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(WalkToPlan::new(5, 1));
+  // r.run(SeqPlan::new(SkipTextsPlan::new(13), HoldTextDisplayOpenPlan)); // Lance
+  // r.run(OverworldWaitPlan::trainer_battle(247)); // initiate Lance fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::HyperBeam))));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::Blizzard, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(3)); // #inputs: 335173
+  // r.save("multi_yellow_after_lance");
+  // r.load("multi_yellow_after_lance");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(14), HoldTextDisplayOpenPlan)); // after text
+  // r.run(WalkToPlan::new(5, 0));
+  // r.run(EdgeWarpPlan::new());
+  // r.run(SeqPlan::new(SkipTextsPlan::new(18), HoldTextDisplayOpenPlan)); // Rival
+  // r.run(OverworldWaitPlan::trainer_battle(243)); // initiate Rival fight
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(BattleMenuPlan::items());
+  // r.run(ListMenuPlan::choose(1)); // XSpd
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used XSpd
+  // r.run(SeqPlan::new(
+  //   SkipTextsPlan::with_metric(1, AIChooseMoveMetric.expect(Move::Kinesis).and_then(TrainerAIMetric).expect(TrainerAIAction::NoAction)).with_skip_ends(2), // Speed rose
+  //   TextPlan::with_metric(MoveEffectMetric.expect(MoveEffectResult::Failed), false).with_skip_ends(4))); // Alazkzam uses Kinesis
+  // r.run(SkipTextsPlan::new(1)); // But it failed
+  // r.save("multi_yellow_test2");
+  // r.load("multi_yellow_test2");
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst))); // 338996 // Fissure: 339097 - 338996 = 101 (-5)
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::HornDrill), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(EndTrainerBattlePlan::new(6)); // #inputs: 341875
+  // r.save("multi_yellow_after_champion");
+  // r.load("multi_yellow_after_champion");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // after text
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // after text
+  // r.run(SkipTextsPlan::new(6)); // after text
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // after text
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // after text
+  // r.save("multi_yellow_test");
+  // r.load("multi_yellow_test");
+  // r.run(SeqPlan::new(SkipTextsPlan::new(12), HoldTextDisplayOpenPlan)); // after text
+  // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // after text
+  // r.run(SeqPlan::new(SkipTextsPlan::new(15), HoldTextDisplayOpenPlan)); // after text
+  // r.save("multi_yellow_test2");
+  r.load("multi_yellow_test2");
+  r.run(TextPlan::new().with_skip_ends(2));
+  r.run(SkipTextsPlan::new(2));
 
+  
   // r.save("multi_yellow_test");
   // r.load("multi_yellow_test");
 

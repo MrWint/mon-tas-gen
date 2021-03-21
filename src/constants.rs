@@ -263,6 +263,9 @@ impl Move {
   pub fn is_gen1(self) -> bool {
     self as u8 <= Move::Struggle as u8
   }
+  pub fn is_ohko(self) -> bool {
+    self == Move::HornDrill || self == Move::Fissure || self == Move::Guillotine
+  }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Primitive, Serialize, Deserialize)]

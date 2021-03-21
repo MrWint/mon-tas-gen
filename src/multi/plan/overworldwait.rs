@@ -30,6 +30,9 @@ impl<R: JoypadAddresses + Gen1OverworldAddresses + Gen1DVAddresses> OverworldWai
   pub fn trainer_battle(id: u8) -> Self {
     Self::with_metric(OverworldInteractionMetric.expect(OverworldInteractionResult::TrainerBattle { species: id }))
   }
+  pub fn fly_warp() -> Self {
+    Self::with_metric(OverworldInteractionMetric.expect(OverworldInteractionResult::FlyWarpOrDungeonWarp))
+  }
 }
 impl<R: MultiRom, M: Metric<R>> Plan<R> for OverworldWaitPlan<M> {
   type Value = M::ValueType;

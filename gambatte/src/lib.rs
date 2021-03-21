@@ -476,7 +476,7 @@ fn load_file(file_name: &str) -> Vec<u8> {
 fn convert_address(address: i32) -> usize {
   let bank = address as usize >> 16;
   let add = address as usize & 0xffff;
-  assert!(add < 0x8000 && (add >= 0x4000 || bank == 0));
+  assert!(add < 0x8000 && (add >= 0x4000 || bank == 0), "add < 0x8000 && (add >= 0x4000 || bank == 0): add={:x}, bank={:x}", add, bank);
   add + bank.saturating_sub(1)*0x4000
 }
 

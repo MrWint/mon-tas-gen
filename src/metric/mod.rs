@@ -238,7 +238,7 @@ impl<R: JoypadAddresses + Gen2DVAddresses> Metric<R> for Gen2DVMetric {
   }
 }
 #[allow(dead_code)]
-pub struct VermilionFirstTrashCanMetric {}
+pub struct VermilionFirstTrashCanMetric;
 impl<R: JoypadAddresses + VermilionTrashCanAddresses> Metric<R> for VermilionFirstTrashCanMetric {
   type ValueType = u8;
 
@@ -248,7 +248,7 @@ impl<R: JoypadAddresses + VermilionTrashCanAddresses> Metric<R> for VermilionFir
   }
 }
 #[allow(dead_code)]
-pub struct VermilionSecondTrashCanMetric {}
+pub struct VermilionSecondTrashCanMetric;
 impl<R: JoypadAddresses + VermilionTrashCanAddresses> Metric<R> for VermilionSecondTrashCanMetric {
   type ValueType = u8;
 
@@ -258,7 +258,7 @@ impl<R: JoypadAddresses + VermilionTrashCanAddresses> Metric<R> for VermilionSec
   }
 }
 #[allow(dead_code)]
-pub struct TrainerIDMetric {}
+pub struct TrainerIDMetric;
 impl<R: JoypadAddresses + TrainerIDAddresses> Metric<R> for TrainerIDMetric {
   type ValueType = u16;
 

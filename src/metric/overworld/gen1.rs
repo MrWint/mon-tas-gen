@@ -12,6 +12,7 @@ pub enum OverworldInteractionResult {
   FlyWarpOrDungeonWarp,
   DisplayText { id: u8 },
   HiddenItem,
+  CardKeyDoor,
   YellowPikachuInteraction,
   WildEncounter { species: Pokemon, level: u8, dvs: DVs },
   TrainerBattle { species: u8 },
@@ -60,6 +61,7 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen1OverworldAddres
       R::OVERWORLD_WARP_FOUND_ADDRESS, // WarpFound1 or WarpFound2
       R::OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS, // HandleFlyWarpOrDungeonWarp
       R::OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS,
+      R::OVERWORLD_CARD_KEY_DOOR_FOUND_ADDRESS,
       R::OVERWORLD_A_BUTTON_Z_CHECK_1, // .displayDialogue - 12
       R::OVERWORLD_DISPLAY_TEXT_ADDRESS,
       R::OVERWORLD_DISPLAY_TEXT_FAILED_ADDRESS, // .noDirectionButtonsPressed - 3
@@ -89,6 +91,8 @@ pub fn get_overworld_interaction_result<R: JoypadAddresses + Gen1OverworldAddres
     OverworldInteractionResult::DisplayText { id: gb.gb().read_memory(R::OVERWORLD_DISPLAY_TEXT_ID_MEM_ADDRESS) }
   } else if hit == R::OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS {
     OverworldInteractionResult::HiddenItem
+  } else if hit == R::OVERWORLD_CARD_KEY_DOOR_FOUND_ADDRESS {
+    OverworldInteractionResult::CardKeyDoor
   } else if hit == R::OVERWORLD_INIT_BATTLE_COMMON_ADDRESS {
     get_overworld_interaction_battle_result(gb)
   } else if hit == R::OVERWORLD_TURNING_DONE_ADDRESS {

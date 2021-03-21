@@ -85,6 +85,7 @@ pub trait Gen1OverworldAddresses {
   const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16;
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32;
   const OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS: i32; // CheckForHiddenObjectOrBookshelfOrCardKeyDoor.hiddenObjectNotFound - 7
+  const OVERWORLD_CARD_KEY_DOOR_FOUND_ADDRESS: i32; // PrintCardKeyText.cardKeyDoorInFrontOfPlayer + 7
   const OVERWORLD_A_BUTTON_Z_CHECK_1: i32; // .displayDialogue - 12
   const OVERWORLD_A_BUTTON_Z_CHECK_2: i32; // .displayDialogue - 3
   const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32; // 3f:4f20 InitializePikachuTextID
@@ -329,6 +330,13 @@ pub trait VermilionTrashCanAddresses {
   const SECOND_TRASH_CAN_MEM_ADDRESS: u16; // wSecondLockTrashCanIndex
   const AFTER_SECOND_TRASH_CAN_ADDRESS: i32; // GymTrashScript.trySecondLock - 2
 }
+pub trait FlyLocationsAddresses {
+  const FLY_LOCATIONS_MEM_ADDRESS: u16; // wFlyLocationsList
+}
+pub trait PushBoulderAddresses {
+  const AFTER_TRY_PUSHING_BOULDER_ADDRESS: i32; // RunMapScript + 11
+  const BOULDER_FLAGS_MEM_ADDRESS: u16; // wFlags_0xcd60
+}
 // Gen 1
 #[allow(dead_code)]
 pub enum Red {}
@@ -424,6 +432,7 @@ macro_rules! impl_red_blue_common_addresses {
       const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16 = 0xD42F; // wDestinationWarpID
       const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0965; // HandleFlyWarpOrDungeonWarp
       const OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS: i32 = 0x0_3edd - 4; // CheckForHiddenObjectOrBookshelfOrCardKeyDoor.hiddenObjectNotFound - 4
+      const OVERWORLD_CARD_KEY_DOOR_FOUND_ADDRESS: i32 = 0x14_669c + 7; // PrintCardKeyText.cardKeyDoorInFrontOfPlayer + 7
       const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_047d-12; // .displayDialogue - 12
       const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_047d-3; // .displayDialogue - 3
       const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32 = 0; // 3f:4f20 InitializePikachuTextID
@@ -598,6 +607,13 @@ macro_rules! impl_red_blue_common_addresses {
       const SECOND_TRASH_CAN_MEM_ADDRESS: u16 = 0xd744; // wSecondLockTrashCanIndex
       const AFTER_SECOND_TRASH_CAN_ADDRESS: i32 = 0x17_5e53-2; // GymTrashScript.trySecondLock - 2
     }
+    impl FlyLocationsAddresses for $t {
+      const FLY_LOCATIONS_MEM_ADDRESS: u16 = 0xcd3e; // wFlyLocationsList
+    }
+    impl PushBoulderAddresses for $t {
+      const AFTER_TRY_PUSHING_BOULDER_ADDRESS: i32 = 0x00_101b+11; // RunMapScript + 11
+      const BOULDER_FLAGS_MEM_ADDRESS: u16 = 0xcd60; // wFlags_0xcd60
+    }
     )+
   }
 }
@@ -686,6 +702,7 @@ impl Gen1OverworldAddresses for Yellow {
   const OVERWORLD_WARP_ENTRANCE_MEM_ADDRESS: u16 = 0xD42E; // wDestinationWarpID
   const OVERWORLD_FLY_DUNGEON_WARP_FOUND_ADDRESS: i32 = 0x0_0794; // HandleFlyWarpOrDungeonWarp
   const OVERWORLD_HIDDEN_ITEM_FOUND_ADDRESS: i32 = 0x0_3f1f - 7; // CheckForHiddenObjectOrBookshelfOrCardKeyDoor.hiddenObjectNotFound - 7
+  const OVERWORLD_CARD_KEY_DOOR_FOUND_ADDRESS: i32 = 0x14_65fc + 7; // PrintCardKeyText.cardKeyDoorInFrontOfPlayer + 7
   const OVERWORLD_A_BUTTON_Z_CHECK_1: i32 = 0x0_02b2; // different in Yellow
   const OVERWORLD_A_BUTTON_Z_CHECK_2: i32 = 0x0_02c5-3; // .displayDialogue - 3
   const OVERWORLD_YELLOW_PIKACHU_INTERACTION_ADDRESS: i32 = 0x3f_4f20; // InitializePikachuTextID
@@ -869,6 +886,13 @@ impl VermilionTrashCanAddresses for Yellow {
   const AFTER_FIRST_TRASH_CAN_ADDRESS: i32 = 0x6_5884-1; // VermilionCity_Script.initCityScript - 1
   const SECOND_TRASH_CAN_MEM_ADDRESS: u16 = 0xd743; // wSecondLockTrashCanIndex
   const AFTER_SECOND_TRASH_CAN_ADDRESS: i32 = 0x17_5e98-2; // GymTrashScript.trySecondLock - 2
+}
+impl FlyLocationsAddresses for Yellow {
+  const FLY_LOCATIONS_MEM_ADDRESS: u16 = 0xcd3e; // wFlyLocationsList
+}
+impl PushBoulderAddresses for Yellow {
+  const AFTER_TRY_PUSHING_BOULDER_ADDRESS: i32 = 0x00_0d2c+11; // RunMapScript + 11
+  const BOULDER_FLAGS_MEM_ADDRESS: u16 = 0xcd60; // wFlags_0xcd60
 }
 
 // Gen 2
