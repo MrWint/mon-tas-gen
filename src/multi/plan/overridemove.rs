@@ -26,6 +26,38 @@ impl OverrideMovePlan {
     plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(3))); // mon // learned // move // !
     ListPlan::new(plans)
   }
+  pub fn choose_it<R: MultiRom + TextAddresses + HandleMenuInputAddresses>(index: u8) -> ListPlan<R> {
+    let mut plans: Vec<Box<dyn Plan<R, Value=()>>> = vec![];
+    plans.push(Box::new(SkipTextsITPlan::new(1))); // mon // trying to learn
+    plans.push(Box::new(SkipTextsITPlan::new(1))); // move // .
+    plans.push(Box::new(SkipTextsITPlan::new(1))); // but // mon // can't learn more
+    plans.push(Box::new(SkipTextsITPlan::new(1))); // than 4 moves
+    plans.push(Box::new(SkipTextsITPlan::new(1))); // delete move to make room
+    plans.push(Box::new(TwoOptionMenuPlan::yes())); // cancels IT
+    plans.push(Box::new(TextPlan::new())); // which move should be forgotten?
+    plans.push(Box::new(OverrideMoveMenuPlan::choose(index))); // Override Horn Attack
+    plans.push(Box::new(SeqPlan::new(TextPlan::new(), TextCommandPausePlan::new()))); // 1, 2, and
+    plans.push(Box::new(SeqPlan::new(TextPlan::new(), SeqPlan::new(TextCommandPausePlan::new(), TextScrollWaitPlan::new())))); // poof
+    plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(3))); // mon // forgot // move // .
+    plans.push(Box::new(SkipTextsPlan::new(1))); // and
+    plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(3))); // mon // learned // move // !
+    ListPlan::new(plans)
+  }
+  pub fn skip<R: MultiRom + TextAddresses + HandleMenuInputAddresses>() -> ListPlan<R> {
+    let mut plans: Vec<Box<dyn Plan<R, Value=()>>> = vec![];
+    plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(1))); // mon // trying to learn
+    plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(1))); // move // .
+    plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(2))); // but // mon // can't learn more
+    plans.push(Box::new(SkipTextsPlan::new(1))); // than 4 moves
+    plans.push(Box::new(SkipTextsPlan::new(1))); // delete move to make room
+    plans.push(Box::new(TextPlan::new().with_skip_ends(2))); // for // move // ?
+    plans.push(Box::new(TwoOptionMenuPlan::no()));
+    plans.push(Box::new(TextPlan::new().with_skip_ends(2))); // Don't learn?
+    plans.push(Box::new(TwoOptionMenuPlan::yes()));
+    plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(1))); // mon // didn't learn
+    plans.push(Box::new(SkipTextsPlan::new(1).with_skip_ends(1))); // move  // !
+    ListPlan::new(plans)
+  }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

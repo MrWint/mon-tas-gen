@@ -55,8 +55,8 @@ pub enum EnemyAttackDesc {
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct AttackDesc {
-  mov: Move,
-  typ: AttackType,
+  pub mov: Move,
+  pub typ: AttackType,
 }
 impl AttackDesc {
   pub fn ohko(mov: Move) -> Self {
@@ -159,6 +159,7 @@ impl<R> FightTurnPlan<R> {
   fn side_effect_text_skips(&self, mov: Move) -> u32 {
     match mov {
       Move::Ember => 0,
+      Move::Bite => 0,
       _ => 2,
     }
   }
@@ -365,7 +366,7 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
           self.battle_menu_plan.as_mut().unwrap().restore(sub_plan_state);
         },
         FightTurnProgress::BattleMenuSelectMove => {
-          self.select_move_menu_plan = Some(Box::new(SelectMoveMenuPlan::with_metric(self.player_attack.mov, MoveSelectMetric::new(&self))));
+          self.select_move_menu_plan = Some(Box::new(SelectMoveMenuPlan::with_metric(self.player_attack.mov, MoveSelectMetric::new(&self.enemy_attack, self.move_order))));
           self.select_move_menu_plan.as_mut().unwrap().restore(sub_plan_state);
         },
         FightTurnProgress::FirstAttackUsedMoveText => {
@@ -399,7 +400,7 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
     gb.restore(state);
     self.enemy_hp = BattleMonInfoFn::new(Who::Enemy).invoke(gb).hp;
     if self.skip_battle_menu {
-      self.select_move_menu_plan = Some(Box::new(SelectMoveMenuPlan::with_metric(self.player_attack.mov, MoveSelectMetric::new(&self))));
+      self.select_move_menu_plan = Some(Box::new(SelectMoveMenuPlan::with_metric(self.player_attack.mov, MoveSelectMetric::new(&self.enemy_attack, self.move_order))));
       self.select_move_menu_plan.as_mut().unwrap().initialize(gb, &state);
       self.progress = FightTurnProgress::BattleMenuSelectMove;
     } else {
@@ -449,7 +450,7 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
       FightTurnProgress::BattleMenuSelectFight => {
         match self.battle_menu_plan.as_mut().unwrap().execute_input(gb, state, input) {
           Some((new_state, Some(()))) => {
-            self.select_move_menu_plan = Some(Box::new(SelectMoveMenuPlan::with_metric(self.player_attack.mov, MoveSelectMetric::new(&self))));
+            self.select_move_menu_plan = Some(Box::new(SelectMoveMenuPlan::with_metric(self.player_attack.mov, MoveSelectMetric::new(&self.enemy_attack, self.move_order))));
             self.select_move_menu_plan.as_mut().unwrap().initialize(gb, &new_state);
             self.progress = FightTurnProgress::BattleMenuSelectMove;
             Some((new_state, None))
@@ -748,25 +749,25 @@ impl<R: MultiRom + HandleMenuInputAddresses + BattleMovesInfoAddresses + BattleM
   }
 }
 
-struct MoveSelectMetric {
+pub struct MoveSelectMetric {
   expected_ai_move: Option<Move>,
   expected_move_order: Option<MoveOrder>,
   before_move_metric: BattleBeforeMoveMetric,
 }
 impl MoveSelectMetric {
-  fn new<R>(plan: &FightTurnPlan<R>) -> Self {
-    let expected_ai_move = match &plan.enemy_attack {
+  pub fn new(enemy_attack: &EnemyAttackDesc, move_order: Option<MoveOrder>) -> Self {
+    let expected_ai_move = match &enemy_attack {
       EnemyAttackDesc::Attack(attack) => Some(attack.mov),
       _ => None,
     };
-    let expected_move_order = if let EnemyAttackDesc::NoAttack = plan.enemy_attack {
-      assert!(plan.move_order != Some(MoveOrder::EnemyFirst), "Enemy can't go first: No attack specified");
+    let expected_move_order = if let EnemyAttackDesc::NoAttack = enemy_attack {
+      assert!(move_order != Some(MoveOrder::EnemyFirst), "Enemy can't go first: No attack specified");
       Some(MoveOrder::PlayerFirst)
-    } else { plan.move_order };
+    } else { move_order };
     Self {
       expected_ai_move,
       expected_move_order,
-      before_move_metric: BattleBeforeMoveMetric::for_enemy(&plan.enemy_attack), // may be changed to player later
+      before_move_metric: BattleBeforeMoveMetric::for_enemy(enemy_attack), // may be changed to player later
     }
   }
 }
@@ -786,12 +787,12 @@ impl<R: MultiRom + AIChooseMoveAddresses + BattleDetermineMoveOrderAddresses + B
   }
 }
 
-struct BattleBeforeMoveMetric {
+pub struct BattleBeforeMoveMetric {
   who: Who,
   expected_trainer_ai: TrainerAIAction,
 }
 impl BattleBeforeMoveMetric {
-  fn for_enemy(enemy_attack: &EnemyAttackDesc) -> Self {
+  pub fn for_enemy(enemy_attack: &EnemyAttackDesc) -> Self {
     let expected_trainer_ai = match enemy_attack {
       EnemyAttackDesc::TrainerAI(ai_action) => *ai_action,
       _ => TrainerAIAction::NoAction,
@@ -801,13 +802,13 @@ impl BattleBeforeMoveMetric {
       expected_trainer_ai,
     }
   }
-  fn for_player() -> Self {
+  pub fn for_player() -> Self {
     Self {
       who: Who::Player,
       expected_trainer_ai: TrainerAIAction::NoAction,
     }
   }
-  fn with_who(&self, who: Who) -> Self { Self {who, ..*self} }
+  pub fn with_who(&self, who: Who) -> Self { Self {who, ..*self} }
 }
 impl<R: MultiRom + BattleObedienceAddresses + Gen1TrainerAIAddresses> Metric<R> for BattleBeforeMoveMetric {
   type ValueType = ();
@@ -825,7 +826,7 @@ impl<R: MultiRom + BattleObedienceAddresses + Gen1TrainerAIAddresses> Metric<R> 
 }
 
 
-struct UseMoveMetric {
+pub struct UseMoveMetric {
   typ: AttackType,
   max_damage: u16,
   max_crit_damage: u16,
@@ -833,7 +834,7 @@ struct UseMoveMetric {
   before_opp_move_metric: Option<BattleBeforeMoveMetric>,
 }
 impl UseMoveMetric {
-  fn new(attack: &AttackDesc, move_info: &MoveInfo, before_opp_move_metric: Option<BattleBeforeMoveMetric>) -> Self {
+  pub fn new(attack: &AttackDesc, move_info: &MoveInfo, before_opp_move_metric: Option<BattleBeforeMoveMetric>) -> Self {
     assert!(attack.mov == move_info.mov);
     Self {
       typ: attack.typ.clone(),
@@ -880,12 +881,12 @@ impl<R: MultiRom + Gen1FightTurnAddresses + Gen1MoveEffectAddresses + BattleObed
 }
 
 
-struct AfterHitTextMetric {
+pub struct AfterHitTextMetric {
   effect: Option<MoveEffectResult>,
   before_opp_move_metric: Option<BattleBeforeMoveMetric>,
 }
 impl AfterHitTextMetric {
-  fn new(effect: Option<MoveEffectResult>, before_opp_move_metric: Option<BattleBeforeMoveMetric>) -> Self {
+  pub fn new(effect: Option<MoveEffectResult>, before_opp_move_metric: Option<BattleBeforeMoveMetric>) -> Self {
     Self {
       effect,
       before_opp_move_metric,

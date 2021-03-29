@@ -43,10 +43,10 @@ fn main() {
   // crate::run::crystal_desync::start();
   // crate::run::crystal_glitchless::start();
   // crate::run::blue_testing::start();
-  // crate::run::multi_blue::start();
+  crate::run::multi_blue::start();
   // crate::run::multi_red::start();
   // crate::run::multi_testing::start();
-  crate::run::multi_yellow::start();
+  // crate::run::multi_yellow::start();
   // crate::run::silver_testing::start();
   // crate::run::yellow_testing::start();
 }
@@ -56,15 +56,15 @@ fn main() {
 fn convert_efl() {
   let sdl = Sdl::init_sdl(1 /* num screens */, 3 /* scale */);
   let (hi_inputs, lo_inputs) = {
-    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
-    ftii::to_ftii::<Crystal>(gb, read_bk2_inputs("temp/crystal_glitchless_90.bk2").unwrap())
+    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/blue.gb", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl.clone(), 0 /* screen */));
+    ftii::to_ftii::<Blue>(gb, read_bk2_inputs("temp/PokemonBlue2020.bk2").unwrap())
   };
 
   let inputs = {
-    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/crystal.gbc", true /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
-    ftii::from_ftii::<Crystal>(gb, hi_inputs, lo_inputs)
+    let gb = Gambatte::create("roms/gbc_bios.bin", "roms/blue.gb", false /* equal length frames */, 0 /* RTC divisor offset */, SdlScreen::new(sdl, 0 /* screen */));
+    ftii::from_ftii::<Blue>(gb, hi_inputs, lo_inputs)
   };
-  Bk2Writer::new::<Crystal>().with_equal_length_frames(true).write_bk2("temp/crystal_glitchless_90_efl.bk2", &inputs).unwrap();
+  Bk2Writer::new::<Blue>().with_equal_length_frames(false).write_bk2("temp/PokemonBlue2020_clean.bk2", &inputs).unwrap();
 }
 
 

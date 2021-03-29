@@ -111,7 +111,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses, M: Metric<R>> Plan<R> for NamingScr
     } else if input.contains(SELECT) {
       if self.letter_progress >= 1 { Some(Input::empty()) } else { None }
     } else if input.contains(B) {
-      if self.letter_progress >= self.fill_letter_count { Some(B) } else if self.letter_progress >= 1 { None } else { Some(Input::empty()) }
+      if self.letter_progress < 2 * self.fill_letter_count - 1 && self.letter_progress >= self.fill_letter_count { Some(B) } else if self.letter_progress >= 1 { None } else { Some(Input::empty()) }
     } else if input.contains(A) {
       if self.letter_progress >= self.fill_letter_count { None } else if self.letter_progress == 0 && self.delta != (0, 0) { None } else { Some(A) }
     } else { Some(Input::empty()) }
@@ -133,7 +133,7 @@ impl<R: Rom + JoypadLowSensitivityAddresses, M: Metric<R>> Plan<R> for NamingScr
     } else if pressed.contains(SELECT) {
       if self.letter_progress >= 1 { delay = true; } else { return None; }
     } else if pressed.contains(B) {
-      if self.letter_progress >= self.fill_letter_count { self.letter_progress += 1; } else if self.letter_progress >= 1 { return None; } else { delay = true; }
+      if self.letter_progress < 2 * self.fill_letter_count - 1 && self.letter_progress >= self.fill_letter_count { self.letter_progress += 1; } else if self.letter_progress >= 1 { return None; } else { delay = true; }
     } else if pressed.contains(A) {
       if self.letter_progress >= self.fill_letter_count { return None; } else if self.letter_progress == 0 && self.delta != (0, 0) { return None; } else { self.letter_progress += 1; }
     } else { delay = true; }

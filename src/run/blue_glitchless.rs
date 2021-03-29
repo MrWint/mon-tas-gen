@@ -1576,28 +1576,29 @@ fn run(r: &mut GbRunner<Blue>) {
   // r.run(EndTrainerBattleSegment::with_defeat_texts(2).with_name_in_defeat_texts());
   // r.save("blue_tower_after_rival");
 
-  // r.load("blue_tower_after_rival");
-  // r.run(SkipTextsSegment::new(10).with_confirm_input(B)); // rival post-fight text
-  // r.run(OverworldMoveSegment::turn(D));
-  // r.run(WalkToSegment::new(3, 9)); // 3F
-  // r.run(OverworldMoveSegment::turn(U));
-  // r.run(WalkToSegment::new(18, 9)); // 4F
-  // r.run(OverworldMoveSegment::turn(L));
-  // r.run(WalkToSegment::new(17, 7)); // Channeler
-  // r.run(WalkToSegment::new(16, 7)); // Channeler
-  // r.run(OverworldMoveSegment::interact_with(2));
-  // r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Channeler
-  // r.run(OHKOSegment::new(Move::IceBeam));
-  // r.run(NextTrainerMonSegment::new());
-  // r.run(OHKOSegment::new(Move::IceBeam));
-  // r.run(EndTrainerBattleSegment::with_defeat_texts(1).with_name_in_defeat_texts().with_level_up());
+  r.load("blue_tower_after_rival");
+  r.run(SkipTextsSegment::new(10).with_confirm_input(B)); // rival post-fight text
+  r.run(OverworldMoveSegment::turn(D));
+  r.run(WalkToSegment::new(3, 9)); // 3F
+  r.debug_write_memory(0xD16D, 1); // Set to 1HP
+  r.run(OverworldMoveSegment::turn(U));
+  r.run(WalkToSegment::new(18, 9)); // 4F
+  r.run(OverworldMoveSegment::turn(L));
+  r.run(WalkToSegment::new(17, 7)); // Channeler
+  r.run(WalkToSegment::new(16, 7)); // Channeler
+  r.run(OverworldMoveSegment::interact_with(2));
+  r.run(StartTrainerBattleSegment::new().with_pre_battle_texts(1)); // Channeler
+  r.run(OHKOSegment::new(Move::IceBeam));
+  r.run(NextTrainerMonSegment::new());
+  r.run(OHKOSegment::new(Move::IceBeam));
+  r.run(EndTrainerBattleSegment::with_defeat_texts(1).with_name_in_defeat_texts().with_level_up());
   // r.save("blue_tower_after_channeler1");
 
   // r.load("blue_tower_after_channeler1");
-  // r.run(WalkToSegment::new(3, 9).with_buffer_size(64)); // 5F
-  // r.run(OverworldMoveSegment::turn(D).with_buffer_size(64));
-  // r.run(WalkToSegment::new(11, 9).into(OverworldInteractionResult::NoOverworldInput).with_buffer_size(64)); // Heal pad
-  // r.run(SkipTextsSegment::new(2).with_confirm_input(B)); // heal pad // 166054
+  r.run(WalkToSegment::new(3, 9).with_buffer_size(64)); // 5F
+  r.run(OverworldMoveSegment::turn(D).with_buffer_size(64));
+  r.run(WalkToSegment::new(11, 9).into(OverworldInteractionResult::NoOverworldInput).with_buffer_size(64)); // Heal pad
+  r.run(SkipTextsSegment::new(2).with_confirm_input(B)); // heal pad // 166054 / 165992
   // r.run(WalkToSegment::new(18, 9)); // 6F
   // // r.debug_write_memory(0xD16D, 1); // Set to 1HP
   // r.run(OverworldMoveSegment::turn(L));
