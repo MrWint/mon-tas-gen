@@ -160,6 +160,7 @@ impl<R> FightTurnPlan<R> {
     match mov {
       Move::Ember => 0,
       Move::Bite => 0,
+      Move::IceBeam => 0,
       _ => 2,
     }
   }

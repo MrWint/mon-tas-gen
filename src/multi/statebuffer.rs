@@ -6,7 +6,7 @@ use super::*;
 use crate::big_array::BigArray;
 
 pub const MULTI_STATE_BUFFER_SINGLE_RNG_MAX_SIZE: usize = 4; // how many states with the same RNG value are kept at most.
-pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 64;
+pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
 pub const MULTI_STATE_BUFFER_HARD_LIMIT_MAX_SIZE: usize = MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE * 16;
 
 #[derive(Clone, Serialize, Deserialize)]
