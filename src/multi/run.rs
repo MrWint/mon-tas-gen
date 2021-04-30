@@ -139,6 +139,9 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
       new_inputs.set_input_lo(input_frame_lo, input);
       let multi_state = MultiState::new([new_multi_state_item], new_inputs);
       if is_done {
+        if self.final_states.is_empty() {
+          log::debug!("first final state found with input frame {}", multi_state.get_next_input_frame());
+        }
         self.final_states.add_state(multi_state);
       } else {
         self.add_state(multi_state);

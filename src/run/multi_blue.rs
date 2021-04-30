@@ -25,12 +25,12 @@ pub fn start() {
   // r.run(MainMenuPlan::new()); // main menu
   // r.run(SkipTextsPlan::new(13)); // oak speech
   // r.run(IntroNameMenuPlan::choose_custom_name()); // own name
-  // r.run(NamingScreenPlan::with_letter(b'I'));
+  // r.run(NamingScreenPlan::with_letter(b'B'));
   // r.run(SkipTextsPlan::new(5)); // oak speech
   // r.run(IntroNameMenuPlan::choose_custom_name()); // rival name
   // r.run(NamingScreenPlan::with_letter(b'U'));
   // r.run(SkipTextsPlan::new(7)); // oak speech
-  // r.run(TextPlan::new()); // ... awaits let's go
+  // r.run(TextPlan::new()); // ... awaits let's go // #inputs: 2500
   // r.save("multi_blue_intro");
   // r.load("multi_blue_intro");
   // r.run(WalkToPlan::new(7, 1)); // go down stairs
@@ -79,14 +79,15 @@ pub fn start() {
   // r.run(SkipTextsPlan::new(1).with_skip_ends(3)); // received Squirtle! Do you want...
   // r.run(TextPlan::new().with_skip_ends(2)); // give nickname?
   // r.run(TwoOptionMenuPlan::yes()); // give nickname
-  //   r.run(NamingScreenPlan::with_metric(b'A', Gen1DVMetric {}.filter(|v| {
+  //   r.run(NamingScreenPlan::with_metric(b'S', Gen1DVMetric {}.filter(|v| {
   //     // log::info!("Inspect DVs: {:?}", v);
+  //     // if v.atk != 14 || v.def < 0 || v.def > 2 || v.spc != 15 || v.spd != 15 || v.hp() != 3 { return false; } // squirtle DVs
   //     if v.atk != 14 || v.def < 6 || v.def > 8 || v.spc != 15 || v.spd != 15 || v.hp() != 3 { return false; } // squirtle DVs
   //     log::info!("Chosen DVs: {:?}", v); true
   //   }).into_unit()));
+  // r.save("multi_blue_chosen_starter_"); // DVs: 14 / 2|6 / 15 / 15 // #inputs: 5914
+  // r.load("multi_blue_chosen_starter_");
   // r.run(HoldTextDisplayOpenPlan::new());
-  // r.save("multi_blue_chosen_starter"); // DVs: 14 / 4 / 15 / 15
-  // r.load("multi_blue_chosen_starter");
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // I'll take this one then
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
@@ -99,19 +100,13 @@ pub fn start() {
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rival fight
   // // r.run(FightTurnPlan::new(AttackDesc::stat_up_down(Move::TailWhip), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)), None));
   // r.run(FightKOPlan::new(Move::Tackle, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl))));
-  // r.run(EndTrainerBattlePlan::with_level_up(3)); // Rival1 fight // #inputs: 9080
-  // r.save("multi_blue_after_rival1");
-  // r.load("multi_blue_after_rival1");
+  // r.run(EndTrainerBattlePlan::with_level_up(3)); // Rival1 fight // #inputs: 9080 9087 / 9094
+  // r.save("multi_blue_after_rival1_");
+  // r.load("multi_blue_after_rival1_");
   // r.run(OverworldWaitPlan::new()); // advance map script (abSs buttons allowed)
   // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())); // after rival1 texts
-  // {
-  //   r.run(OverworldOpenStartMenuPlan::new()); // Open start menu
-  //   r.run(StartMenuPlan::options()); // main menu
-  //   r.run(ChangeOptionsPlan::new()); // set options
-  //   r.run(StartMenuPlan::close()); // main menu
-  // }
   // r.run(WalkToPlan::new(5, 11)); // Leave lab
-  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 9695
+  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 9691 - 9617 = 74
   // r.run(WalkToPlan::new(10, -1));
   // r.run(WalkToPlan::new(11, -1)); // Enter Viridian
   // r.run(WalkToPlan::new(29, 19)); // Enter Mart, starts cutscene
@@ -120,11 +115,15 @@ pub fn start() {
   // r.run(OverworldWaitPlan::auto_walk(U)); // mart cutscene
   // r.run(OverworldWaitPlan::auto_walk(L)); // mart cutscene
   // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())); // mart cutscene
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new()); // Open start menu
+  //   r.run(StartMenuPlan::options()); // main menu
+  //   r.run(ChangeOptionsPlan::new()); // set options
+  //   r.run(StartMenuPlan::close()); // main menu
+  // }
   // r.run(WalkToPlan::new(3, 6));
   // r.run(WalkToPlan::new(3, 7));
-  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 11942
-  // r.save("multi_blue_test");
-  // r.load("multi_blue_test");
+  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 11931 - 11865 = 66
   // r.run(WalkToPlan::new(29, 26));
   // r.run(OverworldJumpLedgePlan::new(D)); // Jump ledge
   // r.run(WalkToPlan::new(21, 36)); // enter Route 1
@@ -146,9 +145,9 @@ pub fn start() {
   // r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan::new())); // Oak speech: greatest undertaking
   // r.run(SeqPlan::new(SkipTextsPlan::new(8), HoldTextDisplayOpenPlan::new())); // Oak speech: leave it to me
   // r.run(WalkToPlan::new(4, 11)); // leave
-  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 16089
-  // r.save("multi_blue_after_oak_parcel");
-  // r.load("multi_blue_after_oak_parcel");
+  // r.run(EdgeWarpPlan::new()); // go outside // inputs: 16078 / 16086
+  // r.save("multi_blue_after_oak_parcel_");
+  // r.load("multi_blue_after_oak_parcel_");
   // r.run(WalkToPlan::new(10, -1)); // enter Route 1
   // r.run(WalkToPlan::new(11, -1)); // Enter Viridian
   // r.run(WalkToPlan::new(18, -1)); // Enter Route 2
@@ -166,9 +165,9 @@ pub fn start() {
   //       log::info!("Pika DVs: {:?}", dvs); true
   //     } else { false }
   //   } else { false }
-  // }).into_unit()));
-  // r.save("multi_blue_pikachu_encounter");
-  // r.load("multi_blue_pikachu_encounter");
+  // }).into_unit())); // #inputs: 19401 // 19423
+  // r.save("multi_blue_pikachu_encounter_");
+  // r.load("multi_blue_pikachu_encounter_");
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Wild Pikachu appeared!
   // r.run(TextPlan::new().with_skip_ends(2)); // Go, Pikachu!
   // r.run(FightTurnPlan::new(AttackDesc::hit(Move::Tackle, 6..=6), EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::ThunderShock, 10..=10)), None));
@@ -176,16 +175,16 @@ pub fn start() {
   // r.run(FightTurnPlan::new(AttackDesc::hit(Move::Tackle, 6..=6), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Growl)), None));
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // enemy // mon // fainted
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // mon // gained // num XP
-  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // mon // grew to level // X // #inputs: 22005
-  // r.save("multi_blue_after_pikachu_encounter");
-  // r.load("multi_blue_after_pikachu_encounter");
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // mon // grew to level // X // #inputs: 21351 // 21320 / 21037
+  // r.save("multi_blue_after_pikachu_encounter_");
+  // r.load("multi_blue_after_pikachu_encounter_");
   // r.run(WalkToPlan::new(2, 19));
   // r.run(OverworldInteractPlan::with(4)); // Bugcatcher
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1));
   // r.run(FightKOPlan::new(Move::Tackle, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))));
-  // r.run(EndTrainerBattlePlan::with_learn_move(2)); // Bugcatcher fight // #inputs: 25267
-  // r.save("multi_blue_viridian_after_bugcatcher");
-  // r.load("multi_blue_viridian_after_bugcatcher");
+  // r.run(EndTrainerBattlePlan::with_learn_move(2)); // Bugcatcher fight // #inputs: 25260 / 25269
+  // r.save("multi_blue_viridian_after_bugcatcher_");
+  // r.load("multi_blue_viridian_after_bugcatcher_");
   // r.run(WalkToPlan::new(1, 0)); // Leave Forest
   // r.run(EdgeWarpPlan::new()); // edge warp
   // r.run(WalkToPlan::new(5, 0)); // Leave Viridian Forest
@@ -197,12 +196,14 @@ pub fn start() {
   // r.run(BattleMenuPlan::fight());
   // r.run(SelectMoveMenuPlan::new(Move::Tackle).use_select());
   // r.run(SelectMoveMenuPlan::new(Move::Bubble).use_select());
-  // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))).skip_battle_menu());
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
+  // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))).skip_battle_menu());
+  // r.save("multi_blue_test2"); // 28821
+  // r.load("multi_blue_test2");
   // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Tackle, 7..=7))));
-  // r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 30608
+  // r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 30584 / 30590
   // r.save("multi_blue_after_brock_");
   // r.load("multi_blue_after_brock_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Brock speech
@@ -241,16 +242,17 @@ pub fn start() {
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Bugcatcher fight
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
-  // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))));
-  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(SeqPlan::new(
+  //   FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))),
+  //   NextTrainerMonPlan::with_level_up()));
   // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))));
   // r.run(NextTrainerMonPlan::new());
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
   // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))));
-  // r.run(EndTrainerBattlePlan::new(1)); // Bugcatcher fight //  #inputs: 36333 - 40
-  // r.save("multi_blue_route3_after_bugcatcher1");
-  // r.load("multi_blue_route3_after_bugcatcher1");
+  // r.run(EndTrainerBattlePlan::new(1)); // Bugcatcher fight //  #inputs: 36237 / 36240
+  // r.save("multi_blue_route3_after_bugcatcher1__");
+  // r.load("multi_blue_route3_after_bugcatcher1__");
   // r.run(WalkToPlan::new(12, 4)); // Youngster
   // r.run(WalkToPlan::new(13, 4)); // Youngster
   // r.run(OverworldInteractPlan::with(3)); // Youngster
@@ -258,25 +260,31 @@ pub fn start() {
   // r.run(FightTurnPlan::new(AttackDesc::hit_with_side_effect(Move::Bubble, 8..=9, MoveEffectResult::Success), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Tackle, 5..=5)), None));
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
-  // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::TailWhip))));
-  // r.run(NextTrainerMonPlan::with_level_up());
-  // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Leer))));
-  // r.run(EndTrainerBattlePlan::new(1)); // Youngster fight //  #inputs: 39046
-  // r.save("multi_blue_route3_after_youngster");
-  // r.load("multi_blue_route3_after_youngster");
+  // r.run(SeqPlan::new(
+  //   FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::TailWhip))),
+  //   NextTrainerMonPlan::with_level_up()));
+  // r.run(SeqPlan::new(
+  //   FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Leer))),
+  //   EndTrainerBattlePlan::new(1))); // Youngster fight //  #inputs: 38932 / 38943
+  // r.save("multi_blue_route3_after_youngster_");
+  // r.load("multi_blue_route3_after_youngster_");
   // r.run(WalkToPlan::new(18, 5)); // Bugcatcher
   // r.run(OverworldInteractPlan::with(5)); // Bugcatcher
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1));
-  // r.run(FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))));
-  // r.run(NextTrainerMonPlan::with_level_up());
-  // r.run(FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::stat_up_down(Move::Harden))));
-  // r.run(NextTrainerMonPlan::new());
-  // r.run(FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))));
-  // r.run(NextTrainerMonPlan::new());
-  // r.run(FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::stat_up_down(Move::Harden))));
-  // r.run(EndTrainerBattlePlan::new(2)); // Bugcatcher fight //  #inputs: 42638 + 8
-  // r.save("multi_blue_route3_after_bugcatcher2");
-  // r.load("multi_blue_route3_after_bugcatcher2");
+  // r.run(SeqPlan::new(
+  //   FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))),
+  //   NextTrainerMonPlan::with_level_up()));
+  // r.run(SeqPlan::new(
+  //   FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::stat_up_down(Move::Harden))),
+  //   NextTrainerMonPlan::new()));
+  // r.run(SeqPlan::new(
+  //   FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::StringShot))),
+  //   NextTrainerMonPlan::new()));
+  // r.run(SeqPlan::new(
+  //   FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::Attack(AttackDesc::stat_up_down(Move::Harden))),
+  //   EndTrainerBattlePlan::new(2))); // Bugcatcher fight //  #inputs: 42505 / 42487
+  // r.save("multi_blue_route3_after_bugcatcher2_");
+  // r.load("multi_blue_route3_after_bugcatcher2_");
   // r.run(WalkToPlan::new(24, 5)); // Bugcatcher
   // r.run(OverworldTurnPlan::new(D));
   // r.run(OverworldInteractPlan::with(8));
@@ -287,9 +295,9 @@ pub fn start() {
   // r.run(SelectMoveMenuPlan::new(Move::Bubble).use_select());
   // r.run(SelectMoveMenuPlan::new(Move::WaterGun).use_select());
   // r.run(FightKOPlan::new(Move::WaterGun, None, EnemyAttackDesc::NoAttack).skip_battle_menu());
-  // r.run(EndTrainerBattlePlan::new(1)); // Bugcatcher fight //  #inputs: 44855 + 10
-  // r.save("multi_blue_route3_after_bugcatcher3");
-  // r.load("multi_blue_route3_after_bugcatcher3");
+  // r.run(EndTrainerBattlePlan::new(1)); // Bugcatcher fight //  #inputs: 44720 + 135 / 44703
+  // r.save("multi_blue_route3_after_bugcatcher3_");
+  // r.load("multi_blue_route3_after_bugcatcher3_");
   // r.run(WalkToEncounterPlan::new(37, 8, OverworldInteractionMetric.filter(|v| {
   //     if let OverworldInteractionResult::WildEncounter { species: Pokemon::Pidgey, level: _, dvs: _ } = v {
   //       log::info!("Pidgey");
@@ -310,9 +318,9 @@ pub fn start() {
   // r.run(TextPlan::new().with_skip_ends(2)); // to Pidgey?
   // r.run(TwoOptionMenuPlan::no());
   // r.run(WalkToPlan::new(59, -1)); // Enter Route 4
-  // r.run(WalkToPlan::new(18, 5)); // Enter Mt. Moon // 47395
-  // r.save("multi_blue_mt_moon");
-  // r.load("multi_blue_mt_moon");
+  // r.run(WalkToPlan::new(18, 5)); // Enter Mt. Moon // 47289 + 106 / 47267
+  // r.save("multi_blue_mt_moon_");
+  // r.load("multi_blue_mt_moon_");
   // r.run(WalkToPlan::new(17, 11)); // Enter Mt. Moon UF2
   // r.run(WalkToPlan::new(17, 11)); // Enter Mt. Moon UF3
   // r.run(WalkToPlan::new(29, 6)); // Enter Mt. Moon UF3
@@ -341,16 +349,16 @@ pub fn start() {
   // r.run(OverworldTurnPlan::new(R));
   // r.run(OverworldInteractPlan::with(2));
   // r.save("multi_blue_test");
-  // r.load("multi_blue_test");
+  // r.load("multi_blue_test"); // 52818
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(3));
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
   // r.run(FightKOPlan::new(Move::MegaPunch, None, EnemyAttackDesc::Attack(AttackDesc::hit(Move::Tackle, 7..=7))));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 55024
-  // r.save("multi_blue_mt_moon_after_rocket");
-  // r.load("multi_blue_mt_moon_after_rocket");
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 54874 + 150 / 54852
+  // r.save("multi_blue_mt_moon_after_rocket_");
+  // r.load("multi_blue_mt_moon_after_rocket_");
   // r.run(TextPlan::new().with_skip_ends(2));
   // r.run(EvolutionPlan::dont_cancel());
   // r.run(TextPlan::new().with_skip_ends(4));
@@ -358,16 +366,22 @@ pub fn start() {
   // r.run(SeqPlan::new(SkipTextsPlan::new(3), HoldTextDisplayOpenPlan::new())); // Super Nerd fight
   // r.run(OverworldWaitPlan::trainer_battle(208)); // Super Nerd fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Super Nerd fight
+  // r.save("multi_blue_test");
+  // r.load("multi_blue_test");
   // r.run(FightTurnPlan::new(AttackDesc::hit_no_side_effect(Move::Bubble, 10..=12), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Disable)), None));
   // r.run(FightKOPlan::new(Move::WaterGun, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
+  // r.save("multi_blue_test2");
+  // r.load("multi_blue_test2");
   // r.run(FightKOPlan::new(Move::MegaPunch, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Screech))));
   // r.run(NextTrainerMonPlan::new());
+  // r.save("multi_blue_test3");
+  // r.load("multi_blue_test3");
   // r.run(FightTurnPlan::new(AttackDesc::crit(Move::WaterGun, 24..=27), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Smog)), None));
   // r.run(FightKOPlan::new(Move::Bubble, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 59081 + 1
-  // r.save("multi_blue_mt_moon_after_super_nerd");
-  // r.load("multi_blue_mt_moon_after_super_nerd");
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 58926 + 155 / 58901
+  // r.save("multi_blue_mt_moon_after_super_nerd_");
+  // r.load("multi_blue_mt_moon_after_super_nerd_");
   // r.run(WalkToPlan::new(13, 7)); // Fossil
   // r.run(OverworldInteractPlan::with(7));
   // r.run(TextPlan::new()); // choose Helix Fossil?
@@ -400,9 +414,9 @@ pub fn start() {
   // r.run(TextPlan::new().with_skip_ends(2)); // to Sandshrew?
   // r.run(TwoOptionMenuPlan::yes());
   // r.run(NamingScreenPlan::with_letter(b'S'));
-  // r.run(WalkToPlan::new(90, 11)); // Enter Cerulean City // #inputs: 62658 + 13
-  // r.save("multi_blue_cerulean");
-  // r.load("multi_blue_cerulean");
+  // r.run(WalkToPlan::new(90, 11)); // Enter Cerulean City // #inputs: 62507 + 151 / 62478
+  // r.save("multi_blue_cerulean_");
+  // r.load("multi_blue_cerulean_");
   // {
   //   r.run(WalkToPlan::new(13, 25)); // Enter Bike Shop
   //   r.run(WalkToPlan::new(6, 5)); // Enter Bike Shop
@@ -420,21 +434,22 @@ pub fn start() {
   // r.run(SeqPlan::new(SkipTextsITPlan::new(2), HoldTextDisplayOpenPlan));
   // r.run(OverworldWaitPlan::trainer_battle(206)); // Jr. Trainer F fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts_it(0));
-  // r.run(FightTurnITPlan::new(AttackDesc::crit(Move::MegaPunch, 23..=27), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Peck, 5..=8)), None));
-  // r.run(FightKOITPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up_it(1)); // #inputs: 66033 + 19
-  // r.save("multi_blue_cerulean_after_jrtrainerf");
-  // r.load("multi_blue_cerulean_after_jrtrainerf");
+  // r.run(FightKOITPlan::new(Move::MegaPunch, None, EnemyAttackDesc::Attack(AttackDesc::hit(Move::Peck, 2..=8))));
+  // r.run(EndTrainerBattlePlan::with_level_up_it(1)); // #inputs: 65884 + 149 / 65854
+  // r.save("multi_blue_cerulean_after_jrtrainerf_");
+  // r.load("multi_blue_cerulean_after_jrtrainerf_");
   // r.run(WalkToPlan::new(5, 2)); // Misty
   // r.run(OverworldTurnPlan::new(L));
   // r.run(OverworldInteractPlan::with(1));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts_it(9)); // Misty
   // r.run(FightKOITPlan::new(Move::MegaPunch, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))));
   // r.run(NextTrainerMonPlan::new_it());
+  // r.save("multi_blue_test");
+  // r.load("multi_blue_test");
   // r.run(FightKOITPlan::new(Move::MegaPunch, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Tackle))));
-  // r.run(EndTrainerBattlePlan::with_level_up_it(4)); // #inputs: 68642 + 19
-  // r.save("multi_blue_cerulean_after_misty");
-  // r.load("multi_blue_cerulean_after_misty");
+  // r.run(EndTrainerBattlePlan::with_level_up_it(4)); // #inputs: 68482 + 160 / 68449
+  // r.save("multi_blue_cerulean_after_misty_");
+  // r.load("multi_blue_cerulean_after_misty_");
   // r.run(SeqPlan::new(SkipTextsITPlan::new(8), HoldTextDisplayOpenPlan));
   // r.run(SeqPlan::new(SkipTextsITPlan::new(1), HoldTextDisplayOpenPlan));
   // r.run(WalkToPlan::new(5, 13)); // Leave Gym
@@ -495,9 +510,9 @@ pub fn start() {
   // r.load("multi_blue_test3");
   // r.run(FightTurnITPlan::new(AttackDesc::hit_failed(Move::MegaPunch), EnemyAttackDesc::Attack(AttackDesc::crit(Move::VineWhip, 30..=30)), None));
   // r.run(FightKOITPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(2)); // Rival fight //  #inputs: 76089 + 25
-  // r.save("multi_blue_cerulean_after_rival");
-  // r.load("multi_blue_cerulean_after_rival");
+  // r.run(EndTrainerBattlePlan::new_it(2)); // Rival fight //  #inputs: 75933 + 156 / 75895
+  // r.save("multi_blue_cerulean_after_rival_");
+  // r.load("multi_blue_cerulean_after_rival_");
   // r.run(SeqPlan::new(SkipTextsITPlan::new(14), HoldTextDisplayOpenPlan)); // Rival after battle texts
   // r.run(WalkToPlan::new(21, -1)); // Enter Route 24
   // r.run(WalkToPlan::new(11, 32)); // Nugget 1
@@ -507,8 +522,8 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::with_level_up_it(1));
-  // r.save("multi_blue_after_nuggetl"); //  #inputs: 78364
-  // r.load("multi_blue_after_nuggetl");
+  // r.save("multi_blue_after_nugget1_"); //  #inputs: 78208 + 156 / 78170
+  // r.load("multi_blue_after_nugget1_");
   // r.run(WalkToPlan::new(10, 29)); // Nugget 2
   // r.run(OverworldInteractPlan::with(6));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts_it(1)); // Nugget2
@@ -516,8 +531,8 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::new_it(1));
-  // r.save("multi_blue_after_nugget2"); //  #inputs: 79793
-  // r.load("multi_blue_after_nugget2");
+  // r.save("multi_blue_after_nugget2_"); //  #inputs: 79637 + 156 / 79599
+  // r.load("multi_blue_after_nugget2_");
   // r.run(WalkToPlan::new(11, 26)); // Nugget 3
   // r.run(OverworldInteractPlan::with(5));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts_it(1)); // Nugget3
@@ -527,8 +542,8 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::new_it(1));
-  // r.save("multi_blue_after_nugget3"); // #inputs: 81529
-  // r.load("multi_blue_after_nugget3");
+  // r.save("multi_blue_after_nugget3_"); // #inputs: 81373 + 156 / 81335
+  // r.load("multi_blue_after_nugget3_");
   // r.run(WalkToPlan::new(10, 23)); // Nugget 4
   // r.run(OverworldInteractPlan::with(4));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts_it(1)); // Nugget4
@@ -536,15 +551,15 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::with_level_up_it());
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::new_it(1));
-  // r.save("multi_blue_after_nugget4"); //  #inputs: 82983
-  // r.load("multi_blue_after_nugget4");
+  // r.save("multi_blue_after_nugget4_"); //  #inputs: 82826 + 157 / 82787
+  // r.load("multi_blue_after_nugget4_");
   // r.run(WalkToPlan::new(11, 20)); // Nugget 5
   // r.run(OverworldInteractPlan::with(3));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts_it(1)); // Nugget5
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 84160
-  // r.save("multi_blue_after_nugget5");
-  // r.load("multi_blue_after_nugget5");
+  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 84002 + 158 / 83964
+  // r.save("multi_blue_after_nugget5_");
+  // r.load("multi_blue_after_nugget5_");
   // r.run(WalkToPlan::new(10, 15)); // Nugget 6
   // r.run(SkipTextsITPlan::new(3));
   // r.run(SkipTextsITPlan::new(1)); // got nugget
@@ -554,9 +569,9 @@ pub fn start() {
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 86064 + 23
-  // r.save("multi_blue_after_nugget6");
-  // r.load("multi_blue_after_nugget6");
+  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 85906 + 158 / 85867
+  // r.save("multi_blue_after_nugget6_");
+  // r.load("multi_blue_after_nugget6_");
   // r.run(SeqPlan::new(SkipTextsITPlan::new(3), HoldTextDisplayOpenPlan)); // Rocket after battle texts
   // r.run(WalkToPlan::new(20, 9)); // Route 25
   // r.run(WalkToPlan::new(8, 6)); // Hiker
@@ -566,9 +581,9 @@ pub fn start() {
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::Bubble, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up_it(1)); // #inputs: 88232
-  // r.save("multi_blue_route25_after_hiker");
-  // r.load("multi_blue_route25_after_hiker");
+  // r.run(EndTrainerBattlePlan::with_level_up_it(1)); // #inputs: 88074 + 158 / 88035
+  // r.save("multi_blue_route25_after_hiker_");
+  // r.load("multi_blue_route25_after_hiker_");
   // r.run(WalkToPlan::new(18, 7)); // Lass1
   // r.run(OverworldTurnPlan::new(D));
   // r.run(OverworldInteractPlan::with(4));
@@ -576,9 +591,9 @@ pub fn start() {
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 89936
-  // r.save("multi_blue_route25_after_lass1");
-  // r.load("multi_blue_route25_after_lass1");
+  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 89778 + 158 / 89739
+  // r.save("multi_blue_route25_after_lass1_");
+  // r.load("multi_blue_route25_after_lass1_");
   // r.run(WalkToPlan::new(24, 6)); // Jr Trainer M
   // r.run(SeqPlan::new(SkipTextsITPlan::new(2), HoldTextDisplayOpenPlan)); // Jr Trainer M
   // r.run(OverworldWaitPlan::trainer_battle(205)); // initiate Jr Trainer M fight
@@ -586,9 +601,9 @@ pub fn start() {
   // r.run(FightKOITPlan::new(Move::Bubble, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 91601
-  // r.save("multi_blue_route25_after_jrtrainerm");
-  // r.load("multi_blue_route25_after_jrtrainerm");
+  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 91444 + 157 / 91405
+  // r.save("multi_blue_route25_after_jrtrainerm_");
+  // r.load("multi_blue_route25_after_jrtrainerm_");
   // r.run(WalkToPlan::new(35, 4)); // Lass2
   // r.run(WalkToPlan::new(36, 4)); // Lass2
   // r.run(OverworldInteractPlan::with(6));
@@ -598,9 +613,9 @@ pub fn start() {
   // r.run(FightKOITPlan::new(Move::Bubble, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_move_override_it(1, 2)); // override Tackle with Bite // #inputs: 94170
-  // r.save("multi_blue_route25_after_lass2");
-  // r.load("multi_blue_route25_after_lass2");
+  // r.run(EndTrainerBattlePlan::with_move_override_it(1, 2)); // override Tackle with Bite // #inputs: 94006 + 164 / 93968
+  // r.save("multi_blue_route25_after_lass2_");
+  // r.load("multi_blue_route25_after_lass2_");
   // r.run(WalkToPlan::new(45, 3)); // Enter Bill's House
   // r.run(WalkToPlan::new(4, 5)); // Bill
   // r.run(WalkToPlan::new(5, 5)); // Bill
@@ -653,13 +668,18 @@ pub fn start() {
   // r.run(SelectMoveMenuPlan::new(Move::BubbleBeam).use_select());
   // r.run(SelectMoveMenuPlan::new(Move::Bite).use_select());
   // r.run(FightKOITPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack).skip_battle_menu());
-  // r.run(EndTrainerBattlePlan::new_it(2)); // #inputs: 100483
-  // r.save("multi_blue_after_cerulean_rocket");
-  // r.load("multi_blue_after_cerulean_rocket");
+  // r.run(EndTrainerBattlePlan::new_it(2)); // #inputs: 100303 + 180 / 100269
+  // r.save("multi_blue_after_cerulean_rocket_");
+  // r.load("multi_blue_after_cerulean_rocket_");
   // r.run(SeqPlan::new(SkipTextsITPlan::new(3), HoldTextDisplayOpenPlan)); // Rocket after battle texts
   // r.run(WalkToPlan::new(28, 36)); // Enter Route 5
   // r.run(WalkToPlan::new(17, 27)); // Underground
   // r.run(WalkToPlan::new(4, 4)); // Underground
+  // {
+  //   r.run(WalkToPlan::new(4, 4)); // Hidden item
+  //   r.run(OverworldInteractPlan::with_hidden_item());
+  //   r.run(HoldTextDisplayOpenPlan); // Found Full Heal
+  // }
   // r.run(WalkToPlan::new(2, 40)); // Underground
   // r.run(WalkToPlan::new(2, 41)); // Underground
   // r.run(WalkToPlan::new(4, 7)); // Leave
@@ -673,9 +693,9 @@ pub fn start() {
   // r.run(FightKOITPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new_it());
   // r.run(FightKOITPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 104988
-  // r.save("multi_blue_after_route6_jrtrainerf");
-  // r.load("multi_blue_after_route6_jrtrainerf");
+  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 104808 + 180 / 104799
+  // r.save("multi_blue_after_route6_jrtrainerf_");
+  // r.load("multi_blue_after_route6_jrtrainerf_");
   // r.run(WalkToPlan::new(10, 30)); // M
   // r.run(WalkToPlan::new(10, 31)); // M
   // r.run(OverworldWaitPlan::new()); // Point-blank Trainer script load
@@ -685,9 +705,9 @@ pub fn start() {
   // r.run(FightKOITPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::with_level_up_it());
   // r.run(FightKOITPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 106560
-  // r.save("multi_blue_after_route6_jrtrainerm");
-  // r.load("multi_blue_after_route6_jrtrainerm");
+  // r.run(EndTrainerBattlePlan::new_it(1)); // #inputs: 106378 + 182 / 106370
+  // r.save("multi_blue_after_route6_jrtrainerm_");
+  // r.load("multi_blue_after_route6_jrtrainerm_");
   // r.run(WalkToPlan::new(9, 36)); // Vermilion City
   // r.run(WalkToPlan::new(18, 30)); // Dock
   // r.run(SeqPlan::new(SkipTextsITPlan::new(4), HoldTextDisplayOpenPlan)); // Dock
@@ -715,9 +735,9 @@ pub fn start() {
   // r.load("multi_blue_test2");
   // r.run(FightTurnITPlan::new(AttackDesc::hit_with_side_effect(Move::Bite, 20..=25, MoveEffectResult::Success), EnemyAttackDesc::NoAttack, None));
   // r.run(FightKOITPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new_it(3)); // Rival fight //  #inputs: 111947
-  // r.save("multi_blue_ssanne_after_rival");
-  // r.load("multi_blue_ssanne_after_rival");
+  // r.run(EndTrainerBattlePlan::new_it(3)); // Rival fight //  #inputs: 111760 + 187 / 111755
+  // r.save("multi_blue_ssanne_after_rival_");
+  // r.load("multi_blue_ssanne_after_rival_");
   // r.run(SeqPlan::new(SkipTextsITPlan::new(5), HoldTextDisplayOpenPlan)); // Rival texts
   // r.run(WalkToPlan::new(36, 4)); // 2F
   // r.run(WalkToPlan::new(4, 4)); // Captain
@@ -736,7 +756,7 @@ pub fn start() {
   // {
   //   r.run(OverworldOpenStartMenuPlan::new());
   //   r.run(StartMenuPlan::items());
-  //   r.run(ListMenuPlan::choose(7));
+  //   r.run(ListMenuPlan::choose(7+1));
   //   r.run(ItemUseTossMenuPlan::use_());
   //   r.run(SkipTextsPlan::new(1)); // Booted up TM
   //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
@@ -772,9 +792,9 @@ pub fn start() {
   // r.load("multi_blue_test3");
   // r.run(FightTurnPlan::new(AttackDesc::crit_with_side_effect(Move::BubbleBeam, 42..=42, MoveEffectResult::Success), EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Thunderbolt)), None));
   // r.run(FightKOPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up(3)); // Surge fight //  #inputs: 121251+30
-  // r.save("multi_blue_after_surge");
-  // r.load("multi_blue_after_surge");
+  // r.run(EndTrainerBattlePlan::with_level_up(3)); // Surge fight //  #inputs: 121101+150 / 121096
+  // r.save("multi_blue_after_surge_");
+  // r.load("multi_blue_after_surge_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Surge after fight texts
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Got TM
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Surge after fight texts
@@ -820,7 +840,7 @@ pub fn start() {
   //   r.run(OverworldOpenStartMenuPlan::new());
   //   r.run(StartMenuPlan::items());
   //   r.run(ListMenuPlan::swap(0)); // Pokeballs
-  //   r.run(ListMenuPlan::swap(9)); // Bike
+  //   r.run(ListMenuPlan::swap(9+1)); // Bike
   //   r.run(ListMenuPlan::choose(0)); // Bike
   //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
   // }
@@ -854,8 +874,8 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::new(1));
-  // r.save("multi_blue_route9_after_jrtrainerf"); // #inputs: 129117+30
-  // r.load("multi_blue_route9_after_jrtrainerf");
+  // r.save("multi_blue_route9_after_jrtrainerf_"); // #inputs: 128967 + 150 / 128975
+  // r.load("multi_blue_route9_after_jrtrainerf_");
   // r.run(WalkToPlan::new(12, 10));
   // r.run(OverworldJumpLedgePlan::new(D)); // Jump ledge
   // r.run(WalkToPlan::new(40, 10));
@@ -869,8 +889,8 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::new(1));
-  // r.save("multi_blue_route9_after_bugcatcher"); // #inputs: 131656+30
-  // r.load("multi_blue_route9_after_bugcatcher");
+  // r.save("multi_blue_route9_after_bugcatcher_"); // #inputs: 131503 + 153 / 131510
+  // r.load("multi_blue_route9_after_bugcatcher_");
   // r.run(WalkToPlan::new(51, 4));
   // r.run(OverworldJumpLedgePlan::new(D)); // Jump ledge
   // r.run(WalkToPlan::new(60, 8)); // Route 10
@@ -885,18 +905,18 @@ pub fn start() {
   // r.load("multi_blue_test");
   // r.run(FightTurnPlan::new(AttackDesc::crit_with_side_effect(Move::Bite, 38..=41, MoveEffectResult::Success), EnemyAttackDesc::NoAttack, None));
   // r.run(FightKOPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 134517+30
-  // r.save("multi_blue_rock_tunnel_after_pokemaniac1");
-  // r.load("multi_blue_rock_tunnel_after_pokemaniac1");
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 134364 + 153 / 134368
+  // r.save("multi_blue_rock_tunnel_after_pokemaniac1_");
+  // r.load("multi_blue_rock_tunnel_after_pokemaniac1_");
   // r.run(WalkToPlan::new(37, 3)); // B1F
   // r.run(WalkToPlan::new(27, 30)); // Pokemaniac
   // r.run(OverworldInteractPlan::with(8));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Pokemaniac
   // r.run(FightTurnPlan::new(AttackDesc::crit_with_side_effect(Move::Bite, 35..=38, MoveEffectResult::Success), EnemyAttackDesc::NoAttack, None));
   // r.run(FightKOPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 136317+30
-  // r.save("multi_blue_rock_tunnel_after_pokemaniac2");
-  // r.load("multi_blue_rock_tunnel_after_pokemaniac2");
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 136164 + 153 / 136166
+  // r.save("multi_blue_rock_tunnel_after_pokemaniac2_");
+  // r.load("multi_blue_rock_tunnel_after_pokemaniac2_");
   // r.run(WalkToPlan::new(14, 30)); // Lass
   // r.run(WalkToPlan::new(14, 29)); // Lass
   // r.run(OverworldInteractPlan::with(6));
@@ -904,9 +924,9 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1));
-  // r.save("multi_blue_rock_tunnel_after_lass"); // #inputs: 138239
-  // r.load("multi_blue_rock_tunnel_after_lass");
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 138056 + 183 / 138055
+  // r.save("multi_blue_rock_tunnel_after_lass_");
+  // r.load("multi_blue_rock_tunnel_after_lass_");
   // r.run(WalkToPlan::new(27, 3)); // 1F
   // r.run(WalkToPlan::new(17, 11)); // B1F
   // r.run(WalkToPlan::new(8, 10)); // Hiker
@@ -919,8 +939,8 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::Bubble, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::new(1));
-  // r.save("multi_blue_rock_tunnel_after_hiker"); // #inputs: 141396
-  // r.load("multi_blue_rock_tunnel_after_hiker");
+  // r.save("multi_blue_rock_tunnel_after_hiker_"); // #inputs: 141214 + 182 / 141213
+  // r.load("multi_blue_rock_tunnel_after_hiker_");
   // r.run(WalkToPlan::new(3, 3)); // 1F
   // r.run(WalkToPlan::new(24, 24)); // JrTrainerF
   // r.run(WalkToPlan::new(23, 24)); // JrTrainerF
@@ -932,8 +952,8 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
   // r.run(EndTrainerBattlePlan::with_level_up(1));
-  // r.save("multi_blue_rock_tunnel_after_jrtrainerf"); // #inputs: 144167 
-  // r.load("multi_blue_rock_tunnel_after_jrtrainerf");
+  // r.save("multi_blue_rock_tunnel_after_jrtrainerf_"); // #inputs: 143984 + 183 / 143983
+  // r.load("multi_blue_rock_tunnel_after_jrtrainerf_");
   // r.run(WalkToPlan::new(15, 33)); // leave
   // r.run(WalkToPlan::new(15, 60)); // ledge
   // r.run(OverworldJumpLedgePlan::new(D)); // Jump ledge
@@ -945,9 +965,9 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::MegaPunch, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::Bite, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 146773
-  // r.save("multi_blue_route_8_after_juggler");
-  // r.load("multi_blue_route_8_after_juggler");
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 146585 + 188 / 146584
+  // r.save("multi_blue_route_8_after_juggler_");
+  // r.load("multi_blue_route_8_after_juggler_");
   // r.run(WalkToPlan::new(13, 3)); // underground
   // r.run(WalkToPlan::new(4, 4)); // underground
   // {
@@ -956,10 +976,12 @@ pub fn start() {
   //   r.run(ListMenuPlan::choose(0)); // Bike
   //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
   // }
-  // r.run(WalkToPlan::new(21, 3)); // Elixer
-  // r.run(WalkToPlan::new(21, 4)); // Elixer
-  // r.run(OverworldInteractPlan::with_hidden_item()); // Elixer
-  // r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Elixer
+  // // {
+  // //   r.run(WalkToPlan::new(21, 3)); // Elixer
+  // //   r.run(WalkToPlan::new(21, 4)); // Elixer
+  // //   r.run(OverworldInteractPlan::with_hidden_item()); // Elixer
+  // //   r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Elixer
+  // // }
   // r.run(WalkToPlan::new(2, 4)); // underground
   // r.run(WalkToPlan::new(2, 5)); // underground
   // r.run(WalkToPlan::new(4, 7)); // underground
@@ -970,9 +992,9 @@ pub fn start() {
   //   r.run(ListMenuPlan::choose(0)); // Bike
   //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
   // }
-  // r.run(WalkToPlan::new(-1, 3)); // Celadon City // #inputs: 148769
-  // r.save("multi_blue_celadon");
-  // r.load("multi_blue_celadon");
+  // r.run(WalkToPlan::new(-1, 3)); // Celadon City // #inputs: 148581 + 188 / 148349
+  // r.save("multi_blue_celadon_");
+  // r.load("multi_blue_celadon_");
   // r.run(WalkToPlan::new(10, 13)); // Mart
   // r.run(WalkToPlan::new(12, 1)); // 2F
   // { // buy TM07 x2
@@ -1020,11 +1042,11 @@ pub fn start() {
   // r.run(OverworldInteractPlan::with(5));
   // r.run(SkipTextsPlan::new(1)); // Vanding Machine text
   // r.run(VendingMachineMenuPlan::fresh_water());
-  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(1), HoldTextDisplayOpenPlan)); // Vanding Machine text
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(1), HoldTextDisplayOpenPlan)); // Vending Machine text
   // r.run(OverworldInteractPlan::with(5));
   // r.run(SkipTextsPlan::new(1)); // Vanding Machine text
   // r.run(VendingMachineMenuPlan::soda_pop());
-  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(1), HoldTextDisplayOpenPlan)); // Vanding Machine text
+  // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(1), HoldTextDisplayOpenPlan)); // Vending Machine text
   // r.run(WalkToPlan::new(7, 4));
   // r.run(WalkToPlan::new(6, 4));
   // r.run(OverworldInteractPlan::with(2));
@@ -1136,9 +1158,9 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(2)); // Rival fight //  #inputs: 161597
-  // r.save("multi_blue_tower_after_rival");
-  // r.load("multi_blue_tower_after_rival");
+  // r.run(EndTrainerBattlePlan::new(2)); // Rival fight //  #inputs: 161374 + 223 / 161137
+  // r.save("multi_blue_tower_after_rival_");
+  // r.load("multi_blue_tower_after_rival_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(10), HoldTextDisplayOpenPlan)); // rival post-fight text
   // r.run(WalkToPlan::new(3, 9)); // 3F
   // r.run(WalkToPlan::new(18, 9)); // 4F
@@ -1149,9 +1171,9 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 165075-20
-  // r.save("multi_blue_tower_after_channeler1");
-  // r.load("multi_blue_tower_after_channeler1");
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 164851 + 224 / 164613
+  // r.save("multi_blue_tower_after_channeler1_");
+  // r.load("multi_blue_tower_after_channeler1_");
   // r.run(WalkToPlan::new(3, 9)); // 5F
   // r.run(WalkToPlan::new(11, 9)); // Heal pad
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // heal pad
@@ -1165,28 +1187,49 @@ pub fn start() {
   // r.load("multi_blue_test");
   // { // Night Shade turn
   //   r.run(BattleMenuPlan::fight());
-  //   r.run(SelectMoveMenuPlan::with_metric(Move::Bite, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }));
-  //   r.run(TextPlan::new().with_skip_ends(4)); // A used Bite
+  //   r.run(SeqPlan::new(
+  //     SelectMoveMenuPlan::with_metric(Move::IceBeam, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }),
+  //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Failed), false).with_skip_ends(4))); // A used IceBeam
+  //   r.run(SeqPlan::new(
+  //     SkipTextsPlan::new(1), // didn't affect
+  //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Succeeded), false).with_skip_ends(4))); // Gastly used Night Shade
+  // }
+  // r.save("multi_blue_test2_"); // 167217
+  // r.load("multi_blue_test2_");
+  // { // Night Shade turn
+  //   r.run(BattleMenuPlan::fight());
+  //   r.run(SeqPlan::new(
+  //     SelectMoveMenuPlan::with_metric(Move::IceBeam, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }),
+  //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Failed), false).with_skip_ends(4))); // A used IceBeam
   //   r.run(SeqPlan::new(
   //     SkipTextsPlan::new(1), // didn't affect
   //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Succeeded), false).with_skip_ends(4))); // Gastly used Night Shade
   // }
   // { // Night Shade turn
   //   r.run(BattleMenuPlan::fight());
-  //   r.run(SelectMoveMenuPlan::with_metric(Move::Bite, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }));
-  //   r.run(TextPlan::new().with_skip_ends(4)); // A used Bite
+  //   r.run(SeqPlan::new(
+  //     SelectMoveMenuPlan::with_metric(Move::IceBeam, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }),
+  //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Failed), false).with_skip_ends(4))); // A used IceBeam
   //   r.run(SeqPlan::new(
   //     SkipTextsPlan::new(1), // didn't affect
   //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Succeeded), false).with_skip_ends(4))); // Gastly used Night Shade
   // }
-  // { // Night Shade turn
-  //   r.run(BattleMenuPlan::fight());
-  //   r.run(SelectMoveMenuPlan::with_metric(Move::Bite, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }));
-  //   r.run(TextPlan::new().with_skip_ends(4)); // A used Bite
-  //   r.run(SeqPlan::new(
-  //     SkipTextsPlan::new(1), // didn't affect
-  //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Succeeded), false).with_skip_ends(4))); // Gastly used Night Shade
-  // }
+  // // { // Night Shade turn
+  // //   r.run(BattleMenuPlan::fight());
+  // //   r.run(SelectMoveMenuPlan::with_metric(Move::Bite, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }));
+  // //   r.run(TextPlan::new().with_skip_ends(4)); // A used Bite
+  // //   r.run(SeqPlan::new(
+  // //     SkipTextsPlan::new(1), // didn't affect
+  // //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Succeeded), false).with_skip_ends(4))); // Gastly used Night Shade
+  // // }
+  // // { // Night Shade turn
+  // //   r.run(BattleMenuPlan::fight());
+  // //   r.run(SelectMoveMenuPlan::with_metric(Move::Bite, ExpectedAIChooseMoveMetric { expected_move: Some(Move::NightShade) }));
+  // //   r.run(TextPlan::new().with_skip_ends(4)); // A used Bite
+  // //   r.run(SeqPlan::new(
+  // //     SkipTextsPlan::new(1), // didn't affect
+  // //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Succeeded), false).with_skip_ends(4))); // Gastly used Night Shade
+  // // }
   // // { // Lick turn // TODO: swap with Rattata QA if Def 6 or 8
   // //   r.run(BattleMenuPlan::fight());
   // //   r.run(SelectMoveMenuPlan::with_metric(Move::Bite, ExpectedAIChooseMoveMetric { expected_move: Some(Move::Lick) }));
@@ -1196,10 +1239,10 @@ pub fn start() {
   // //     TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(4, 7).expect(FightTurnResult::Hit { damage: 3 }).and_then(MoveEffectMetric).expect(MoveEffectResult::NoEffect), false).with_skip_ends(4))); // Gastly used Lick
   // // }
   // r.run(BattleMenuPlan::fight());
-  // r.run(SelectMoveMenuPlan::new(Move::Bite).use_select());
   // r.run(SelectMoveMenuPlan::new(Move::BubbleBeam).use_select());
+  // r.run(SelectMoveMenuPlan::new(Move::Bite).use_select());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack).skip_battle_menu());
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 168782 + 260  // alt: 167878
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 168583 + 199 / 168337
   // r.save("multi_blue_tower_after_channeler2_");
   // r.load("multi_blue_tower_after_channeler2_");
   // r.run(WalkToPlan::new(11, 5)); // Channeler
@@ -1207,7 +1250,7 @@ pub fn start() {
   // r.run(OverworldInteractPlan::with(2));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Channeler
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 170203  // alt: 169397
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 170008 + 195 / 169760
   // r.save("multi_blue_tower_after_channeler3_");
   // r.load("multi_blue_tower_after_channeler3_");
   // r.run(WalkToPlan::new(6, 6)); // Rare Candy
@@ -1225,7 +1268,7 @@ pub fn start() {
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Use doll
   // r.run(SkipTextsPlan::new(1)); // Marowak gone
   // r.run(TextPlan::new()); // Marowak gone
-  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Marowak gone
+  // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Marowak gone // #inputs: 171323 / 171075
   // r.save("multi_blue_tower_after_marowak_");
   // r.load("multi_blue_tower_after_marowak_");
   // r.run(WalkToPlan::new(9, 16)); // 7F
@@ -1239,7 +1282,7 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 173784  // alt: 173324
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 173578 + 206 / 173330
   // r.save("multi_blue_tower_after_rocket1_");
   // r.load("multi_blue_tower_after_rocket1_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not forget this
@@ -1250,7 +1293,7 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 176045 + 255  // alt: 175941
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 175837 + 208 / 175591
   // r.save("multi_blue_tower_after_rocket2_");
   // r.load("multi_blue_tower_after_rocket2_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(3), HoldTextDisplayOpenPlan)); // not forget this
@@ -1261,13 +1304,15 @@ pub fn start() {
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Rocket
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
-  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
+  // // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(FightTurnPlan::new(AttackDesc::hit(Move::BubbleBeam, 50..=999), EnemyAttackDesc::Attack(AttackDesc::hit(Move::QuickAttack, 5..=5)), None));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
+  // // r.run(FightTurnPlan::new(AttackDesc::hit(Move::BubbleBeam, 61..=999), EnemyAttackDesc::Attack(AttackDesc::hit(Move::QuickAttack, 8..=9)), None));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1));
-  // r.save("multi_blue_tower_after_rocket3_"); // #inputs: 179077  // alt: 178814
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 178779 + 198 / 178525
+  // r.save("multi_blue_tower_after_rocket3_");
   // r.load("multi_blue_tower_after_rocket3_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not forget this
   // r.run(WalkToPlan::new(10, 4));
@@ -1291,16 +1336,16 @@ pub fn start() {
   //   r.run(FlyToPlan::to_celadon_city());
   //   r.run(OverworldWaitPlan::fly_warp());
   // }
-  // r.run(WalkToPlan::new(41, 9)); // Center
-  // r.run(WalkToPlan::new(3, 3)); // Center
-  // r.run(OverworldInteractPlan::with(1)); // Center
-  // r.run(SkipTextsPlan::new(3)); // Center
-  // r.run(TwoOptionMenuPlan::yes()); // Center
-  // r.run(TextPlan::new()); // Center
-  // r.run(SkipTextsPlan::new(2)); // Center
-  // r.run(SeqPlan::new(TextCommandPausePlan::new(), SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan))); // Center
-  // r.run(WalkToPlan::new(3, 7)); // go outside
-  // r.run(EdgeWarpPlan::new()); // go outside
+  // // r.run(WalkToPlan::new(41, 9)); // Center
+  // // r.run(WalkToPlan::new(3, 3)); // Center
+  // // r.run(OverworldInteractPlan::with(1)); // Center
+  // // r.run(SkipTextsPlan::new(3)); // Center
+  // // r.run(TwoOptionMenuPlan::yes()); // Center
+  // // r.run(TextPlan::new()); // Center
+  // // r.run(SkipTextsPlan::new(2)); // Center
+  // // r.run(SeqPlan::new(TextCommandPausePlan::new(), SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan))); // Center
+  // // r.run(WalkToPlan::new(3, 7)); // go outside
+  // // r.run(EdgeWarpPlan::new()); // go outside
   // {
   //   r.run(OverworldOpenStartMenuPlan::new());
   //   r.run(StartMenuPlan::items());
@@ -1314,6 +1359,8 @@ pub fn start() {
   // {
   //   r.run(OverworldOpenStartMenuPlan::new());
   //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::swap(3)); // Helix Fossil
+  //   r.run(ListMenuPlan::swap(15)); // Rare Candy
   //   r.run(ListMenuPlan::choose(16)); // Flute
   //   r.run(ItemUseTossMenuPlan::use_());
   //   r.run(SkipTextsPlan::new(1)); // Played flute
@@ -1323,10 +1370,10 @@ pub fn start() {
   // }
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Wild Snorlax appeared!
   // r.run(TextPlan::new().with_skip_ends(2)); // Go, Wartortle!
-  // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::crit(Move::Headbutt, 1..=52)), None));
-  // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Headbutt, 1..=26)), None));
+  // // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::crit(Move::Headbutt, 1..=52)), None));
+  // // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Headbutt, 1..=26)), None));
   // r.run(BattleMenuPlan::run());
-  // r.run(SkipTextsPlan::new(1)); // Got away safely! // #inputs: 183378  // alt: 184062/184746
+  // r.run(SkipTextsPlan::new(1)); // Got away safely! // #inputs: 183080 + 197 / 182880
   // r.save("multi_blue_after_snorlax_");
   // r.load("multi_blue_after_snorlax_");
   // r.run(WalkToPlan::new(24, 10));
@@ -1415,14 +1462,14 @@ pub fn start() {
   //   r.run(StartMenuClosePlan::new());
   //   r.run(OverworldWaitPlan::fly_warp());
   // }
-  // // {
-  // //   r.run(OverworldOpenStartMenuPlan::new());
-  // //   r.run(StartMenuPlan::mon());
-  // //   r.run(PartyMenuPlan::choose(1)); // Pidgey
-  // //   r.run(PartyMonMenuPlan::choose(0)); // Fly
-  // //   r.run(FlyToPlan::to_celadon_city());
-  // //   r.run(OverworldWaitPlan::fly_warp());
-  // // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.run(FlyToPlan::to_celadon_city());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
   // r.save("multi_blue_test3");
   // r.load("multi_blue_test3");
   // {
@@ -1455,22 +1502,22 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(218)); // Beauty fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Beauty fight
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 195587  // alt: 195846/196429
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 195288 + 199 / 195090
   // r.save("multi_blue_celadon_after_beauty_");
-  r.load("multi_blue_celadon_after_beauty_");
-  r.run(WalkToPlan::new(4, 4)); // Erika
-  r.run(OverworldTurnPlan::new(U));
-  r.run(OverworldInteractPlan::with(1));
-  r.run(StartTrainerBattlePlan::with_pre_battle_texts(13)); // Erika
-  // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::crit(Move::RazorLeaf, 78..=78)), None));
-  r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  r.run(NextTrainerMonPlan::with_level_up());
-  r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  r.run(NextTrainerMonPlan::new());
-  r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  r.run(EndTrainerBattlePlan::new(3)); // #inputs: 198474  // alt: 199241/199312
-  r.save("multi_blue_celadon_after_erika_");
-  r.load("multi_blue_celadon_after_erika_");
+  // r.load("multi_blue_celadon_after_beauty_");
+  // r.run(WalkToPlan::new(4, 4)); // Erika
+  // r.run(OverworldTurnPlan::new(U));
+  // r.run(OverworldInteractPlan::with(1));
+  // r.run(StartTrainerBattlePlan::with_pre_battle_texts(13)); // Erika
+  // // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::crit(Move::RazorLeaf, 78..=78)), None));
+  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(EndTrainerBattlePlan::new(3)); // #inputs: 198168 + 198 / 197969
+  // r.save("multi_blue_celadon_after_erika_");
+  // r.load("multi_blue_celadon_after_erika_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // after texts
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not enough space
   // r.run(WalkToPlan::new(5, 5));
@@ -1516,7 +1563,7 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Disable))));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 204176  // alt: 204948
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 203870 + 211 / 203666
   // r.save("multi_blue_fuchsia_after_juggler1_");
   // r.load("multi_blue_fuchsia_after_juggler1_");
   // r.run(WalkToPlan::new(1, 7)); // Juggler
@@ -1528,9 +1575,10 @@ pub fn start() {
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
   // r.run(NextTrainerMonPlan::new());
-  // r.run(FightTurnPlan::new(AttackDesc::crit(Move::Surf, 63..=68), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Headbutt, 15..=15)), None));
+  // // r.run(FightTurnPlan::new(AttackDesc::crit(Move::Surf, 63..=68), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Disable)), None));
+  // r.run(FightTurnPlan::new(AttackDesc::crit(Move::Surf, 63..=68), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Headbutt, 14..=14)), None));
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 207195  // alt: 207966
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 206800 + 210 / 206682
   // r.save("multi_blue_fuchsia_after_juggler2_");
   // r.load("multi_blue_fuchsia_after_juggler2_");
   // r.run(TextPlan::new().with_skip_ends(2));
@@ -1545,6 +1593,7 @@ pub fn start() {
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Disable))));
+  // // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::Sludge, 30..=30))));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::with_level_up());
@@ -1560,7 +1609,7 @@ pub fn start() {
   //     TextPlan::with_metric(Gen1MoveSuccessMetric.expect(FightTurnResult::Failed), false).with_skip_ends(4))); // Weezing uses Self Destruct
   //   r.run(SkipTextsPlan::new(1)); // missed
   // }
-  // r.run(EndTrainerBattlePlan::new(3)); // #inputs: 211475  // alt: 212235
+  // r.run(EndTrainerBattlePlan::new(3)); // #inputs: 211304 + 218 / 210911
   // r.save("multi_blue_fuchsia_after_koga_");
   // r.load("multi_blue_fuchsia_after_koga_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // after texts
@@ -1719,7 +1768,16 @@ pub fn start() {
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
-  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::Stomp, 19..=20))));
+  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::Attack(AttackDesc::hit_no_side_effect(Move::Stomp, 21..=21))));
+  // // {
+  // //   r.run(BattleMenuPlan::fight());
+  // //   r.run(SelectMoveMenuPlan::with_metric(Move::BubbleBeam, TrainerAIMetric.expect(TrainerAIAction::Potion)));
+  // //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used Super Potion
+  // //   r.run(SeqPlan::new(
+  // //     SkipTextsPlan::new(1).with_skip_ends(2), // On Rapidash
+  // //     TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(72, 138).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 113 } else { false }), false).with_skip_ends(4))); // Blastoise used BubbleBeam
+  // //   r.run(SkipTextsPlan::new(2)); // Crit + effective
+  // // }
   // r.run(NextTrainerMonPlan::with_level_up());
   // r.save("multi_blue_test4");
   // r.load("multi_blue_test4");
@@ -1732,7 +1790,7 @@ pub fn start() {
   //     TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(102, 188).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 149 } else { false }), false).with_skip_ends(4))); // Blastoise used Surf
   //   r.run(SkipTextsPlan::new(2)); // Crit + effective
   // }
-  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 230839 + 11  // alt: 231613
+  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 230506 + 237 / 230262
   // r.save("multi_blue_after_blaine_");
   // r.load("multi_blue_after_blaine_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // after texts
@@ -1745,14 +1803,14 @@ pub fn start() {
   //   r.run(StartMenuClosePlan::new());
   //   r.run(OverworldWaitPlan::fly_warp());
   // }
-  // // {
-  // //   r.run(OverworldOpenStartMenuPlan::new());
-  // //   r.run(StartMenuPlan::mon());
-  // //   r.run(PartyMenuPlan::choose(1)); // Pidgey
-  // //   r.run(PartyMonMenuPlan::choose(0)); // Fly
-  // //   r.run(FlyToPlan::to_celadon_city());
-  // //   r.run(OverworldWaitPlan::fly_warp());
-  // // }
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::mon());
+  //   r.run(PartyMenuPlan::choose(1)); // Pidgey
+  //   r.run(PartyMonMenuPlan::choose(0)); // Fly
+  //   r.run(FlyToPlan::to_celadon_city());
+  //   r.run(OverworldWaitPlan::fly_warp());
+  // }
   // {
   //   r.run(OverworldOpenStartMenuPlan::new());
   //   r.run(StartMenuPlan::items());
@@ -1776,18 +1834,36 @@ pub fn start() {
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
   // r.run(WalkToPlan::new(18, 21)); // enter Silph Co
-  // r.run(WalkToPlan::new(26, 0)); // 1F
   // r.run(WalkToPlan::new(26, 0)); // 2F
-  // r.run(WalkToPlan::new(24, 0)); // 3F
-  // r.run(WalkToPlan::new(26, 0)); // 4F
+  // r.run(WalkToPlan::new(26, 0)); // 3F
+  // r.run(WalkToPlan::new(24, 0)); // 4F
+  // r.run(WalkToPlan::new(26, 0)); // 5F
+  // {
+  //   r.run(WalkToPlan::new(14, 3));
+  //   r.run(WalkToPlan::new(13, 3));
+  //   r.run(OverworldInteractPlan::with_hidden_item()); // Elixer
+  //   r.run(SeqPlan::new(TextPlan::new().with_skip_ends(2), HoldTextDisplayOpenPlan)); // Found Elixer
+  // }
   // r.run(WalkToPlan::new(8, 14));
   // r.run(WalkToPlan::new(8, 15));
   // r.run(OverworldInteractPlan::with(2));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1)); // Rocket
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 236618  // alt: 236846
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 236282 + 336 / 236270
   // r.save("multi_blue_saffron_after_rocket1_");
   // r.load("multi_blue_saffron_after_rocket1_");
+  // {
+  //   r.run(OverworldOpenStartMenuPlan::new());
+  //   r.run(StartMenuPlan::items());
+  //   r.run(ListMenuPlan::choose(2)); // Rare Candy
+  //   r.run(ItemUseTossMenuPlan::use_());
+  //   r.run(PartyMenuPlan::choose(0)); // Blastoise
+  //   r.run(TextScrollWaitPlan::new()); // Rose to lv 40
+  //   r.run(TextScrollWaitPlan::new()); // Rose to lv 40
+  //   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Rose to lv 40
+  //   r.run(ListMenuPlan::quit());
+  //   r.run(StartMenuPlan::close());
+  // }
   // r.run(WalkToPlan::new(9, 15));
   // r.run(WalkToPlan::new(17, 16));
   // r.run(WalkToPlan::new(17, 15));
@@ -1827,7 +1903,7 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 242904  // alt: 243131
+  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 242561 + 343 / 242806
   // r.save("multi_blue_saffron_after_rival_");
   // r.load("multi_blue_saffron_after_rival_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(14), HoldTextDisplayOpenPlan)); // Rival after texts
@@ -1841,10 +1917,10 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 246304  // alt: 246530
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 245960 + 344 / 246030
   // r.save("multi_blue_saffron_after_rocket2_");
   // r.load("multi_blue_saffron_after_rocket2_");
-  // r.run(WalkToPlan::new(6, 16));
+  // r.run(WalkToPlan::new(6, 15));
   // r.run(WalkToPlan::new(6, 14));
   // r.run(OverworldInteractPlan::with_card_key_door()); // Door
   // r.run(SkipTextsPlan::new(1).with_skip_ends(1)); // Card Key
@@ -1854,13 +1930,13 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(229)); // Giovanni fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Giovanni fight
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_skip_learning_move());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_skip_learning_move(1)); // #inputs: 250084  // alt: 250308
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 249738 + 346 / 249775
   // r.save("multi_blue_saffron_after_giovanni_");
   // r.load("multi_blue_saffron_after_giovanni_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // Giovanni post-fight text
@@ -1887,7 +1963,7 @@ pub fn start() {
   //   r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), StartMenuClosePlan::new())); // Get on Bike
   // }
   // r.run(WalkToPlan::new(36, 31));
-  // r.run(WalkToPlan::new(34, 3)); // Enter Gym // 252157 //  alt: 252331
+  // r.run(WalkToPlan::new(34, 3)); // Enter Gym
   // r.run(WalkToPlan::new(11, 15));
   // r.run(WalkToPlan::new(15, 15));
   // r.run(WalkToPlan::new(15, 5));
@@ -1899,16 +1975,16 @@ pub fn start() {
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
-  // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Psybeam))));
-  // r.run(EndTrainerBattlePlan::with_level_up(6)); // #inputs: 256537
-  // r.save("multi_blue_saffron_after_sabrina_");
+  // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Recover))));
+  // r.run(EndTrainerBattlePlan::new(6)); // #inputs: 256200 + 337 / 256131 256106
+  // r.save("multi_blue_saffron_after_sabrina__");
   // r.load("multi_blue_saffron_after_sabrina_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(8), HoldTextDisplayOpenPlan)); // after texts
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // not enough space
@@ -1941,21 +2017,21 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(231)); // Cooltrainer fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Cooltrainer
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 260338
-  // r.save("multi_blue_viridian_after_cooltrainerm");
-  // r.load("multi_blue_viridian_after_cooltrainerm");
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 259998 + 340 / 259931
+  // r.save("multi_blue_viridian_after_cooltrainerm_");
+  // r.load("multi_blue_viridian_after_cooltrainerm_");
   // r.run(WalkToPlan::new(10, 4));
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan));
   // r.run(OverworldWaitPlan::trainer_battle(224)); // Blackbelt fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0)); // Blackbelt
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 262857 + 6
-  // r.save("multi_blue_viridian_after_blackbelt");
-  // r.load("multi_blue_viridian_after_blackbelt");
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 262515 + 342 / 262493
+  // r.save("multi_blue_viridian_after_blackbelt_");
+  // r.load("multi_blue_viridian_after_blackbelt_");
   // r.run(WalkToPlan::new(16, 16));
   // r.run(WalkToPlan::new(16, 17));
   // r.run(EdgeWarpPlan::new());
@@ -1968,15 +2044,24 @@ pub fn start() {
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(NextTrainerMonPlan::new());
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
-  // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::Attack(AttackDesc::hit(Move::Slash, 16..=23)))); // min dmg 129
+  // {
+  //   r.run(BattleMenuPlan::fight());
+  //   r.run(SelectMoveMenuPlan::with_metric(Move::BubbleBeam, TrainerAIMetric.expect(TrainerAIAction::GuardSpec)));
+  //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Used Guard Spec.
+  //   r.run(SeqPlan::new(
+  //     SkipTextsPlan::new(1).with_skip_ends(2), // On Dugtrio
+  //     TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(126, 216).filter(|v| if let FightTurnResult::Hit { damage } = v { *damage >= 88 } else { false }), false).with_skip_ends(4))); // Blastoise used BubbleBeam
+  //   r.run(SkipTextsPlan::new(1)); // effective
+  // }
+  // // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::Attack(AttackDesc::hit(Move::Slash, 19..=23)))); // min dmg 129
   // r.save("multi_blue_test3");
   // r.load("multi_blue_test3");
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::BubbleBeam, None, EnemyAttackDesc::NoAttack));
@@ -1984,14 +2069,14 @@ pub fn start() {
   // r.load("multi_blue_test4");
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // enemy // mon // fainted
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // mon // gained // num XP
-  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // level up
+  // // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // level up
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // I defeated U
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // First defeat text
   // r.run(SkipTextsPlan::new(3)); // Additional defeat texts
   // r.run(TextPlan::new()); // Additional defeat texts
-  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // player got // X for winning // #inputs: 268383
-  // r.save("multi_blue_viridian_after_giovanni");
-  // r.load("multi_blue_viridian_after_giovanni");
+  // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // player got // X for winning // #inputs: 268135 + 248 / 267715
+  // r.save("multi_blue_viridian_after_giovanni_");
+  // r.load("multi_blue_viridian_after_giovanni_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(8), HoldTextDisplayOpenPlan)); // after texts
   // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // after texts
   // r.run(WalkToPlan::new(15, 6));
@@ -2003,7 +2088,9 @@ pub fn start() {
   // {
   //   r.run(OverworldOpenStartMenuPlan::new());
   //   r.run(StartMenuPlan::items());
-  //   r.run(ListMenuPlan::choose(16)); // HM04
+  //   r.run(ListMenuPlan::swap(1)); // Nugget
+  //   r.run(ListMenuPlan::swap(17)); // Elixer
+  //   r.run(ListMenuPlan::choose(15)); // HM04
   //   r.run(ItemUseTossMenuPlan::use_());
   //   r.run(SkipTextsPlan::new(1)); // Booted up HM
   //   r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // It contains // move // !
@@ -2031,21 +2118,30 @@ pub fn start() {
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
-  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Leer))));
-  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::Attack(AttackDesc::hit(Move::Bite, 20..=28))));
+  // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.save("multi_blue_test3");
   // r.load("multi_blue_test3");
-  // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Psychic))));
-  // r.run(NextTrainerMonPlan::new());
+  // {
+  //   r.run(BattleMenuPlan::fight());
+  //   r.run(SelectMoveMenuPlan::with_metric(Move::MegaKick, AIChooseMoveMetric.expect(Move::Reflect)));
+  //   r.run(TextPlan::new().with_skip_ends(4)); // Used reflect
+  //   r.run(SeqPlan::new(
+  //     SkipTextsPlan::new(1), // gained armor
+  //     TextPlan::with_metric(Gen1NormalHitMetric::with_expected_max_damage(50, 165).filter(|v| if let FightTurnResult::CriticalHit { damage } = v { *damage >= 123 } else { false }), false).with_skip_ends(4))); // Blastoise used MegaKick
+  //   r.run(SkipTextsPlan::new(1)); // critical hit
+  // }
+  // // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Recover))));
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 298795
-  // r.save("multi_blue_route22_after_rival");
-  // r.load("multi_blue_route22_after_rival");
+  // r.run(EndTrainerBattlePlan::new(2)); // #inputs:  275994 / 275805 275785
+  // r.save("multi_blue_route22_after_rival__");
+  // r.load("multi_blue_route22_after_rival_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(5), HoldTextDisplayOpenPlan)); // Rival
   // r.run(WalkToPlan::new(21, 6));
   // r.run(OverworldJumpLedgePlan::new(D));
@@ -2331,24 +2427,24 @@ pub fn start() {
   // r.run(OverworldInteractPlan::with(1));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(9));
   // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(NextTrainerMonPlan::with_level_up());
-  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
   // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
   // r.run(NextTrainerMonPlan::new());
   // r.save("multi_blue_test3");
   // r.load("multi_blue_test3");
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::DoubleSlap))));
-  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(NextTrainerMonPlan::new());
   // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 296380
-  // r.save("multi_blue_after_lorelei");
-  // r.load("multi_blue_after_lorelei");
+  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 296106 + 274 / 295856
+  // r.save("multi_blue_after_lorelei_");
+  // r.load("multi_blue_after_lorelei_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan)); // after text
   // {
   //   r.run(OverworldOpenStartMenuPlan::new());
   //   r.run(StartMenuPlan::items());
-  //   r.run(ListMenuPlan::choose(8)); // Elixer
+  //   r.run(ListMenuPlan::choose(1)); // Elixer
   //   r.run(ItemUseTossMenuPlan::use_());
   //   r.run(PartyMenuPlan::choose(0)); // Blastoise
   //   r.run(SkipTextsPlan::new(1)); // PP restored
@@ -2367,17 +2463,17 @@ pub fn start() {
   // r.run(OverworldInteractPlan::with(1));
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(10));
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(EndTrainerBattlePlan::new(1)); // #inputs: 300627
-  // r.save("multi_blue_after_bruno");
-  // r.load("multi_blue_after_bruno");
+  // r.run(EndTrainerBattlePlan::with_level_up(1)); // #inputs: 300347 + 280 / 300234
+  // r.save("multi_blue_after_bruno_");
+  // r.load("multi_blue_after_bruno_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // after text
   // r.run(WalkToPlan::new(4, 1));
   // r.run(WalkToPlan::new(4, 0));
@@ -2392,20 +2488,22 @@ pub fn start() {
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(12));
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
-  // r.run(FightTurnPlan::new(AttackDesc::crit_no_side_effect(Move::IceBeam, 57..=57), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Hypnosis)), None));
+  // r.run(FightTurnPlan::new(AttackDesc::crit_no_side_effect(Move::IceBeam, 53..=63), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Hypnosis)), None));
   // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Hypnosis))));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::new());
+  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
-  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::with_level_up());
-  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(NextTrainerMonPlan::new());
-  // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(NextTrainerMonPlan::new());
-  // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Toxic))));
-  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 305569
-  // r.save("multi_blue_after_agatha");
-  // r.load("multi_blue_after_agatha");
+  // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::DreamEater))));
+  // // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Toxic))));
+  // r.run(EndTrainerBattlePlan::new(2)); // #inputs: 305280 + 289 / 305186 305164
+  // r.save("multi_blue_after_agatha__");
+  // r.load("multi_blue_after_agatha_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan)); // after text
   // r.run(WalkToPlan::new(4, 1));
   // r.run(WalkToPlan::new(4, 0));
@@ -2415,19 +2513,19 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(247)); // initiate Lance fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Leer))));
-  // r.run(NextTrainerMonPlan::with_level_up());
-  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
   // r.run(NextTrainerMonPlan::new());
+  // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
+  // r.run(NextTrainerMonPlan::with_skip_learning_move());
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Supersonic))));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(EndTrainerBattlePlan::with_skip_learning_move(3)); // #inputs: 311375
-  // r.save("multi_blue_after_lance");
-  // r.load("multi_blue_after_lance");
+  // r.run(EndTrainerBattlePlan::new(3)); // #inputs: 311078 + 297 / 310946
+  // r.save("multi_blue_after_lance_");
+  // r.load("multi_blue_after_lance_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(14), HoldTextDisplayOpenPlan)); // after text
   // r.run(WalkToPlan::new(5, 0));
   // r.run(EdgeWarpPlan::new());
@@ -2435,23 +2533,23 @@ pub fn start() {
   // r.run(OverworldWaitPlan::trainer_battle(243)); // initiate Rival fight
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(0));
   // r.run(FightKOPlan::new(Move::IceBeam, None, EnemyAttackDesc::NoAttack));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.save("multi_blue_test");
   // r.load("multi_blue_test");
-  // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::hit_failed(Move::Psychic))));
+  // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Recover))));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(NextTrainerMonPlan::with_level_up());
+  // r.run(NextTrainerMonPlan::new()); // 314889
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
   // r.run(FightKOPlan::new(Move::MegaKick, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Leer))));
   // r.run(NextTrainerMonPlan::new());
   // r.run(FightKOPlan::new(Move::Surf, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Leer))));
-  // r.run(NextTrainerMonPlan::new());
+  // r.run(NextTrainerMonPlan::with_level_up());
   // r.run(FightTurnPlan::new(AttackDesc::ohko(Move::Fissure), EnemyAttackDesc::NoAttack, Some(MoveOrder::PlayerFirst)));
-  // r.run(EndTrainerBattlePlan::with_level_up(6)); // #inputs: 318244
-  // r.save("multi_blue_after_champion");
-  // r.load("multi_blue_after_champion");
+  // r.run(EndTrainerBattlePlan::new(6)); // #inputs: 317883 + 361 / 317619 317620
+  // r.save("multi_blue_after_champion__");
+  // r.load("multi_blue_after_champion_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(6), HoldTextDisplayOpenPlan)); // after text
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // after text
   // r.run(SkipTextsPlan::new(6)); // after text
@@ -2465,7 +2563,10 @@ pub fn start() {
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
   // r.run(TextPlan::new().with_skip_ends(2));
-  // r.run(SkipTextsPlan::new(2)); // #inputs: 321938
+  // r.run(SkipTextsPlan::new(2)); // #inputs: 321577 + 361
+  // r.save("multi_blue_test3");
+  // r.load("multi_blue_test3");
+  // r.run(TextPlan::new());
 
 
   // r.save("multi_blue_test");
