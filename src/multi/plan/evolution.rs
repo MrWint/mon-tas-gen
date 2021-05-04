@@ -28,6 +28,7 @@ pub struct EvolutionPlan {
   evolution_inputs_remaining: u8,
 
   // config state
+  cancel: bool,
   forced: bool,
 }
 impl EvolutionPlan {
@@ -37,6 +38,17 @@ impl EvolutionPlan {
       hjoy5_state: HJoy5State::unknown(),
       evolution_inputs_remaining: 0,
 
+      cancel: false,
+      forced: false,
+    }
+  }
+  pub fn cancel() -> Self {
+    Self {
+      // Set instance state to dummy values, will be initialize()'d later.
+      hjoy5_state: HJoy5State::unknown(),
+      evolution_inputs_remaining: 0,
+
+      cancel: true,
       forced: false,
     }
   }
@@ -46,6 +58,7 @@ impl EvolutionPlan {
       hjoy5_state: HJoy5State::unknown(),
       evolution_inputs_remaining: 0,
 
+      cancel: false,
       forced: true,
     }
   }
@@ -67,19 +80,30 @@ impl<R: MultiRom> Plan<R> for EvolutionPlan {
     self.evolution_inputs_remaining = 72;
   }
   fn is_safe(&self) -> bool { true }
-  fn get_blockable_inputs(&self) -> Input { Input::empty() }
+  fn get_blockable_inputs(&self) -> Input { if self.cancel { Input::B } else { Input::empty() } }
 
   fn canonicalize_input(&self, input: Input) -> Option<Input> {
-    if self.hjoy5_state.get_hjoy5(input).contains(B) { if self.forced { Some(B) } else { None } } else { Some(Input::empty()) }
+    if self.hjoy5_state.get_hjoy5(input).contains(B) {
+      if self.cancel || self.forced { Some(B) } else { None }
+    } else {
+      if self.cancel && self.evolution_inputs_remaining <= 1 { None } else { Some(Input::empty()) }
+    }
   }
   fn execute_input(&mut self, gb: &mut Gb<R>, s: &GbState, input: Input) -> Option<(GbState, Option<Self::Value>)> {
-    if !self.forced && self.hjoy5_state.get_hjoy5(input).contains(B) { return None; }
+    if self.hjoy5_state.get_hjoy5(input).contains(B) {
+      if self.cancel {
+        gb.restore(s);
+        gb.input(input);
+        gb.step();
+        return Some((gb.save(), Some(())));
+      } else if !self.forced { return None; }
+    }
     gb.restore(s);
     gb.input(input);
     gb.step();
     self.evolution_inputs_remaining -= 1;
     if self.evolution_inputs_remaining == 0 {
-      Some((gb.save(), Some(())))
+      if self.cancel { None } else { Some((gb.save(), Some(()))) }
     } else {
       let new_state = gb.save();
       self.hjoy5_state = HJoy5State::from_gb(gb);
