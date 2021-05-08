@@ -1366,12 +1366,10 @@ pub fn start() {
   //   r.run(SkipTextsPlan::new(1)); // Played flute
   //   r.run(StartMenuClosePlan::new());
   //   r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan)); // Snorlax fight
-  //   r.run(OverworldWaitPlan::with_metric(OverworldInteractionMetric.filter(|r| if let OverworldInteractionResult::WildEncounter { species: Pokemon::Snorlax, dvs, .. } = r { dvs.atk <= 3 } else { false })));
+  //   r.run(OverworldWaitPlan::with_metric(OverworldInteractionMetric.filter(|r| if let OverworldInteractionResult::WildEncounter { species: Pokemon::Snorlax, .. } = r { true } else { false })));
   // }
   // r.run(SkipTextsPlan::new(1).with_skip_ends(2)); // Wild Snorlax appeared!
   // r.run(TextPlan::new().with_skip_ends(2)); // Go, Wartortle!
-  // // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::crit(Move::Headbutt, 1..=52)), None));
-  // // r.run(FightTurnPlan::new(AttackDesc::hit_failed(Move::MegaKick), EnemyAttackDesc::Attack(AttackDesc::hit(Move::Headbutt, 1..=26)), None));
   // r.run(BattleMenuPlan::run());
   // r.run(SkipTextsPlan::new(1)); // Got away safely! // #inputs: 183080 + 197 / 182880
   // r.save("multi_blue_after_snorlax_");
@@ -1420,7 +1418,7 @@ pub fn start() {
   //   r.run(PartyMonMenuPlan::choose(0)); // Cut
   //   r.run(TextScrollWaitPlan::new()); // used cut
   // }
-  // r.run(WalkToPlan::new(18, 3)); // Enter Safari // 187129
+  // r.run(WalkToPlan::new(18, 3)); // Enter Safari // 186582
   // r.save("multi_blue_test2");
   // r.load("multi_blue_test2");
   // r.run(WalkToPlan::new(3, 2));

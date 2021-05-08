@@ -266,6 +266,7 @@ pub trait Gen1MoveEffectAddresses {
   const MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS: i32; // DisableEffect.playerTurnNotLinkBattle
   const MOVE_EFFECT_DISABLE_FAILED_ADDRESS: i32; // DisableEffect.moveMissed
   const MOVE_EFFECT_HEAL_FAILED_ADDRESS: i32; // HealEffect_.failed
+  const MOVE_EFFECT_TELEPORT_FAILED_ADDRESS: i32; // SwitchAndTeleportEffect.notWildBattle2
 }
 pub trait Gen2FightTurnAddresses {
   const NEXT_BATTLE_COMMAND_ADDRESS: i32; // DoMove.ReadMoveEffectCommand (for next command)
@@ -579,6 +580,7 @@ macro_rules! impl_red_blue_common_addresses {
       const MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS: i32 = 0xf_7ae1; // DisableEffect.playerTurnNotLinkBattle
       const MOVE_EFFECT_DISABLE_FAILED_ADDRESS: i32 = 0xf_7b06; // DisableEffect.moveMissed
       const MOVE_EFFECT_HEAL_FAILED_ADDRESS: i32 = 0x0e_7a97; // HealEffect_.failed
+      const MOVE_EFFECT_TELEPORT_FAILED_ADDRESS: i32 = 0x0F_77D1; // SwitchAndTeleportEffect.notWildBattle2
     }
     impl Gen1MapAddresses for $t {
       const SURF_STATE_MEM_ADDRESS: u16 = 0xd700; // wWalkBikeSurfState (2 = surfing)
@@ -860,6 +862,7 @@ impl Gen1MoveEffectAddresses for Yellow {
   const MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS: i32 = 0xf_7abc; // DisableEffect.playerTurnNotLinkBattle
   const MOVE_EFFECT_DISABLE_FAILED_ADDRESS: i32 = 0xf_7ae1; // DisableEffect.moveMissed
   const MOVE_EFFECT_HEAL_FAILED_ADDRESS: i32 = 0x3d_6365; // HealEffect_.failed
+  const MOVE_EFFECT_TELEPORT_FAILED_ADDRESS: i32 = 0x0f_7787; // SwitchAndTeleportEffect.notWildBattle2
 }
 impl Gen1MapAddresses for Yellow {
   const SURF_STATE_MEM_ADDRESS: u16 = 0xd6ff; // wWalkBikeSurfState (2 = surfing)

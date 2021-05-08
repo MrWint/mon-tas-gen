@@ -84,7 +84,8 @@ impl<R: JoypadAddresses + Gen1MoveEffectAddresses> Metric<R> for MoveEffectMetri
       R::MOVE_EFFECT_MIMIC_FAILED_ADDRESS,
       R::MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS,
       R::MOVE_EFFECT_DISABLE_FAILED_ADDRESS,
-      R::MOVE_EFFECT_HEAL_FAILED_ADDRESS]);
+      R::MOVE_EFFECT_HEAL_FAILED_ADDRESS,
+      R::MOVE_EFFECT_TELEPORT_FAILED_ADDRESS]);
     if hit == R::MOVE_EFFECT_NO_EFFECT_ADDRESS { Some(MoveEffectResult::NoEffect) }
     else if hit == R::MOVE_EFFECT_SLEEP_SUCCESS_ADDRESS { Some(MoveEffectResult::Sleep { turns: gb.gb().read_registers().a as u8 }) }
     else if hit == R::MOVE_EFFECT_SLEEP_FAILED_ADDRESS { Some(MoveEffectResult::Failed) }
@@ -113,6 +114,7 @@ impl<R: JoypadAddresses + Gen1MoveEffectAddresses> Metric<R> for MoveEffectMetri
     else if hit == R::MOVE_EFFECT_DISABLE_SUCCESS_ADDRESS { Some(MoveEffectResult::Success) }
     else if hit == R::MOVE_EFFECT_DISABLE_FAILED_ADDRESS { Some(MoveEffectResult::Failed) }
     else if hit == R::MOVE_EFFECT_HEAL_FAILED_ADDRESS { Some(MoveEffectResult::Failed) }
+    else if hit == R::MOVE_EFFECT_TELEPORT_FAILED_ADDRESS { Some(MoveEffectResult::Failed) }
     else { Some(MoveEffectResult::Unknown) }
   }
 }
