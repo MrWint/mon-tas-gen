@@ -22,6 +22,7 @@ pub trait IMultiGbExecutor {
   fn execute_input(&mut self, state: &GbState, input: Input) -> Option<(MultiStateItem, bool)>;
   fn debug_identify_input(&mut self, state: &GbState, instance: usize);
   fn debug_render_end_states(&mut self, state: &GbState);
+  fn equal_length_frames(&self) -> bool;
 }
 pub struct MultiGbExecutor<R: MultiRom> {
   gb: Gb<R>,
@@ -63,10 +64,14 @@ impl<R: MultiRom + InputIdentificationAddresses> IMultiGbExecutor for MultiGbExe
   }
   fn debug_identify_input(&mut self, state: &GbState, instance: usize) {
     let frame = state.get_input_frame_lo();
+
+    self.gb.restore(state);
+    let cycle_count = self.gb.gb.get_cycle_count() / 35112;
+
     if let Some(name) = identify_input(&mut self.gb, state) {
-      log::info!("Instance {} finished with next input {} at frame {}", instance, name, frame);
+      log::info!("Instance {} finished with next input {} at frame {}({})", instance, name, frame, cycle_count);
     } else {
-      log::info!("Instance {} finished with next input not identified at frame {}", instance, frame);
+      log::info!("Instance {} finished with next input not identified at frame {}({})", instance, frame, cycle_count);
     }
   }
   fn debug_render_end_states(&mut self, state: &GbState) {
@@ -81,6 +86,9 @@ impl<R: MultiRom + InputIdentificationAddresses> IMultiGbExecutor for MultiGbExe
       self.gb.step();
     }
     std::thread::sleep(std::time::Duration::from_millis(200));
+  }
+  fn equal_length_frames(&self) -> bool {
+    self.gb.gb.equal_length_frames()
   }
 }
 
@@ -157,7 +165,7 @@ impl<const N: usize> MultiGbRunner<N> {
     if !use_unsafe {
       let num_processed_states = min_frame_states.len();
       let num_remaining_states = self.states.count_states();
-      log::debug!("performing step at frame {} (max frame {} total states {}), moving {} states", min_frame, max_frame, num_remaining_states + num_processed_states, num_processed_states);
+      log::debug!("performing step at frame {} (max frame {} total states {}), moving {} states ({})", min_frame, max_frame, num_remaining_states + num_processed_states, num_processed_states, min_frame_states.debug_stats());
     }
     for state in min_frame_states.into_iter() {
       self.step_state(state);
@@ -336,13 +344,32 @@ impl<const N: usize> MultiGbRunner<N> {
       }
     }
   }
+  pub fn load_final_only(&mut self, file_name: &str) {
+    let file_path = format!("saves/{}.gz", file_name);
+    let f = std::fs::File::open(file_path).expect("file not found");
+    let mut f = ::flate2::read::GzDecoder::new(f);
+    self.states = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
+    self.states_unsafe = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
+    self.final_states = StateBuffer::default();
+    let mut stored_final_states: StateBuffer<N> = ::bincode::deserialize_from(&mut f).expect("loading statebuffer failed");
+
+    // Final states are not final anymore after the plans have been extended.
+    while !stored_final_states.is_empty() {
+      self.states = StateBuffer::default();
+      self.states_unsafe = StateBuffer::default();
+      for state in stored_final_states.fetch_min_input_frame_states().into_iter() {
+        self.add_state(state);
+      }
+    }
+  }
 
   pub fn debug_segment_end(&mut self, file_name: &str) {
     {
       let chosen_state = self.final_states.iter().min_by_key(|s| s.inputs.len_max()).unwrap();
       let inputs = chosen_state.inputs.create_inputs();
       log::info!("Creating sample input file {} with {} inputs", file_name, inputs.len());
-      Bk2Writer::new::<Blue>().write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
+      let elf = self.instances[0].equal_length_frames();
+      Bk2Writer::new::<Blue>().with_equal_length_frames(elf).write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
     }
     log::info!("Rendering end states");
     for s in self.final_states.iter() {

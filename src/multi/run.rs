@@ -186,15 +186,17 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
       format!("with Ignored inputs: {:?}", ignored_inputs)
     } else { String::new() };
     let frame = state.get_input_frame_lo();
+    self.gb.restore(state);
+    let cycle_count = self.gb.gb.get_cycle_count()/35112;
     if let Some(name) = identify_input(&mut self.gb, state) {
       let additional_info = if name == "JoypadOverworld" {
         self.gb.restore(state);
         self.gb.input(input);
         format!(" ({:?})", get_overworld_interaction_result(&mut self.gb))
       } else { String::new() };
-      log::info!("Next input {}{} at frame {} {}", name, additional_info, frame, ignored_input_text);
+      log::info!("Next input {}{} at frame {}({}) {}", name, additional_info, frame, cycle_count, ignored_input_text);
     } else {
-      log::info!("Next input not identified at frame {} {}", frame, ignored_input_text);
+      log::info!("Next input not identified at frame {}({}) {}", frame, cycle_count, ignored_input_text);
     }
   }
 
@@ -216,7 +218,7 @@ impl<R: MultiRom + Gen1OverworldAddresses + Gen1DVAddresses> SingleGbRunner<R> {
       let chosen_state = self.states.iter().min_by_key(|s| s.inputs.len_max()).unwrap();
       let inputs = chosen_state.inputs.create_inputs();
       log::info!("Creating sample input file {} with {} inputs", file_name, inputs.len());
-      Bk2Writer::new::<Blue>().write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
+      Bk2Writer::new::<Blue>().with_equal_length_frames(self.gb.gb.equal_length_frames()).write_bk2(&format!("{}.bk2", file_name), &inputs).unwrap();
     }
     log::info!("Rendering end states");
     let states: Vec<_> = self.states.iter().map(|s| s.instances[0].gb_state.clone()).collect();

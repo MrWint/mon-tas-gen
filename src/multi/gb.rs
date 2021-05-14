@@ -53,6 +53,10 @@ impl GbState {
     assert!(self.is_at_input());
     input - self.ignored_inputs
   }
+
+  pub fn num_delays(&self) -> u32 {
+    self.num_delays
+  }
 }
 
 /// Object encapsulating an ongoing game execution.
