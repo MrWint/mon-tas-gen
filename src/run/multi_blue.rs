@@ -8,7 +8,7 @@ use montas::multi::*;
 use montas::rom::*;
 use montas::sdl::*;
 
-const EQUAL_LENGTH_FRAMES: bool = false;
+const EQUAL_LENGTH_FRAMES: bool = true;
 const RTC_DIVISOR_OFFSET: i32 = 0;
 
 #[allow(dead_code)]
@@ -30,9 +30,9 @@ pub fn start() {
   // r.run(IntroNameMenuPlan::choose_custom_name()); // rival name
   // r.run(NamingScreenPlan::with_letter(b'U'));
   // r.run(SkipTextsPlan::new(7)); // oak speech
-  // r.run(TextPlan::new()); // ... awaits let's go // #inputs: 2500
-  // r.save("multi_blue_intro");
-  // r.load("multi_blue_intro");
+  // r.run(TextPlan::new()); // ... awaits let's go // #inputs: 2500(2728)
+  // r.save("multi_blue_intro_");
+  // r.load("multi_blue_intro_");
   // r.run(WalkToPlan::new(7, 1)); // go down stairs
   // r.run(WalkToPlan::new(3, 6)); // go outside
   // r.run(WalkToPlan::new(3, 7)); // go outside

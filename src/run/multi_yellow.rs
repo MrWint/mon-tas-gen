@@ -2664,9 +2664,9 @@ pub fn start() {
   // r.run(SeqPlan::new(SkipTextsPlan::new(7), HoldTextDisplayOpenPlan)); // after text
   // r.run(SeqPlan::new(SkipTextsPlan::new(15), HoldTextDisplayOpenPlan)); // after text
   // r.save("multi_yellow_test2");
-  r.load("multi_yellow_test2");
-  r.run(TextPlan::new().with_skip_ends(2));
-  r.run(SkipTextsPlan::new(2));
+  // r.load("multi_yellow_test2");
+  // r.run(TextPlan::new().with_skip_ends(2));
+  // r.run(SkipTextsPlan::new(2));
 
   
   // r.save("multi_yellow_test");

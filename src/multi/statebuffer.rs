@@ -6,7 +6,7 @@ use super::*;
 use crate::big_array::BigArray;
 
 pub const MULTI_STATE_BUFFER_SINGLE_RNG_MAX_SIZE: usize = 4; // how many states with the same RNG value are kept at most.
-pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 16;
+pub const MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE: usize = 256;
 pub const MULTI_STATE_BUFFER_HARD_LIMIT_MAX_SIZE: usize = MULTI_STATE_BUFFER_DEFAULT_MAX_SIZE * 16;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -86,11 +86,27 @@ impl<const N: usize> MultiState<N> {
   pub fn get_next_input_frame(&self) -> u32 {
     self.instances.iter().map(|instance| instance.gb_state.get_input_frame_lo()).min().unwrap()
   }
+  /// Returns the sum of the input frames, for state comparisons.
+  pub fn get_input_frame_sum(&self) -> u32 {
+    self.instances.iter().map(|instance| instance.gb_state.get_input_frame_lo()).sum()
+  }
+  /// Returns the sum of the input frames, for state comparisons.
+  pub fn get_delays_sum(&self) -> u32 {
+    self.instances.iter().map(|instance| instance.gb_state.num_delays()).sum()
+  }
 
   fn get_blocked_inputs(&self) -> BlockedInputs<N> {
     let mut result = BlockedInputs([Input::empty(); N]);
     for i in 0..N {
       result.0[i] = self.instances[i].gb_state.blocked_inputs;
+    }
+    result
+  }
+
+  fn get_rng_states(&self) -> [u32; N] {
+    let mut result = [0u32; N];
+    for i in 0..N {
+      result[i] = self.instances[i].gb_state.rng_state;
     }
     result
   }
@@ -166,6 +182,17 @@ impl<const N: usize> MultiStateBuffer<N> {
     }
   }
 
+  pub fn debug_stats(&self) -> String {
+    let mut rng_state: Vec<HashSet<u32>> = vec![HashSet::new(); N];
+    for s in self.states.values() {
+      let rs = s.get_rng_states();
+      for i in 0..N {
+        rng_state.get_mut(i).unwrap().insert(rs[i]);
+      }
+    }
+    rng_state.into_iter().map(|s| s.len().to_string()).collect::<Vec<_>>().join("/")
+  }
+
   /// Adds a state to the buffer.
   fn add_state(&mut self, s: MultiState<N>) {
     if self.states.capacity() == 0 {
@@ -174,7 +201,7 @@ impl<const N: usize> MultiStateBuffer<N> {
     }
     let rng_fingerprint = s.get_rng_fingerprint();
     let blocked_inputs = s.get_blocked_inputs();
-    let frame_count = s.get_next_input_frame();
+    let frame_sum = s.get_input_frame_sum();
     let num_better_states = self.states.iter().filter(|(_, os)| s.compare_plans(os) == Some(Ordering::Less)).count() as u32;
     let mut num_comparable_states = self.states.iter().filter(|(_, os)| s.compare_plans(os).is_some()).count() as u32;
     let blocked_input_list = self.blocked_inputs.entry(rng_fingerprint).or_insert(Vec::new());
@@ -182,12 +209,12 @@ impl<const N: usize> MultiStateBuffer<N> {
       let mut i = 0;
       while i < blocked_input_list.len() {
         let other_key = (rng_fingerprint, blocked_input_list[i].clone());
-        let &(mut other_num_better_states, mut other_num_comparable_states, other_frame_count) = self.metrics.get(&other_key).unwrap();
+        let &(mut other_num_better_states, mut other_num_comparable_states, other_frame_sum) = self.metrics.get(&other_key).unwrap();
         // Account for new state as if it were already added to the buffer.
         if s.compare_plans(self.states.get(&other_key).unwrap()) == Some(Ordering::Greater) { other_num_better_states += 1; }
         if s.compare_plans(self.states.get(&other_key).unwrap()).is_some() { other_num_comparable_states += 1; }
         // Try to determine a clearly superior state.
-        match num_better_states.cmp(&other_num_better_states).then(num_comparable_states.cmp(&other_num_comparable_states)).then(frame_count.cmp(&other_frame_count)).then_with(|| if blocked_inputs.contains(&blocked_input_list[i]) { Ordering::Greater } else if blocked_input_list[i].contains(&blocked_inputs) { Ordering::Less } else { Ordering::Equal }) {
+        match num_better_states.cmp(&other_num_better_states).then(num_comparable_states.cmp(&other_num_comparable_states)).then(frame_sum.cmp(&other_frame_sum)).then_with(|| if blocked_inputs.contains(&blocked_input_list[i]) { Ordering::Greater } else if blocked_input_list[i].contains(&blocked_inputs) { Ordering::Less } else { Ordering::Equal }) {
           Ordering::Less => {
             // Stored state is worse than current state, remove
             let old_blocked_input = blocked_input_list.swap_remove(i);
@@ -252,7 +279,7 @@ impl<const N: usize> MultiStateBuffer<N> {
       }
       assert!(num_better_states == assert_num_better_states);
       assert!(num_comparable_states == assert_num_comparable_states);
-      self.metrics.insert(inserted_key.clone(), (num_better_states, num_comparable_states, frame_count));
+      self.metrics.insert(inserted_key.clone(), (num_better_states, num_comparable_states, frame_sum));
     }
     self.states.insert(inserted_key, s);
     if self.states.len() > self.max_size {

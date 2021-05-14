@@ -31,8 +31,8 @@ pub fn start() {
   // r.run(NamingScreenPlan::with_letter(b'U'));
   // r.run(SkipTextsPlan::new(7)); // oak speech
   // r.run(TextPlan::new()); // ... awaits let's go
-  // r.save("multi_red_intro");
-  // r.load("multi_red_intro");
+  // r.save("multi_red_intro_");
+  // r.load("multi_red_intro_");
   // r.run(WalkToPlan::new(7, 1)); // go down stairs
   // r.run(WalkToPlan::new(3, 6)); // go outside
   // r.run(WalkToPlan::new(3, 7)); // go outside
@@ -63,8 +63,8 @@ pub fn start() {
   // r.run(SeqPlan::new(SkipTextsPlan::new(12), HoldTextDisplayOpenPlan::new())); // you can have one, choose
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // What about me?
   // r.run(SeqPlan::new(SkipTextsPlan::new(2), HoldTextDisplayOpenPlan::new())); // Can have one too
-  // r.save("multi_red_before_starter");
-  // r.load("multi_red_before_starter");
+  // r.save("multi_red_before_starter_");
+  // r.load("multi_red_before_starter_");
   // r.run(OverworldTurnPlan::new(R)); // turn towards Charmander
   // r.run(OverworldInteractPlan::with(2)); // Interact with Charmander Ball
   // r.run(TextScrollWaitPlan::new()); // Scroll dex text 1
@@ -80,8 +80,8 @@ pub fn start() {
   //     if v.hp() < 15 || v.atk < 6 || v.def < 10 || v.spc < 14 { return false; } // Charmander DVs
   //     log::info!("Chosen DVs: {:?}", v); true
   //   }).into_unit())); //  // DVs: 7 / 13 / 1 / 15 #inputs: 5846
-  // r.save("multi_red_after_starter"); 
-  // r.load("multi_red_after_starter");
+  // r.save("multi_red_after_starter_"); 
+  // r.load("multi_red_after_starter_");
   // r.run(HoldTextDisplayOpenPlan::new());
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan::new())); // I'll take this one then
   // r.run(SeqPlan::new(SkipTextsPlan::new(1).with_skip_ends(2), HoldTextDisplayOpenPlan::new())); // rival received // squirtle // !
@@ -98,7 +98,7 @@ pub fn start() {
   // r.run(SeqPlan::new(
   //   FightKOPlan::new(Move::Scratch, None, EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::TailWhip))),
   //   EndTrainerBattlePlan::with_level_up(3))); // Rival1 fight
-  // r.save("multi_red_after_rival1"); // #inputs: 9013
+  // r.save("multi_red_after_rival1_"); // #inputs: 9013
   // r.load("multi_red_after_rival1");
   // r.run(OverworldWaitPlan::new()); // advance map script (abSs buttons allowed)
   // r.run(SeqPlan::new(SkipTextsPlan::new(4), HoldTextDisplayOpenPlan::new())); // after rival1 texts
@@ -142,12 +142,12 @@ pub fn start() {
   // r.run(WalkToPlan::new(4, 11)); // leave
   // r.run(EdgeWarpPlan::new()); // go outside // inputs: 15949
   // r.save("multi_red_after_oak_parcel");
-  // r.load("multi_red_after_oak_parcel");
-  // r.run(WalkToPlan::new(10, -1)); // enter Route 1
-  // r.run(WalkToPlan::new(11, -1)); // Enter Viridian
-  // r.run(WalkToPlan::new(18, -1)); // Enter Route 2
-  // r.run(WalkToPlan::new(3, 43)); // Enter Viridian Forest
-  // r.run(WalkToPlan::new(5, 0)); // Enter Viridian Forest
+  r.load("multi_red_after_oak_parcel");
+  r.run(WalkToPlan::new(10, -1)); // enter Route 1
+  r.run(WalkToPlan::new(11, -1)); // Enter Viridian
+  r.run(WalkToPlan::new(18, -1)); // Enter Route 2
+  r.run(WalkToPlan::new(3, 43)); // Enter Viridian Forest
+  r.run(WalkToPlan::new(5, 0)); // Enter Viridian Forest
   // r.run(WalkToPlan::new(2, 19));
   // r.run(OverworldInteractPlan::with(4)); // Bugcatcher
   // r.run(StartTrainerBattlePlan::with_pre_battle_texts(1));
@@ -189,7 +189,7 @@ pub fn start() {
   // r.run(FightKOPlan::new(Move::Ember, Some(MoveEffectResult::NoEffect), EnemyAttackDesc::Attack(AttackDesc::effect_failed(Move::Screech))));
   // r.run(EndTrainerBattlePlan::with_level_up(10)); // Brock fight //  #inputs: 33573
   // r.save("multi_red_after_brock");
-  // r.load("multi_red_after_brock");
+  // r.load("multi_red_after_brock_");
   // r.run(SeqPlan::new(SkipTextsPlan::new(1), HoldTextDisplayOpenPlan)); // Brock speech
   // r.run(SeqPlan::new(SkipTextsPlan::new(13), HoldTextDisplayOpenPlan)); // Brock speech
   // r.run(WalkToPlan::new(4, 13));
